@@ -99,10 +99,12 @@ function get_kb_versions()
 						'cat_articles'			=> array('UINT', 0),
 					),
 					'PRIMARY_KEY'	=> 'cat_id',
+					/*
 					'KEYS'			=> array(
 						'cat_name'			=> array('INDEX', 'cat_name'),
-						'cat_desc'			=> array('INDEX', 'cat_desc'),
+						'cat_desc'			=> array('FULLTEXT', 'cat_desc'),
 					),
+					*/
 				)),
 
 				array('phpbb_article_comments', array(
@@ -647,6 +649,51 @@ function get_kb_versions()
 			// Bug updates, resync latest articles and cat count
 			'custom' => 'kb_update_400_to_401',
 		),
+		
+		'0.4.2' => array(
+			// New config, resync user articles count and update history
+			'config_add' => array(
+				array('kb_ajax_rating', 1),
+			),
+			
+			'custom' => 'kb_update_401_to_402',
+		),
+		
+		'0.4.3' => array(
+			// More config
+			'config_add' => array(
+				array('kb_disable_left_menu', 0),
+				array('kb_disable_right_menu', 0),
+				array('kb_left_menu_width', 240),
+				array('kb_left_menu_type', 0),
+				array('kb_right_menu_width', 240),
+				array('kb_right_menu_type', 0),	
+			),
+		),
+		
+		'0.4.4' => array(
+			// Even more config options.... yay
+			'config_add' => array(
+				array('kb_show_contrib', 1),
+				array('kb_related_articles', 1),
+				array('kb_email_article', 1),
+				array('kb_ext_article_header', 1),
+				array('kb_soc_bookmarks', 1),
+				array('kb_export_article', 1),
+				array('kb_show_desc_cat', 1),
+				array('kb_show_desc_article', 1),
+				array('kb_disable_desc', 0),
+			),
+		),
+		
+		'0.4.5' => array(
+			'config_add' => array(
+				array('kb_cats_per_row', 3),
+				array('kb_layout_style'	, 1),
+				array('kb_list_subcats', 1),
+				array('kb_latest_articles_c', 5),
+			),
+		),
 	);
 
 	return $versions;
@@ -862,5 +909,54 @@ function kb_update_400_to_401($action, $version)
 	set_config('kb_total_cats', count($cat_ids));
 	$cache->destroy('config');
 }
+
+
+/// For 042 we fix problems with history edit_type and resync user article count
+function kb_update_401_to_402($action, $version)
+{
+	global $db, $table_prefix;
 	
+	if($action != 'update')
+	{
+		return;
+	}
+	
+	// Fix article count for users
+	$sql = 'SELECT article_user_id
+			FROM' . $table_prefix . 'articles
+			GROUP BY article_user_id';
+	$result = $db->sql_query($sql);
+	
+	$users = array();
+	while($row = $db->sql_fetchrow($result))
+	{
+		$users[] = $row['article_user_id'];
+	}
+	$db->sql_freeresult($result);
+	
+	foreach($users as $user_id)
+	{
+		$sql = 'SELECT COUNT(article_id) AS num_articles
+				FROM ' . $table_prefix . 'articles
+				WHERE article_user_id = ' . $user_id;
+		$result = $db->sql_query($sql);
+		$article_count = (int) $db->sql_fetchfield('num_articles', $result);
+		
+		$sql = 'UPDATE ' . $table_prefix . 'users
+				SET user_articles = ' . $articles_count . '
+				WHERE user_id = ' . $user_id;
+		$db->sql_query($sql);
+	}
+	
+	// Fix history
+	$sql = 'UPDATE ' . $table_prefix . 'article_edits
+			SET edit_type = "a:1:{i:0;i:7;}"
+			WHERE edit_type = 7';
+	$db->sql_query($sql);
+	
+	$sql = 'UPDATE ' . $table_prefix . 'article_edits
+			SET edit_type = "a:1:{i:0;i:7;}"
+			WHERE edit_type = 7';
+	$db->sql_query($sql);
+}
 ?>

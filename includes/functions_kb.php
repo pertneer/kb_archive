@@ -532,12 +532,7 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 	
 	$sql_data = array();
 	$data['article_title'] = truncate_string($data['article_title']);
-	$data['article_desc'] = truncate_string($data['article_desc'], 300, 500);
-	
-	if($mode == 'edit')
-	{
-		$edit_type = check_edit_type($data, $old_data, $update_message);
-	}
+	//$data['article_desc'] = truncate_string($data['article_desc'], 300, 500);
 	
 	// Build sql data for articles table
 	$sql_data[KB_TABLE]['sql'] = array(
@@ -570,7 +565,7 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 		'article_edit_reason_global'	=>	$data['article_edit_reason_global'],
 		'article_open'					=>  $data['article_open'],
 		'article_edit_contribution'		=>  $data['article_contribution'],
-		'article_edit_type'				=>  serialize($edit_type),
+		'article_edit_type'				=>  ($mode == 'edit') ? serialize(check_edit_type($data, $old_data, $update_message)) : serialize(array()),
 	);
 	
 	// Submit an edit based on this edit
@@ -718,7 +713,7 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 			else
 			{
 				// insert attachment into db
-				if (!@file_exists($phpbb_root_path . $config['upload_path'] . '/' . basename($orphan_rows[$attach_row['attach_id']]['physical_filename'])))
+				if (!@file_exists($phpbb_root_path . $config['upload_path'] . '/' . utf8_basename($orphan_rows[$attach_row['attach_id']]['physical_filename'])))
 				{
 					continue;
 				}
@@ -884,7 +879,7 @@ function comment_submit($mode, &$data, $update_message = true)
 			else
 			{
 				// insert attachment into db
-				if (!@file_exists($phpbb_root_path . $config['upload_path'] . '/' . basename($orphan_rows[$attach_row['attach_id']]['physical_filename'])))
+				if (!@file_exists($phpbb_root_path . $config['upload_path'] . '/' . utf8_basename($orphan_rows[$attach_row['attach_id']]['physical_filename'])))
 				{
 					continue;
 				}
@@ -1006,7 +1001,7 @@ function kb_posting_gen_attachment_entry($attachment_data, &$filename_data, $sho
 		foreach ($attachment_data as $count => $attach_row)
 		{
 			$hidden = '';
-			$attach_row['real_filename'] = basename($attach_row['real_filename']);
+			$attach_row['real_filename'] = utf8_basename($attach_row['real_filename']);
 
 			foreach ($attach_row as $key => $value)
 			{
@@ -1016,8 +1011,8 @@ function kb_posting_gen_attachment_entry($attachment_data, &$filename_data, $sho
 			$download_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'mode=view&amp;c=' . $cat_id . '&amp;id=' . (int) $attach_row['attach_id'], true, ($attach_row['is_orphan']) ? $user->session_id : false);
 
 			$template->assign_block_vars('attach_row', array(
-				'FILENAME'			=> basename($attach_row['real_filename']),
-				'A_FILENAME'		=> addslashes(basename($attach_row['real_filename'])),
+				'FILENAME'			=> utf8_basename($attach_row['real_filename']),
+				'A_FILENAME'		=> addslashes(utf8_basename($attach_row['real_filename'])),
 				'FILE_COMMENT'		=> $attach_row['attach_comment'],
 				'ATTACH_ID'			=> $attach_row['attach_id'],
 				'S_IS_ORPHAN'		=> $attach_row['is_orphan'],
@@ -1281,7 +1276,7 @@ function article_delete($article_id, $cat_id, $article_data)
 		}
 		
 		// Delete from latest articles list
-		handle_latest_articles('delete', $cat_id, array('article_id' => $article_id));
+		handle_latest_articles('delete', $cat_id, array('article_id' => $article_id), $config['kb_latest_articles_c']);
 		
 		$meta_info = kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id");
 		$message = $user->lang['ARTICLE_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB_CAT'], '<a href="' . $meta_info . '">', '</a>');
@@ -1677,8 +1672,8 @@ function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview
 
 		// Some basics...
 		$attachment['extension'] = strtolower(trim($attachment['extension']));
-		$filename = $phpbb_root_path . $config['upload_path'] . '/' . basename($attachment['physical_filename']);
-		$thumbnail_filename = $phpbb_root_path . $config['upload_path'] . '/thumb_' . basename($attachment['physical_filename']);
+		$filename = $phpbb_root_path . $config['upload_path'] . '/' . utf8_basename($attachment['physical_filename']);
+		$thumbnail_filename = $phpbb_root_path . $config['upload_path'] . '/thumb_' . utf8_basename($attachment['physical_filename']);
 
 		$upload_icon = '';
 
@@ -1694,17 +1689,15 @@ function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview
 			}
 		}
 
-		$filesize = $attachment['filesize'];
-		$size_lang = ($filesize >= 1048576) ? $user->lang['MIB'] : (($filesize >= 1024) ? $user->lang['KIB'] : $user->lang['BYTES']);
-		$filesize = get_formatted_filesize($filesize, false);
+		$filesize = get_formatted_filesize($attachment['filesize'], false);
 
 		$comment = bbcode_nl2br(censor_text($attachment['attach_comment']));
 
 		$block_array += array(
 			'UPLOAD_ICON'		=> $upload_icon,
-			'FILESIZE'			=> $filesize,
-			'SIZE_LANG'			=> $size_lang,
-			'DOWNLOAD_NAME'		=> basename($attachment['real_filename']),
+			'FILESIZE'			=> $filesize['value'],
+			'SIZE_LANG'			=> $filesize['unit'],
+			'DOWNLOAD_NAME'		=> utf8_basename($attachment['real_filename']),
 			'COMMENT'			=> $comment,
 		);
 
@@ -2022,10 +2015,15 @@ function handle_related_articles($article_id, $show_num = 5)
 * Using this instead of doing multiple sql queries which will increase server load, as it could be running more than 25 extra queries depending how many cats they had perpage
 * Should actually work quickly but more likely to fail if a manual delete happenes from database as doesn't check topic is there
 */
-function handle_latest_articles($mode, $cat_id, $data, $show = 4)
+function handle_latest_articles($mode, $cat_id, $data, $show)
 {
 	global $phpbb_root_path, $phpEx, $db;
-
+	
+	if(!$show)
+	{
+		return '';
+	}
+	
 	switch ($mode)
 	{
 		case 'get':
@@ -2047,7 +2045,7 @@ function handle_latest_articles($mode, $cat_id, $data, $show = 4)
 			return implode(', ', $article_links);
 		break;
 		
-		case 'add':
+		case 'edit': // On edit we check if it's already there, remove it and put it to the top
 			$sql = $db->sql_build_query('SELECT', array(
 				'SELECT'	=> 'c.latest_ids',
 				'FROM'		=> array(
@@ -2060,6 +2058,35 @@ function handle_latest_articles($mode, $cat_id, $data, $show = 4)
 			$db->sql_freeresult($result);
 			
 			$latest_articles = unserialize($row['latest_ids']);
+			foreach($latest_articles as $key => $article)
+			{
+				if($article['article_id'] == $data['article_id'])
+				{
+					unset($latest_articles[$key]);
+					break;
+				}
+			}
+			
+			// No break
+		
+		case 'edit':
+		case 'add':
+			if($mode == 'add')
+			{
+				$sql = $db->sql_build_query('SELECT', array(
+					'SELECT'	=> 'c.latest_ids',
+					'FROM'		=> array(
+						KB_CATS_TABLE => 'c'),
+	
+					'WHERE'		=> 'cat_id = ' . $cat_id,
+				));
+				$result = $db->sql_query($sql);
+				$row = $db->sql_fetchrow($result);
+				$db->sql_freeresult($result);
+
+				$latest_articles = unserialize($row['latest_ids']);
+			}
+			
 			// Build new array
 			if(count($latest_articles) == $show)
 			{
@@ -2352,16 +2379,19 @@ function kb_display_cats($root_data = '')
 	}
 	$db->sql_freeresult($result);
 	
-	for ($i = 0; $i < count($cat_ids); $i += 3)
+	// Begin math to calculate amount of cats per row and then create dummies to fill it out
+	$cats_per_row = ($config['kb_layout_style']) ? $config['kb_cats_per_row'] : 1; // If normal style we only want 1 cat per row
+	
+	for ($i = 0; $i < count($cats); $i += $cats_per_row)
 	{
-		$template->assign_block_vars('cat_row', array());
-
-		for ($j = $i; $j < ($i + 3); $j++)
+		$template->assign_block_vars('catrow', array());
+		
+		for ($j = $i; $j < ($i + $cats_per_row); $j++)
 		{
-				
 			if ($j >= count($cats))
 			{
-				$template->assign_block_vars('cat_row.no_cat', array());
+				// Assign dummies
+				$template->assign_block_vars('catrow.dummy', array());
 				continue;
 			}
 			
@@ -2369,7 +2399,7 @@ function kb_display_cats($root_data = '')
 			$subcats_list = $s_subcats_list = array();
 			$visible_subcats[$cat_id] = 0;
 			
-			if(isset($subcats[$cat_id]))
+			if(isset($subcats[$cat_id]) && $config['kb_list_subcats'])
 			{
 				foreach($subcats[$cat_id] as $subcat_id => $subcat)
 				{
@@ -2385,9 +2415,9 @@ function kb_display_cats($root_data = '')
 			
 			$folder_img = (sizeof($subcats_list)) ? 'forum_read_subforum' : 'forum_read';
 			
-			$latest_articles = handle_latest_articles('get', $cat_id, $cats[$cat_id]['latest_ids']);
+			$latest_articles = handle_latest_articles('get', $cat_id, $cats[$cat_id]['latest_ids'], $config['kb_latest_articles_c']);
 			
-			$template->assign_block_vars('cat_row.cats', array(
+			$template->assign_block_vars('catrow.cat', array(
 				'S_SUBFORUMS'			=> (sizeof($subcats_list)) ? true : false,
 			
 				'CAT_ID'				=> $cats[$cat_id]['cat_id'],

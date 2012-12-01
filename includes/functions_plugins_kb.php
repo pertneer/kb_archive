@@ -120,41 +120,47 @@ function generate_menu($page = 'index', $cat_id = 0)
 		$page = 'add';
 	}
 	
-	$left_menu = cached_plugins('left');
-	foreach ($left_menu as $plugin)
+	if(!$config['kb_disable_left_menu'])
 	{
-		if (!$config['kb_' . $plugin['FILE'] . '_enable'])
+		$left_menu = cached_plugins('left');
+		foreach ($left_menu as $plugin)
 		{
-			continue;
-		}
-	
-		$show_pages = unserialize($plugin['PERM']);
-		if (in_array($page, $show_pages))
-		{	
-			include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
-			
-			$template->assign_block_vars('left_menu', array(
-				'CONTENT'		=> $plugin['FILE']($cat_id),
-			));
+			if (!$config['kb_' . $plugin['FILE'] . '_enable'])
+			{
+				continue;
+			}
+		
+			$show_pages = unserialize($plugin['PERM']);
+			if (in_array($page, $show_pages))
+			{	
+				include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
+				
+				$template->assign_block_vars('left_menu', array(
+					'CONTENT'		=> $plugin['FILE']($cat_id),
+				));
+			}
 		}
 	}
 	
-	$right_menu = cached_plugins('right');
-	foreach ($right_menu as $plugin)
+	if(!$config['kb_disable_right_menu'])
 	{
-		if (!$config['kb_' . $plugin['FILE'] . '_enable'])
+		$right_menu = cached_plugins('right');
+		foreach ($right_menu as $plugin)
 		{
-			continue;
-		}
-	
-		$show_pages = unserialize($plugin['PERM']);
-		if (in_array($page, $show_pages))
-		{	
-			include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
-			
-			$template->assign_block_vars('right_menu', array(
-				'CONTENT'		=> $plugin['FILE']($cat_id),
-			));
+			if (!$config['kb_' . $plugin['FILE'] . '_enable'])
+			{
+				continue;
+			}
+		
+			$show_pages = unserialize($plugin['PERM']);
+			if (in_array($page, $show_pages))
+			{	
+				include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
+				
+				$template->assign_block_vars('right_menu', array(
+					'CONTENT'		=> $plugin['FILE']($cat_id),
+				));
+			}
 		}
 	}
 }

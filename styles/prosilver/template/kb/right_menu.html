@@ -1,4 +1,5 @@
 <!-- IF S_IN_ARTICLE -->
+	<!-- IF S_RELATED_ARTICLES -->
 	<div class="post bg3">
 		<div class="inner">
 			<span class="corners-top"><span></span></span>
@@ -20,6 +21,7 @@
 			<span class="corners-bottom"><span></span></span>
 		</div>
 	</div>
+	<!-- ENDIF -->
 	
 	<!-- IF S_KB_EMAIL -->
 	<div class="post bg3">
@@ -38,6 +40,7 @@
 	</div>
 	<!-- ENDIF -->
 	
+	<!-- IF U_WATCH_ARTICLE or U_BOOKMARK_ARTICLE or S_SOCIAL_BOOKMARKS -->
 	<div class="post bg3">
 		<div class="inner">
 			<span class="corners-top"><span></span></span>
@@ -48,6 +51,7 @@
 					<!-- IF U_WATCH_ARTICLE --><li <!-- IF S_WATCHING_ARTICLE -->class="icon-unsubscribe"<!-- ELSE -->class="icon-subscribe"<!-- ENDIF -->><a href="{U_WATCH_ARTICLE}" title="{L_WATCH_ARTICLE}">{L_WATCH_ARTICLE}</a></li><!-- ENDIF -->
 					<!-- IF U_BOOKMARK_ARTICLE --><li class="icon-bookmark"><a href="{U_BOOKMARK_ARTICLE}" title="{L_BOOKMARK_ARTICLE}">{L_BOOKMARK_ARTICLE}</a></li><!-- ENDIF -->
 					</ul>
+					<!-- IF S_SOCIAL_BOOKMARKS -->
 					<strong>{L_SOCIAL_BOOKMARKS}:</strong>
 					<div class="addthis_toolbox">   
 						<div class="custom_images">
@@ -69,12 +73,15 @@
 								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=wordpress&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE_CLEAN}&amp;content={ARTICLE_DESC_CLEAN}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/wordpress.png" width="24" height="24" alt="{L_WORDPRESS}" title="{L_WORDPRESS} {L_THIS}" /></a>	
 						</div>
 					</div>
+					<!-- ENDIF -->
 				</div>
 			</div>
 			<span class="corners-bottom"><span></span></span>
 		</div>
 	</div>
+	<!-- ENDIF -->
 	
+	<!-- IF S_EXPORT_OPTIONS -->
 	<div class="post bg3">
 		<div class="inner">
 			<span class="corners-top"><span></span></span>
@@ -85,6 +92,7 @@
 			<span class="corners-bottom"><span></span></span>
 		</div>
 	</div>
+	<!-- ENDIF -->
 <!-- ENDIF -->
 
 <!-- BEGIN right_menu -->

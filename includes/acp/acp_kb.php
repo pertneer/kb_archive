@@ -81,10 +81,32 @@ class acp_kb
 						'kb_link_name'			=> array('lang' => 'KB_LINK_NAME',		'validate' => 'string',	'type' => 'text:40:50', 	'explain' => true),						
 						'kb_allow_subscribe'	=> array('lang' => 'KB_ALLOW_SUB',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_allow_bookmarks'	=> array('lang' => 'KB_ALLOW_BOOK',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
+						'kb_soc_bookmarks'		=> array('lang' => 'KB_ALLOW_SOCBOOK',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_articles_per_page'	=> array('lang' => 'KB_ART_PER_PAGE',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => false),
 						'kb_comments_per_page'	=> array('lang' => 'KB_COM_PER_PAGE',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => false),
+						'kb_ajax_rating'		=> array('lang' => 'KB_AJAX_RATING',	'validate' => 'bool',	'type' => 'radio:yes_no',	'explain' => true),
+						'kb_show_contrib'		=> array('lang' => 'KB_SHOW_CONTRIB',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
+						'kb_related_articles'	=> array('lang' => 'KB_SHOW_RELART',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
+						'kb_email_article'		=> array('lang' => 'KB_EMAIL_ARTICLE',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
+						'kb_export_article'		=> array('lang' => 'KB_EXP_ARTICLE',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
+						'kb_ext_article_header' => array('lang' => 'KB_EXT_HEADER',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
+						'kb_show_desc_cat'		=> array('lang' => 'KB_DESC_CAT',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
+						'kb_show_desc_article'	=> array('lang' => 'KB_DESC_ART',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
+						'kb_cats_per_row'		=> array('lang' => 'KB_CATS_PER_ROW',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => true),
+						'kb_layout_style'		=> array('lang' => 'KB_LAYOUT_STYLE',	'validate' => 'int',	'type' => 'select',	'method' => 'select_style_layout', 'explain' => true),
+						'kb_list_subcats'		=> array('lang' => 'KB_LIST_SUBCATS',	'validate' => 'int',	'type' => 'radio:yes_no', 	'explain' => false),
+						'kb_latest_articles_c'	=> array('lang' => 'KB_ACP_LATEST_ART',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => true),
 						
-						'legend2'				=> 'ACP_KB_POST_SETTINGS',
+						
+						'legend2'				=> 'ACP_KB_MENU_SETTINGS',
+						'kb_disable_left_menu'	=> array('lang' => 'DISABLE_LEFT_MENU',		'validate' => 'bool',	'type' => 'radio:yes_no',	'explain' => true),
+						'kb_left_menu_width'	=> array('lang' => 'KB_LEFT_MENU_WIDTH',	'validate' => 'int',	'type' => 'text:3:5',		'explain' => true),
+						'kb_left_menu_type'		=> array('lang' => 'KB_LEFT_MENU_TYPE',		'validate' => 'int',	'type' => 'select',	'method' => 'select_menu_type', 'explain' => false),
+						'kb_disable_right_menu'	=> array('lang' => 'DISABLE_RIGHT_MENU', 	'validate' => 'bool',	'type' => 'radio:yes_no',	'explain' => true),
+						'kb_right_menu_width'	=> array('lang' => 'KB_RIGHT_MENU_WIDTH',	'validate' => 'int',	'type' => 'text:3:5',		'explain' => true),
+						'kb_right_menu_type'	=> array('lang' => 'KB_RIGHT_MENU_TYPE',	'validate' => 'int',	'type' => 'select',	'method' => 'select_menu_type', 'explain' => false),
+						
+						'legend3'				=> 'ACP_KB_POST_SETTINGS',
 						'kb_allow_attachments'	=> array('lang'	=> 'KB_ALLOW_ATTACH',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_allow_sig'			=> array('lang' => 'KB_ALLOW_SIG',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_allow_bbcode'		=> array('lang'	=> 'KB_ALLOW_BBCODE',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
@@ -93,6 +115,7 @@ class acp_kb
 						'kb_allow_post_links'	=> array('lang' => 'KB_ALLOW_LINKS',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_desc_min_chars'		=> array('lang' => 'KB_DESC_MIN_CHARS', 'validate' => 'int',	'type' => 'text:3:5',		'explain' => true),
 						'kb_desc_max_chars'		=> array('lang' => 'KB_DESC_MAX_CHARS', 'validate' => 'int',	'type' => 'text:3:5',		'explain' => true),
+						'kb_disable_desc'		=> array('lang' => 'KB_DISABLE_DESC',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 					)
 				);
 			break;
@@ -336,6 +359,7 @@ class acp_kb
 						$umil->run_actions('uninstall', $versions, 'kb_version');
 						unset($versions);
 						
+						add_log('admin', 'LOG_KB_UNINSTALL');
 						trigger_error('KB_UNINSTALLED');
 					}
 					else
@@ -481,7 +505,27 @@ class acp_kb
 				unset($display_vars['vars'][$config_key]);
 			}
 		}
-	}		
+	}
+	
+	/**
+	* Select menu type
+	*/
+	function select_menu_type($value, $key = '')
+	{
+		global $user;
+		
+		return '<option value="0"' . (($value == 0) ? ' selected="selected"' : '') . '>' . $user->lang['KB_PIXELS'] . ' (px)</option><option value="1"' . (($value == 1) ? ' selected="selected"' : '') . '>' . $user->lang['KB_PERCENT'] . ' (%)</option>';
+	}
+	
+	/**
+	* Select layout style
+	*/
+	function select_style_layout($value, $key = '')
+	{
+		global $user;
+		
+		return '<option value="0"' . (($value == 0) ? ' selected="selected"' : '') . '>' . $user->lang['KB_CLASSIC_LOOK'] . ' </option><option value="1"' . (($value == 1) ? ' selected="selected"' : '') . '>' . $user->lang['KB_MODERN_LOOK'] . '</option>';
+	}
 }
 
 /**

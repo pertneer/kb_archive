@@ -38,7 +38,8 @@ if (defined('IN_KB_PLUGIN'))
 */
 function categories($cat_id = 0)
 {
-	global $template, $phpbb_root_path, $phpEx, $config, $auth;
+	global $template, $phpbb_root_path, $user;
+	global $phpEx, $config, $auth;
 	
 	if (!$config['kb_categories_enable'])
 	{
@@ -55,6 +56,10 @@ function categories($cat_id = 0)
 		));
 	}
 	unset($cats);
+	
+	$template->assign_vars(array(
+		'T_THEME_PATH'				=> "{$phpbb_root_path}styles/" . $user->theme['theme_path'] . '/theme',
+	));
 	
 	$content = kb_parse_template('categories', 'categories.html');
 	

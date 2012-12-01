@@ -2,11 +2,11 @@
 <table style="width: 100%">
 	<tr>
 		<!-- IF .left_menu -->
-			<td id="left_menu" style="width: 240px;">
+			<td id="left_menu" style="width: {LEFT_MENU_WIDTH};">
 				<!-- INCLUDE kb/left_menu.html -->
 			</td>
 		<!-- ENDIF -->
-		<td style="vertical-align: top;">
+		<td style="vertical-align: top;<!-- IF .left_menu --> padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu --> padding-right: 20px;<!-- ENDIF -->">
 			<!-- IF S_SHOW_FORM -->
 			<form method="get" action="{S_SEARCH_ACTION}">
 
@@ -42,10 +42,10 @@
 				</dl>
 				<dl>
 					<dt><label for="sf1">{L_SEARCH_WITHIN}:</label></dt>
-					<dd><label for="sf1"><input type="radio" name="search_in" id="sf1" value="0" checked="checked" /> {L_SEARCH_TITLE_TEXT_DESC}</label></dd>
+					<!-- IF S_SEARCH_DESC --><dd><label for="sf1"><input type="radio" name="search_in" id="sf1" value="0" checked="checked" /> {L_SEARCH_TITLE_TEXT_DESC}</label></dd><!-- ENDIF -->
 					<dd><label for="sf2"><input type="radio" name="search_in" id="sf2" value="1" /> {L_SEARCH_TITLE}</label></dd>
 					<dd><label for="sf3"><input type="radio" name="search_in" id="sf3" value="2" /> {L_SEARCH_TEXT}</label></dd>
-					<dd><label for="sf4"><input type="radio" name="search_in" id="sf4" value="3" /> {L_SEARCH_DESC}</label></dd>
+					<!-- IF S_SEARCH_DESC --><dd><label for="sf4"><input type="radio" name="search_in" id="sf4" value="3" /> {L_SEARCH_DESC}</label></dd><!-- ENDIF -->
 				</dl>
 
 				<hr class="dashed" />
@@ -146,7 +146,7 @@
 			<!-- ENDIF -->
 		</td>
 		<!-- IF .right_menu -->
-		<td id="right_menu" style="width: 240px; vertical-align: top; padding-left: 10px;">
+		<td id="right_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
 			<!-- INCLUDE kb/right_menu.html -->
 		</td>
 		<!-- ENDIF -->

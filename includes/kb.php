@@ -162,6 +162,13 @@ class knowledge_base
 	*/
 	function export_article()
 	{
+		global $config;
+		
+		if(!$config['kb_export_article'])
+		{
+			trigger_error('KB_DISABLE_EXPORT');
+		}
+		
 		export_data('word', $this->article_id);
 	}
 	
@@ -179,7 +186,7 @@ class knowledge_base
 		$a_t			= request_var('a_t', '', true);
 		$email			= request_var('email', '', true);
 		
-		if (!$config['email_enable'])
+		if (!$config['email_enable'] || !$config['kb_email_article'])
 		{
 			trigger_error('EMAIL_DISABLED');
 		}
@@ -280,7 +287,7 @@ class knowledge_base
 	*/
 	function page_header($page_title)
 	{
-		global $template, $phpbb_root_path, $phpEx;
+		global $template, $phpbb_root_path, $phpEx, $config;
 		
 		page_header($page_title);
 		
@@ -293,6 +300,12 @@ class knowledge_base
 				'UA_POPUP_PM'		=> addslashes(kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=notify_popup&amp;a=' . $this->popup['article_id'])),
 			));
 		}
+		
+		// Assign other KB related vars to use on all pages
+		$template->assign_vars(array(
+			'LEFT_MENU_WIDTH'	=> $config['kb_left_menu_width'] . (($config['kb_left_menu_type'] == 0) ? 'px' : '%'),
+			'RIGHT_MENU_WIDTH'	=> $config['kb_right_menu_width'] . (($config['kb_right_menu_type'] == 0) ? 'px' : '%'),
+		));
 	}
 	
 	/**
@@ -418,7 +431,7 @@ class knowledge_base
 				'COMMENTS'					=> $row['article_comments'],
 				'VIEWS'						=> $row['article_views'],
 				'ARTICLE_TITLE'				=> censor_text($article_type['article_title']),
-				'ARTICLE_DESC'				=> generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options']),
+				'ARTICLE_DESC'				=> ($config['kb_show_desc_cat'] && !$config['kb_disable_desc']) ? generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options']) : '',
 				'ARTICLE_FOLDER_IMG'		=> $user->img('topic_read', censor_text($row['article_title'])),
 				'ARTICLE_FOLDER_IMG_SRC'	=> $user->img('topic_read', censor_text($row['article_title']), false, '', 'src'),
 				'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
@@ -446,9 +459,11 @@ class knowledge_base
 			'PAGINATION'		=> generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$this->cat_id" . ((strlen($this->sort)) ? "&amp;sort=$this->sort" : '')), $articles_count, $config['kb_articles_per_page'], $this->start),
 			'PAGE_NUMBER'		=> on_page($articles_count, $config['kb_articles_per_page'], $this->start),
 			'TOTAL_ARTICLES' 	=> $articles_count,			
-			'U_ADD_NEW_ARTICLE'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=" . $this->cat_id . '&amp;i=add'),			
+			'U_ADD_NEW_ARTICLE'	=> ($auth->acl_get('u_kb_add', $this->cat_id)) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=" . $this->cat_id . '&amp;i=add') : '',			
 			'S_NO_TOPIC'		=> false,
 			'S_IN_MAIN'			=> true,
+			'S_CAT_STYLE'		=> ($config['kb_layout_style']) ? true : false, // IF 1 then set to true bc. style = special
+			'S_COL_WIDTH'		=> ($config['kb_layout_style']) ? (100 / $config['kb_cats_per_row']) : 0,
 			'S_SORT_OPTIONS'	=> $sort_options,
 			'S_SORT_DIRECTION'	=> $sort_direction,
 			'S_ARTICLE_ACTION'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $this->cat_id),
@@ -539,7 +554,10 @@ class knowledge_base
 			break;
 		}
 		
-		handle_related_articles($this->article_id);
+		if($config['kb_related_articles'])
+		{
+			handle_related_articles($this->article_id);
+		}
 		
 		if($this->cat_id == 0)
 		{
@@ -830,7 +848,7 @@ class knowledge_base
 		
 		// Get article types
 		$article_type = gen_article_type($article_data['article_type'], $article_data['article_title'], $types, $icons);
-		$article_desc_re = generate_text_for_display($article_data['article_desc'], $article_data['article_desc_uid'], $article_data['article_desc_bitfield'], $article_data['article_desc_options']);
+		$article_desc_re = ($config['kb_show_desc_article'] && !$config['kb_disable_desc']) ? generate_text_for_display($article_data['article_desc'], $article_data['article_desc_uid'], $article_data['article_desc_bitfield'], $article_data['article_desc_options']) : '';
 		
 		// Show revision his if wanted & authorized
 		if($auth->acl_get('u_kb_viewhistory', $this->cat_id) && request_var('view_rev', false))
@@ -856,7 +874,7 @@ class knowledge_base
 		}
 		
 		// Generate contributions list
-		if($auth->acl_get('u_kb_viewhistory', $this->cat_id))
+		if($auth->acl_get('u_kb_viewhistory', $this->cat_id) && $config['kb_show_contrib'])
 		{
 			$sql = 'SELECT edit_user_id, edit_user_color, edit_user_name
 					FROM ' . KB_EDITS_TABLE . '
@@ -876,8 +894,8 @@ class knowledge_base
 		
 		// Send vars to template
 		$template->assign_vars(array(
-			'ARTICLE_DESC_CLEAN'	=> strip_tags($article_desc_re),
-			'ARTICLE_DESC'			=> $article_desc_re,
+			'ARTICLE_DESC_CLEAN'	=> ($config['kb_show_desc_article'] && !$config['kb_disable_desc']) ? strip_tags($article_desc_re) : '',
+			'ARTICLE_DESC'			=> ($config['kb_show_desc_article'] && !$config['kb_disable_desc']) ? $article_desc_re : '',
 			'ARTICLE_ID' 			=> $this->article_id,
 			'ARTICLE_TITLE' 		=> $article_type['article_title'],
 			'ARTICLE_TITLE_CLEAN' 	=> strip_tags($article_type['article_title']),
@@ -892,6 +910,7 @@ class knowledge_base
 			'U_VIEW_ARTICLE'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $this->cat_id . '&amp;a=' . $this->article_id),
 			'U_DLOAD_WORD'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=export&amp;a=' . $this->article_id),
 			'POSTER_ARTICLES' 		=> $article_data['user_articles'],
+			'U_POSTER_ARTICLES'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search&amp;author_id=' . $article_data['article_user_id']),
 			'ARTICLE_AUTHOR_FULL'	=> get_username_string('full', $article_data['article_user_id'], $article_data['article_user_name'], $article_data['article_user_color']),
 			'ARTICLE_TAGS' 			=> $article_tags,
 			'ARTICLE_VIEWS'			=> ($article_data['article_views'] == 1) ? sprintf($user->lang['ARTICLES_VIEW'], $article_data['article_views']) : sprintf($user->lang['ARTICLES_VIEWS'], $article_data['article_views']),
@@ -955,7 +974,8 @@ class knowledge_base
 			'U_DELETE'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb_delete')) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=delete&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
 			'U_HISTORY'			=> (!$auth->acl_get('u_kb_viewhistory', $this->cat_id)) ? '' : kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;a=" . $this->article_id),
 	
-			'S_KB_EMAIL'	=> ($config['email_enable'] && $auth->acl_get('u_sendemail')) ? true : false,
+			'S_RELATED_ARTICLES' => ($config['kb_related_articles']) ? true : false,
+			'S_KB_EMAIL'	=> ($config['kb_email_article'] && $config['email_enable'] && $auth->acl_get('u_sendemail')) ? true : false,
 			'U_KB_EMAIL'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=email&amp;starter=" . $article_data['article_user_name'] . '&amp;sender=' . $user->data['username'] . '&amp;a=' . $this->article_id . '&amp;a_t= ' . $article_data['article_title']),
 			'U_RSS_AUTHOR'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=user&amp;feed_user_id=' . $article_data['article_user_id'] . '&amp;feed_username=' . $article_data['article_user_name']),
 			'U_PROFILE'		=> kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=viewprofile&amp;u=" . $article_data['article_user_id']),
@@ -968,19 +988,33 @@ class knowledge_base
 			'U_YIM'			=> ($article_data['user_yim']) ? 'http://edit.yahoo.com/config/send_webmesg?.target=' . urlencode($article_data['user_yim']) . '&amp;.src=pg' : '',
 			'U_JABBER'		=> ($article_data['user_jabber'] && $auth->acl_get('u_sendim')) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=jabber&amp;u=" . $article_data['article_user_id']) : '',
 	
-			'S_HAS_ATTACHMENTS'	=> (!empty($attachments)) ? true : false,
+			'S_HAS_ATTACHMENTS'		=> (!empty($attachments)) ? true : false,
 			'S_ARTICLE_UNAPPROVED'	=> ($article_data['article_status'] == STATUS_APPROVED) ? false : true,
-			'S_DISPLAY_NOTICE'	=> $display_notice && $article_data['article_attachment'],
-			'S_CUSTOM_FIELDS'	=> (isset($cp_row['row']) && sizeof($cp_row['row'])) ? true : false,
-			'S_IS_MCP'			=> ($module == 'mcp') ? true : false,
-			'S_IS_UCP'			=> ($module == 'ucp') ? true : false,
+			'S_DISPLAY_NOTICE'		=> $display_notice && $article_data['article_attachment'],
+			'S_CUSTOM_FIELDS'		=> (isset($cp_row['row']) && sizeof($cp_row['row'])) ? true : false,
+			'S_IS_MCP'				=> ($module == 'mcp') ? true : false,
+			'S_IS_UCP'				=> ($module == 'ucp') ? true : false,
 			
 			// Rating vars
-			'U_RATE' => kb_append_sid("kb.$phpEx", "i=rate&a=$this->article_id"), // No phpbb_root_path ! Important !
-			'RATING' => $article_data['article_rating'],
-			'RATING_PX' => $article_data['article_rating'] * 25, // Used for style purposes
-			'S_HAS_RATED' => $has_rated,
-			'L_CURRENT_RATING' => sprintf(($article_data['article_votes'] == 1) ? $user->lang['CURRENT_RATING_S'] : $user->lang['CURRENT_RATING_P'], $article_data['article_rating'], $article_data['article_votes']),
+			// First the ones if ajax rating is disabled
+			'U_RATE_1' 				=> ($config['kb_ajax_rating']) ? 'javascript:rateArticle(1)' : append_sid($phpbb_root_path . "kb.$phpEx", "i=rate&amp;a=$this->article_id&amp;rating=1"),
+			'U_RATE_2' 				=> ($config['kb_ajax_rating']) ? 'javascript:rateArticle(2)' : append_sid($phpbb_root_path . "kb.$phpEx", "i=rate&amp;a=$this->article_id&amp;rating=2"),
+			'U_RATE_3' 				=> ($config['kb_ajax_rating']) ? 'javascript:rateArticle(3)' : append_sid($phpbb_root_path . "kb.$phpEx", "i=rate&amp;a=$this->article_id&amp;rating=3"),
+			'U_RATE_4' 				=> ($config['kb_ajax_rating']) ? 'javascript:rateArticle(4)' : append_sid($phpbb_root_path . "kb.$phpEx", "i=rate&amp;a=$this->article_id&amp;rating=4"),
+			'U_RATE_5' 				=> ($config['kb_ajax_rating']) ? 'javascript:rateArticle(5)' : append_sid($phpbb_root_path . "kb.$phpEx", "i=rate&amp;a=$this->article_id&amp;rating=5"),
+			'U_RATE_6' 				=> ($config['kb_ajax_rating']) ? 'javascript:rateArticle(6)' : append_sid($phpbb_root_path . "kb.$phpEx", "i=rate&amp;a=$this->article_id&amp;rating=6"),
+			
+			'U_RATE' 				=> kb_append_sid("kb.$phpEx", "i=rate&a=$this->article_id"), // No phpbb_root_path ! Important !
+			'RATING' 				=> $article_data['article_rating'],
+			'RATING_PX' 			=> $article_data['article_rating'] * 25, // Used for style purposes
+			'S_HAS_RATED' 			=> $has_rated,
+			'L_CURRENT_RATING' 		=> sprintf(($article_data['article_votes'] == 1) ? $user->lang['CURRENT_RATING_S'] : $user->lang['CURRENT_RATING_P'], $article_data['article_rating'], $article_data['article_votes']),
+		
+			'DISABLE_LEFT_MENU'		=> ($config['kb_disable_left_menu']) ? true : false,
+			'DISABLE_RIGHT_MENU'	=> ($config['kb_disable_right_menu']) ? true : false,
+			'S_EXTENDED_HEADER'		=> ($config['kb_ext_article_header']) ? true : false,
+			'S_SOCIAL_BOOKMARKS'	=> ($config['kb_soc_bookmarks']) ? true : false,
+			'S_EXPORT_OPTIONS'		=> ($config['kb_export_article']) ? true : false,
 		));
 		
 		if (isset($cp_row['row']) && sizeof($cp_row['row']))
@@ -1037,6 +1071,8 @@ class knowledge_base
 		// Sorting also applies for comments
 		// Comments TO DO:
 		// - read / unread
+		// Default for comments sorting is ASC and not DESC as for everything else, overwrite, $this->dir.
+		$this->dir = request_var('dir', 'ASC');
 		switch($this->sort)
 		{
 			// Ability to sort by post time, edit time, name, views, author	
@@ -1127,6 +1163,7 @@ class knowledge_base
 				'comment_time'			=> $row['comment_time'],
 				'user_id'				=> $row['user_id'],
 				'username'				=> $row['username'],
+				'comment_user_name'		=> $row['comment_user_name'],
 				'user_colour'			=> $row['user_colour'],
 				'article_id'			=> $row['article_id'],
 				'comment_title'			=> $row['comment_title'],
@@ -1380,10 +1417,10 @@ class knowledge_base
 			
 			//
 			$postrow = array(
-				'POST_AUTHOR_FULL'		=> get_username_string('full', $poster_id, $row['username'], $row['user_colour']),
-				'POST_AUTHOR_COLOUR'	=> get_username_string('colour', $poster_id, $row['username'], $row['user_colour']),
-				'POST_AUTHOR'			=> get_username_string('username', $poster_id, $row['username'], $row['user_colour']),
-				'U_POST_AUTHOR'			=> get_username_string('profile', $poster_id, $row['username'], $row['user_colour']),
+				'POST_AUTHOR_FULL'		=> get_username_string('full', $poster_id, $row['username'], $row['user_colour'], $row['comment_user_name']),
+				'POST_AUTHOR_COLOUR'	=> get_username_string('colour', $poster_id, $row['username'], $row['user_colour'], $row['comment_user_name']),
+				'POST_AUTHOR'			=> get_username_string('username', $poster_id, $row['username'], $row['user_colour'], $row['comment_user_name']),
+				'U_POST_AUTHOR'			=> get_username_string('profile', $poster_id, $row['username'], $row['user_colour'], $row['comment_user_name']),
 		
 				'RANK_TITLE'			=> $user_cache[$poster_id]['rank_title'],
 				'RANK_IMG'				=> $user_cache[$poster_id]['rank_image'],
@@ -1539,6 +1576,8 @@ class knowledge_base
 		$template->assign_vars(array(
 			'S_IN_MAIN'		=> true,
 			'S_NO_TOPIC'	=> true,
+			'S_CAT_STYLE'	=> ($config['kb_layout_style']) ? true : false, // IF 1 then set to true bc. style = special
+			'S_COL_WIDTH'	=> ($config['kb_layout_style']) ? (100 / $config['kb_cats_per_row']) : 0,
 		));
 		
 		// Output the page
@@ -1877,7 +1916,7 @@ class knowledge_base
 			
 			// Make our own parser for the desc length so we can control it
 			$desc_parser->warn_msg = array();
-			if ($config['kb_desc_min_chars'] > 0 || $config['kb_desc_max_chars'] > 0)
+			if (!$config['kb_disable_desc'] && ($config['kb_desc_min_chars'] > 0 || $config['kb_desc_max_chars'] > 0))
 			{
 				$msg_len = utf8_strlen($desc_parser->message);
 				
@@ -2108,6 +2147,15 @@ class knowledge_base
 						$db->sql_query($sql);
 					}
 					
+					// handle latest article list for cat
+					$late_articles = array(
+						'article_id'		=> $article_id,
+						'article_title'		=> $data['article_title'],
+					);
+					handle_latest_articles('add', $data['cat_id'], $late_articles, $config['kb_latest_articles_c']);
+				
+					set_config('kb_last_updated', time(), true);
+					
 					$sql = 'UPDATE ' . KB_CATS_TABLE . "
 							SET cat_articles = cat_articles + 1
 							WHERE cat_id = '" . $db->sql_escape($data['cat_id']) . "'";
@@ -2118,14 +2166,6 @@ class knowledge_base
 							WHERE user_id = '" . $db->sql_escape($data['article_user_id']) . "'";
 					$db->sql_query($sql);
 					
-					// handle latest article list for cat
-					$late_articles = array(
-						'article_id'		=> $article_id,
-						'article_title'		=> $data['article_title'],
-					);
-					handle_latest_articles('add', $data['cat_id'], $late_articles);
-				
-					set_config('kb_last_updated', time(), true);
 					set_config('kb_total_articles', $config['kb_total_articles'] + 1, true);
 				}
 				
@@ -2134,6 +2174,18 @@ class knowledge_base
 				{
 					$notify_on = ($update_message) ? array(NOTIFY_EDIT_CONTENT, NOTIFY_EDIT_ALL) : NOTIFY_EDIT_ALL;
 					kb_handle_notification($this->article_id, $article_data['article_title'], $notify_on);
+					
+					if($data['article_status'] == STATUS_APPROVED)
+					{
+						// handle latest article list for cat
+						$late_articles = array(
+							'article_id'		=> $article_id,
+							'article_title'		=> $data['article_title'],
+						);
+						handle_latest_articles('edit', $data['cat_id'], $late_articles, $config['kb_latest_articles_c']);
+					
+						set_config('kb_last_updated', time(), true);
+					}
 				}
 				
 				$redirect_url = ($auth->acl_get('u_kb_add_wa', $this->cat_id)) ? kb_append_sid("{$phpbb_root_path}kb.{$phpEx}", 'a=' . $article_id) : kb_append_sid("{$phpbb_root_path}ucp.{$phpEx}", 'i=kb&amp;mode=articles&amp;ma=view&amp;a=' . $article_id);
@@ -2331,7 +2383,9 @@ class knowledge_base
 			'S_OPEN_CHECKED'			=> $open_checked,
 			'S_CONTRIB_ALLOWED'			=> $contrib_allowed,
 			'S_CONTRIB_CHECKED'			=> $contrib_checked,
-		
+			
+			'S_SHOW_DESC_FIELD'			=> ($config['kb_disable_desc']) ? false : true,
+			
 			'S_BBCODE_IMG'			=> $img_status,
 			'S_BBCODE_URL'			=> $url_status,
 			'S_BBCODE_FLASH'		=> $flash_status,
@@ -2500,7 +2554,7 @@ class knowledge_base
 		switch ($this->action)
 		{
 			case 'add':
-				if ($user->data['is_registered'] && $auth->acl_get('u_kb_comment', $comment_data['cat_id']))
+				if ($auth->acl_get('u_kb_comment', $comment_data['cat_id']))
 				{
 					$is_authed = true;
 				}
@@ -2550,7 +2604,7 @@ class knowledge_base
 		}
 		
 		// Set some default variables
-		$uninit = array('comment_attachment' => 0, 'comment_user_id' => $user->data['user_id'], 'enable_magic_url' => 0, 'comment_type' => 0, 'comment_time' => 0);
+		$uninit = array('comment_user_name' => '', 'comment_attachment' => 0, 'comment_user_id' => $user->data['user_id'], 'enable_magic_url' => 0, 'comment_type' => 0, 'comment_time' => 0);
 		foreach ($uninit as $var_name => $default_value)
 		{
 			if (!isset($comment_data[$var_name]))
@@ -2694,7 +2748,7 @@ class knowledge_base
 					'comment_attachment'	=> (isset($comment_data['comment_attachment'])) ? (int) $comment_data['comment_attachment'] : 0,
 					'article_id'			=> (int) $this->article_id,
 					'comment_user_id'		=> (int) ($this->action == 'edit') ? $comment_data['comment_user_id'] : $user->data['user_id'],
-					'comment_user_name'		=> ($this->action == 'edit') ? $comment_data['username'] : $user->data['username'],
+					'comment_user_name'		=> ($this->action == 'edit') ? $comment_data['username'] : ($user->data['is_registered'] ? $user->data['username'] : utf8_normalize_nfc(request_var('guest_username', $user->data['username'], true))),
 					'comment_user_color'	=> ($this->action == 'edit') ? $comment_data['user_colour'] : $user->data['user_colour'],
 					'enable_sig'			=> (bool) $comment_data['enable_sig'],
 					'enable_bbcode'			=> (bool) $comment_data['enable_bbcode'],
@@ -2874,6 +2928,7 @@ class knowledge_base
 			'CAT_NAME'				=> $comment_data['article_title'],
 			'ARTICLE_TITLE'			=> $comment_data['comment_title'],
 			'TEXT_MESSAGE'			=> $comment_data['comment_text'],
+			'USERNAME'				=> $comment_data['comment_user_name'],
 			'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($user->lang['BBCODE_IS_ON'], '<a href="' . kb_append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>') : sprintf($user->lang['BBCODE_IS_OFF'], '<a href="' . kb_append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>'),
 			'IMG_STATUS'			=> ($img_status) ? $user->lang['IMAGES_ARE_ON'] : $user->lang['IMAGES_ARE_OFF'],
 			'FLASH_STATUS'			=> ($flash_status) ? $user->lang['FLASH_IS_ON'] : $user->lang['FLASH_IS_OFF'],
@@ -2896,6 +2951,7 @@ class knowledge_base
 			'S_FORM_ENCTYPE'			=> $form_enctype,
 			'S_IS_MCP'					=> ($module == 'mcp') ? true : false,
 			'S_IS_UCP'					=> ($module == 'ucp') ? true : false,
+			'S_SHOW_USERNAME_FIELD'		=> (!$user->data['is_registered'] && $this->action == 'add') ? true : false,
 		
 			'S_BBCODE_IMG'			=> $img_status,
 			'S_BBCODE_URL'			=> $url_status,
@@ -2937,7 +2993,7 @@ class knowledge_base
 	*/
 	function article_rate()
 	{
-		global $db, $auth, $user;
+		global $db, $auth, $user, $config;
 		$rating = request_var('rating', 1);
 		
 		if(!$this->article_id)
@@ -2989,6 +3045,11 @@ class knowledge_base
 				SET article_votes = article_votes + 1
 				WHERE article_id = ' . $this->article_id;
 		$db->sql_query($sql);
+		
+		if(!$config['kb_ajax_rating'])
+		{
+			trigger_error('RATED_THANKS');
+		}
 	}
 	
 	/**
@@ -3250,7 +3311,7 @@ class knowledge_base
 					'COMMENTS'					=> $row['article_comments'],
 					'VIEWS'						=> $row['article_views'],
 					'ARTICLE_TITLE'				=> censor_text($article_type['article_title']),
-					'ARTICLE_DESC'				=> preg_replace('#(?!<.*)(?<!\w)(' . $hilit . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">$1</span>', generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options'])),
+					'ARTICLE_DESC'				=> (!$config['kb_disable_desc']) ? preg_replace('#(?!<.*)(?<!\w)(' . $hilit . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">$1</span>', generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options'])) : '',
 					'ARTICLE_FOLDER_IMG'		=> $user->img('topic_read', censor_text($row['article_title'])),
 					'ARTICLE_FOLDER_IMG_SRC'	=> $user->img('topic_read', censor_text($row['article_title']), false, '', 'src'),
 					'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
@@ -3386,6 +3447,7 @@ class knowledge_base
 			'S_TIME_OPTIONS'				=> $time_options,
 			'S_SEARCH_ACTION'				=> kb_append_sid("{$phpbb_root_path}kb.$phpEx"),
 			'S_HIDDEN_FIELDS'				=> build_hidden_fields(array('i' => 'search')),
+			'S_SEARCH_DESC'					=> ($config['kb_disable_desc']) ? false : true,
 			
 			'L_SEARCH_KEYWORDS_EXPLAIN'		=> $user->lang['KB_KEYWORDS_EXPLAIN'],
 			'L_SEARCH_CATS'					=> $user->lang['KB_SEARCH_CATS'],
@@ -3517,7 +3579,7 @@ class knowledge_base
 				'COMMENTS'					=> $row['article_comments'],
 				'VIEWS'						=> $row['article_views'],
 				'ARTICLE_TITLE'				=> censor_text($article_type['article_title']),
-				'ARTICLE_DESC'				=> generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options']),
+				'ARTICLE_DESC'				=> ($config['kb_show_desc_cat'] && !$config['kb_disable_desc']) ? generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options']) : '',
 				'ARTICLE_FOLDER_IMG'		=> $user->img('topic_read', censor_text($row['article_title'])),
 				'ARTICLE_FOLDER_IMG_SRC'	=> $user->img('topic_read', censor_text($row['article_title']), false, '', 'src'),
 				'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
@@ -3673,7 +3735,7 @@ class knowledge_base
 				$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 			}
 			
-			if($data['edit_article_desc'] != '')
+			if($data['edit_article_desc'] != '' && !$config['kb_disable_desc'])
 			{
 				$article_desc = censor_text($data['edit_article_desc']);
 		
@@ -3744,7 +3806,7 @@ class knowledge_base
 				'EDIT_REASON_GLOBAL'	=> ($data['edit_reason_global']) ? true : false,
 				
 				'ARTICLE_MESSAGE'		=> $message,
-				'ARTICLE_DESC'			=> $data['edit_article_desc'],
+				'ARTICLE_DESC'			=> ($config['kb_disable_desc']) ? '' : $data['edit_article_desc'],
 				'L_CONTENT'				=> $user->lang['ARTICLE_CONTENT'],
 				
 				'S_VIEW_EDIT'			=> true,

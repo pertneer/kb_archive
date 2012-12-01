@@ -31,6 +31,8 @@ if ((!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION) && $a
 {
 	if(confirm_box(true))
 	{
+		$old_version = (isset($config['kb_version'])) ? $config['kb_version'] : '';
+		
 		if (!class_exists('umil'))
 		{
 			$umil_file = $phpbb_root_path . 'umil/umil.' . $phpEx;
@@ -48,10 +50,20 @@ if ((!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION) && $a
 		$versions = get_kb_versions();
 	
 		$umil->run_actions('update', $versions, 'kb_version');
-		unset($versions);
 		
+		// Log the action
 		$install_mode = request_var('install_mode', 'install');
-		$message = ($install_mode == 'install') ? 'KB_INSTALLED' : 'KB_UPDATED';
+		if($install_mode == 'install')
+		{
+			$message = sprintf($user->lang['KB_INSTALLED'], KB_VERSION);
+			add_log('admin', 'LOG_KB_INSTALL', KB_VERSION);
+		}
+		else
+		{
+			$message = sprintf($user->lang['KB_UPDATED'], KB_VERSION);
+			add_log('admin', 'LOG_KB_UPDATED', KB_VERSION, $old_version);
+		}
+		unset($versions);
 		trigger_error($message);
 	}
 	else

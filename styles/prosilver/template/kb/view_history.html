@@ -2,10 +2,12 @@
 
 <table style="width: 100%">
 	<tr>
-		<td id="left_menu" style="width: 240px; vertical-align: top;">
+		<!-- IF .left_menu -->
+		<td id="left_menu" style="width: {LEFT_MENU_WIDTH}; vertical-align: top;">
 			<!-- INCLUDE kb/left_menu.html -->
 		</td>
-		<td style="vertical-align: top; padding-left: 10px;">
+		<!-- ENDIF -->
+		<td style="vertical-align: top;<!-- IF .left_menu --> padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu --> padding-right: 20px;<!-- ENDIF -->">
 			<!-- IF S_VIEW_EDIT -->
 			<div id="a" class="post bg1">
 				<div class="inner"><span class="corners-top"><span></span></span>
@@ -264,9 +266,11 @@
 			</form>
 		<!-- ENDIF --> 
 		</td>
-		<td id="left_menu" style="width: 240px; vertical-align: top; padding-left: 10px;">
+		<!-- IF .right_menu -->
+		<td id="left_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
 			<!-- INCLUDE kb/right_menu.html -->
 		</td>
+		<!-- ENDIF -->
 	</tr>
 </table>
 <!-- IF S_DISPLAY_ONLINE_LIST -->

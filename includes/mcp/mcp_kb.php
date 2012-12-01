@@ -148,7 +148,7 @@ class mcp_kb
 						'edit_reason'						=>		$reason,
 						'edit_reason_global'				=>		($global) ? 1 : 0,
 						'edit_moderated'					=>		1,
-						'edit_type'							=>		EDIT_TYPE_STATUS,
+						'edit_type'							=>		serialize(array(EDIT_TYPE_STATUS)),
 					);
 					
 					$sql = 'INSERT INTO ' . KB_EDITS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_data);

@@ -101,11 +101,18 @@ class acp_kb_cats
 						'cat_desc_options'		=> 7,
 						'cat_desc_bitfield'		=> '',
 						'cat_image'				=> request_var('cat_image', ''),
-						'latest_ids'			=> serialize(array()),
+						
 					);
+					
+					if($action == 'add')
+					{
+						$cat_data += array(
+							'latest_ids'	=> serialize(array()),
+						);
+					}
 
 					// Get data for forum description if specified
-					if ($cat_data['cat_desc'])
+					if ($cat_data['cat_desc'] != '')
 					{
 						generate_text_for_storage($cat_data['cat_desc'], $cat_data['cat_desc_uid'], $cat_data['cat_desc_bitfield'], $cat_data['cat_desc_options'], true, true, true);
 					}

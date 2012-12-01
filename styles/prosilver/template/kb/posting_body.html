@@ -10,11 +10,11 @@
 <table style="width: 100%">
 	<tr>
 		<!-- IF .left_menu -->
-			<td id="left_menu" style="width: 240px;">
+			<td id="left_menu" style="width: {LEFT_MENU_WIDTH}; vertical-align: top;">
 				<!-- INCLUDE kb/left_menu.html -->
 			</td>
 		<!-- ENDIF -->
-		<td style="vertical-align: top; <!-- IF .left_menu -->padding-left: 10px; <!-- ENDIF -->padding-right: 20px;">	
+		<td style="vertical-align: top; <!-- IF .left_menu -->padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu --> padding-right: 20px;<!-- ENDIF -->">	
 			<form id="postform" method="post" action="{S_POST_ACTION}"{S_FORM_ENCTYPE}>
 			<!-- IF not S_IS_UCP && not S_IS_MCP -->
 			<!-- IF S_DISPLAY_PREVIEW --><!-- INCLUDE posting_preview.html --><!-- ENDIF -->
@@ -26,6 +26,13 @@
 			
 				<fieldset class="fields1">
 				<!-- IF ERROR --><p class="error">{ERROR}</p><!-- ENDIF -->
+				
+				<!-- IF S_SHOW_USERNAME_FIELD -->
+				<dl style="clear: left;">
+					<dt><label for="guest_username">{L_USERNAME}:</label></dt>
+					<dd><input type="text" tabindex="1" name="guest_username" id="guest_username" size="25" value="{USERNAME}" class="inputbox" /></dd>
+				</dl>
+				<!-- ENDIF -->
 				
 				<!-- IF S_POST_ACTION -->
 				<dl style="clear: left;">
@@ -47,10 +54,12 @@
 					<dd><select name="c" id="c">{S_CAT_SELECT}</select></dd>
 				</dl>
 				
+				<!-- IF S_SHOW_DESC_FIELD -->
 				<dl style="clear: left;">
 					<dt><label for="subject">{L_ARTICLE_DESC}:</label><br /><span class="gensmall">{L_ARTICLE_DESC_EXPLAIN}</span></dt>
 					<dd><textarea name="desc" id="desc" rows="10" cols="45" tabindex="3" class="inputbox desc" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);">{DESC}</textarea></dd>
 				</dl>
+				<!-- ENDIF -->
 				<!-- ENDIF -->
 				
 				<!-- IF S_CAN_MOD_TIME -->
@@ -263,7 +272,7 @@
 			<!-- ENDIF -->
 		</td>				
 		<!-- IF .right_menu -->
-		<td id="right_menu" style="width: 240px; vertical-align: top; padding-left: 10px;">
+		<td id="right_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
 			<!-- INCLUDE kb/right_menu.html -->
 		</td>
 		<!-- ENDIF -->
