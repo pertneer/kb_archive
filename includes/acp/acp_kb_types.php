@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: acp_kb_types.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: acp_kb_types.php 416 2010-01-12 21:02:01Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -155,7 +155,7 @@ class acp_kb_types
 						$type_data['type_img_h'] = $image_info[1];
 						$type_data['icon_id'] = 0;
 					}
-					elseif($img_type == 'icon')
+					else if($img_type == 'icon')
 					{
 						$type_data['icon_id'] = request_var('icon', 0);
 						$type_data['type_image'] = '';
@@ -176,7 +176,7 @@ class acp_kb_types
 							$sql = 'INSERT INTO ' . KB_TYPE_TABLE . ' ' . $db->sql_build_array('INSERT', $type_data);
 							$db->sql_query($sql);
 						}
-						elseif($action == 'edit')
+						else if($action == 'edit')
 						{
 							$sql = 'UPDATE ' . KB_TYPE_TABLE . ' 
 							SET ' . $db->sql_build_array('UPDATE', $type_data) . '

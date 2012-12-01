@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: ucp_kb.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: ucp_kb.php 416 2010-01-12 21:02:01Z softphp $
 * @copyright (c) 2009 Andreas Nexmann
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -18,7 +18,7 @@ class ucp_kb_info
 		return array(
 			'filename'	=> 'ucp_kb',
 			'title'		=> 'UCP_KB',
-			'version'	=> '0.0.1',
+			'version'	=> '1.0.1',
 			'modes'		=> array(
 				'front'			=> array('title' => 'UCP_KB_FRONT', 'auth' => '', 'cat' => array('UCP_KB')),
 				'subscribed'	=> array('title' => 'UCP_KB_SUBSCRIBED', 'auth' => 'cfg_kb_allow_subscribe', 'cat' => array('UCP_KB')),

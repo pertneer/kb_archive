@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_rated_articles.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: kb_rated_articles.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -25,9 +25,9 @@ if (defined('IN_KB_PLUGIN'))
 	$acp_options['kb_rated_articles_limit']		= array('lang' => 'HIGHEST_RATED_ARTICLES_LIMIT',	'validate' => 'int',	'type' => 'text:5:2',		'explain'	=> false);
 	
 	$details = array(
-		'PLUGIN_NAME'			=> 'Highest Rated Articles',
-		'PLUGIN_DESC'			=> 'Adds a list of highest rated articles to your knowledge base',
-		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
+		'PLUGIN_NAME'			=> 'PLUGIN_HIGH_RATE',
+		'PLUGIN_DESC'			=> 'PLUGIN_HIGH_RATE_DESC',
+		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.0',
 		'PLUGIN_MENU'			=> RIGHT_MENU,
 		'PLUGIN_PAGES'			=> array('all'),
@@ -66,7 +66,7 @@ function rated_articles($cat_id)
 	{
 		$template->assign_block_vars('ratingrow', array(
 			'ARTICLE_TITLE'		=> censor_text($row['article_title']),
-			'U_VIEW_ARTICLE'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $row['article_id']),
+			'U_VIEW_ARTICLE'	=> kb_append_sid('article', array('id' => $row['article_id'], 'title' => censor_text($row['article_title']))),
 			'ARTICLE_RATING'	=> round($row['rating'], 1),
 		));
 	}

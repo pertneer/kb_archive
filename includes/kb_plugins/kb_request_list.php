@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_request_list.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: kb_request_list.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -25,13 +25,13 @@ if (defined('IN_KB_PLUGIN'))
 	$acp_options['kb_request_list_limit']		= array('lang' => 'REQUEST_ARTICLES_LIMIT',			'validate' => 'int',	'type' => 'text:5:2',		'explain'	=> false);
 	
 	$details = array(
-		'PLUGIN_NAME'			=> 'Request Articles',
-		'PLUGIN_DESC'			=> 'Allow users to request articles they want to see in the knowledge base',
-		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
+		'PLUGIN_NAME'			=> 'PLUGIN_REQUEST',
+		'PLUGIN_DESC'			=> 'PLUGIN_REQUEST_DESC',
+		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.0',
 		'PLUGIN_MENU'			=> RIGHT_MENU,
 		'PLUGIN_PERM'			=> true,
-		'PLUGIN_PAGES'			=> array('all'),
+		'PLUGIN_PAGES'			=> array('index', 'view_tag', 'view_cat', 'view_article', 'search', 'history'),
 	);
 }
 

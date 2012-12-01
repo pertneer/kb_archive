@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_latest_article.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: kb_latest_article.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -24,9 +24,9 @@ if (defined('IN_KB_PLUGIN'))
 	$acp_options['kb_latest_article_menu']		= array('lang' => 'WHICH_MENU',					'validate' => 'int',	'type' => 'custom', 		'function' 	=> 'select_menu_check', 	'explain' 	=> false);
 		
 	$details = array(
-		'PLUGIN_NAME'			=> 'Latest Article',
-		'PLUGIN_DESC'			=> 'Adds a latest article to your knowledge base',
-		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
+		'PLUGIN_NAME'			=> 'PLUGIN_LATEST',
+		'PLUGIN_DESC'			=> 'PLUGIN_LATEST_DESC',
+		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.2',
 		'PLUGIN_MENU'			=> RIGHT_MENU,
 		'PLUGIN_PAGE_PERM'		=> array('add'),
@@ -81,8 +81,8 @@ function latest_article($cat_id = 0)
 		'LAST_ARTICLE_COMMENTS'		=> $row['article_comments'],
 		'LAST_ARTICLE_VIEWS'		=> $row['article_views'],
 		
-		'U_LAST_ARTICLE'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $config['kb_latest_article']),
-		'U_RSS_LAST_ARTICLE'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=latest'),
+		'U_LAST_ARTICLE'			=> kb_append_sid('article', array('id' => $config['kb_latest_article'], 'title' => censor_text($row['article_title']))),
+		'U_RSS_LAST_ARTICLE'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=latest'),
 		
 		'T_THEME_PATH'				=> "{$phpbb_root_path}styles/" . $user->theme['theme_path'] . '/theme',
 	));

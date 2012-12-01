@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 378 2009-11-17 21:23:18Z tom.martin60@btinternet.com $
+* @version $Id: kb.php 410 2009-12-18 21:29:30Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -17,6 +17,7 @@ $phpbb_root_path = (defined('PHPBB_ROOT_PATH')) ? PHPBB_ROOT_PATH : './';
 $phpEx = substr(strrchr(__FILE__, '.'), 1);
 include($phpbb_root_path . 'common.' . $phpEx);
 include($phpbb_root_path . 'includes/kb.' . $phpEx);
+include($phpbb_root_path . 'includes/kb_auth.' . $phpEx);
 include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
 include($phpbb_root_path . 'includes/functions_kb.' . $phpEx);
 include($phpbb_root_path . 'includes/functions_plugins_kb.' . $phpEx);
@@ -26,74 +27,42 @@ $user->session_begin();
 $auth->acl($user->data);
 $user->setup('mods/kb');
 
-// Bug in update function, this will correct it
-if ((isset($config['kb_version'])) ? $config['kb_version'] == '1.0.1RC1' : false)
-{
-	set_config('kb_version', '1.0.0RC2');
-}
-
 // Lets start the install/update of the kb
 // Automatically install or update if required
-if ((!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION) && $auth->acl_get('a_') && !empty($user->data['is_registered']))
+if(!isset($config['kb_version']) || version_compare($config['kb_version'], KB_VERSION, '<') || isset($config['kb_install_step']))
 {
-	if(confirm_box(true))
+	if(!$auth->acl_get('a_') || empty($user->data['is_registered']) || ((int) $user->data['user_type'] !== USER_FOUNDER))
 	{
-		$old_version = (isset($config['kb_version'])) ? $config['kb_version'] : '';
-		
-		if (!class_exists('umil'))
-		{
-			$umil_file = $phpbb_root_path . 'umil/umil.' . $phpEx;
-			if (!file_exists($umil_file))
-			{
-				trigger_error('KB_UPDATE_UMIL', E_USER_ERROR);
-			}
+		// Stop any user in the middle of an install or update
+		trigger_error('KB_NOT_ENABLE');
+	}
 	
-			include($umil_file);
-		}
-			
-		// Log the action
-		$install_mode = request_var('install_mode', 'install');
-		if($install_mode == 'install')
-		{
-			$message = sprintf($user->lang['KB_INSTALLED'], KB_VERSION);
-			add_log('admin', 'LOG_KB_INSTALL', KB_VERSION);
-		}
-		else
-		{
-			$message = sprintf($user->lang['KB_UPDATED'], KB_VERSION);
-			add_log('admin', 'LOG_KB_UPDATED', KB_VERSION, $old_version);
-		}
-		
-		$umil = new umil(true);
-		
-		include($phpbb_root_path . 'includes/functions_install_kb.' . $phpEx);
-		$versions = get_kb_versions();
-	
-		$umil->run_actions($install_mode, $versions, 'kb_version');
-		
-		unset($versions);
-		trigger_error($message);
+	include($phpbb_root_path . 'includes/functions_install_kb.' . $phpEx);
+	if(!isset($config['kb_version']) || isset($config['kb_install_step']))
+	{
+		kb_install();
 	}
 	else
 	{
-		$message = (isset($config['kb_version'])) ? 'UPDATE_KB' : 'INSTALL_KB';
-		$hidden_fields = build_hidden_fields(array(
-			'install_mode'	=> (isset($config['kb_version'])) ? 'update' : 'install'
-		));
-		confirm_box(false, $message, $hidden_fields);
+		kb_update($config['kb_version']);
 	}
-	
-	redirect(kb_append_sid("{$phpbb_root_path}index.$phpEx"));
-}
-else if(!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION)
-{
-	trigger_error('KB_NOT_ENABLE');
 }
 
 if (!isset($config['kb_enable']) || !$config['kb_enable'] && !($auth->acl_get('a_') || $auth->acl_get('m_kb')))
 {
 	trigger_error('KB_NOT_ENABLE');
 }
+
+// Initialize KB auth
+$kb_auth = new kb_auth;
+$kb_auth->acl($user->data, $auth);
+
+$copyright = '';
+$copyright .= sprintf($user->lang['KB_COPYRIGHT'], '<a href="http://kb.softphp.dk">', '</a>', KB_VERSION);
+$copyright .= ($user->lang['KB_TRANSLATION'] != '') ? '&nbsp;&bull;&nbsp;' . $user->lang['KB_TRANSLATION'] : '';
+$copyright .= ($user->lang['TRANSLATION_INFO'] != '') ? '<br />' . $user->lang['TRANSLATION_INFO'] : '';
+
+$user->lang['TRANSLATION_INFO'] = $copyright;  
 
 // set cat id here needed for search and random article to work properly
 $cat_id = request_var('c', 0);
@@ -103,7 +72,7 @@ $cat_search = ($cat_id == 0) ? '' : '&amp;cat_ids[]=' . $cat_id;
 
 // Some default template variables
 $template->assign_vars(array(
-	'U_MCP'				=> ($auth->acl_get('m_kb')) ? kb_append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=kb') : false,
+	'U_MCP'				=> ($auth->acl_get('m_kb')) ? append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=kb') : false,
 ));
 
 // Handle all knowledge base related stuff, this file is only to call it, makes the user able to move it around

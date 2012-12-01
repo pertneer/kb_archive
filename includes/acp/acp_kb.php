@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: acp_kb.php 352 2009-11-02 13:27:46Z softphp $
+* @version $Id: acp_kb.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -82,6 +82,7 @@ class acp_kb
 						'kb_link_name'			=> array('lang' => 'KB_LINK_NAME',		'validate' => 'string',	'type' => 'text:40:50', 	'explain' => true),						
 						'kb_articles_per_page'	=> array('lang' => 'KB_ART_PER_PAGE',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => false),
 						'kb_comments_per_page'	=> array('lang' => 'KB_COM_PER_PAGE',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => false),
+						'kb_seo'				=> array('lang' => 'KB_SEO_ENABLE',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
 						'kb_ajax_rating'		=> array('lang' => 'KB_AJAX_RATING',	'validate' => 'bool',	'type' => 'radio:yes_no',	'explain' => true),
 						'kb_ext_article_header' => array('lang' => 'KB_EXT_HEADER',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
 						'kb_show_desc_cat'		=> array('lang' => 'KB_DESC_CAT',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
@@ -296,9 +297,9 @@ class acp_kb
 								include($plugin_loc . 'kb_' . $data . '.' . $phpEx);
 							
 								$template->assign_block_vars('uninstalled', array(
-									'PLUGIN_NAME'		=> $details['PLUGIN_NAME'],
-									'PLUGIN_DESC'		=> $details['PLUGIN_DESC'],
-									'PLUGIN_COPY'		=> $details['PLUGIN_COPY'],
+									'PLUGIN_NAME'		=> $user->lang[$details['PLUGIN_NAME']],
+									'PLUGIN_DESC'		=> $user->lang[$details['PLUGIN_DESC']],
+									'PLUGIN_COPY'		=> $user->lang[$details['PLUGIN_COPY']],
 									'PLUGIN_VERSION'	=> $details['PLUGIN_VERSION'],
 
 									'U_INSTALL'			=> $this->u_action . '&amp;action=install&amp;filename=' . $data,
@@ -348,27 +349,26 @@ class acp_kb
 					'UPDATE_INSTRUCTIONS'	=> sprintf($user->lang['UPDATE_INSTRUCTIONS'], $announcement_url, $download_url, $kb_path),
 				));
 				
-				$uninstall = (isset($_POST['uninstall'])) ? true : false;	
+				$uninstall = (isset($_POST['uninstall']) || isset($_GET['uninstall'])) ? true : false;	
 				if ($uninstall)
 				{
-					if(confirm_box(true))
+					if(confirm_box(true) || isset($config['kb_uninstall_step']))
 					{
-						if (!file_exists($phpbb_root_path . 'umil/umil.' . $phpEx))
-						{
-							trigger_error('KB_UPDATE_UMIL', E_USER_ERROR);
-						}
-
-						include($phpbb_root_path . 'umil/umil.' . $phpEx);
-						$umil = new umil(true);
+						$step = (isset($config['kb_uninstall_step'])) ? $config['kb_uninstall_step'] : 1;
 		
 						include($phpbb_root_path . 'includes/functions_install_kb.' . $phpEx);
-						$versions = get_kb_versions();
-			
-						$umil->run_actions('uninstall', $versions, 'kb_version');
-						unset($versions);
+						kb_uninstall($step, $this->u_action);
 						
-						add_log('admin', 'LOG_KB_UNINSTALL');
-						trigger_error('KB_UNINSTALLED');
+						if($step == 4)
+						{
+							add_log('admin', 'LOG_KB_UNINSTALL');
+							trigger_error($user->lang['KB_UNINSTALLED'] . adm_back_link(append_sid($phpbb_root_path . 'adm/index.' . $phpEx)));
+						}
+						else
+						{
+							meta_refresh(2, append_sid($this->u_action . '&amp;uninstall=true'));
+							trigger_error(sprintf($user->lang['KB_UNINSTALL_CONTINUE'], '<a href="' . append_sid($this->u_action . '&amp;uninstall=true') . '">', '</a>'));
+						}
 					}
 					else
 					{
@@ -376,6 +376,44 @@ class acp_kb
 							'uninstall'	=> true,
 						));
 						confirm_box(false, 'UNINSTALL_KB', $hidden_fields);
+					}
+				}
+				
+				$reset_db = (isset($_POST['reset_db'])) ? true : false;	
+				if ($reset_db)
+				{
+					if(confirm_box(true))
+					{
+						reset_db();
+						add_log('admin', 'LOG_KB_RESET_DB');
+						
+						trigger_error($user->lang['KB_RESET_DB'] . adm_back_link($this->u_action));
+					}
+					else
+					{
+						$hidden_fields = build_hidden_fields(array(
+							'reset_db'	=> true,
+						));
+						confirm_box(false, 'RESET_DB', $hidden_fields);
+					}
+				}
+				
+				$reset_perms = (isset($_POST['reset_perms'])) ? true : false;	
+				if ($reset_perms)
+				{
+					if(confirm_box(true))
+					{
+						reset_perms();
+						add_log('admin', 'LOG_KB_RESET_PERMS');
+						
+						trigger_error($user->lang['KB_RESET_PERMS'] . adm_back_link($this->u_action));
+					}
+					else
+					{
+						$hidden_fields = build_hidden_fields(array(
+							'reset_perms'	=> true,
+						));
+						confirm_box(false, 'RESET_PERMS', $hidden_fields);
 					}
 				}
 			break;
@@ -406,7 +444,7 @@ class acp_kb
 			{
 				if (request_var('all_pages', 0))
 				{
-					$pages = make_page_list('', array(), true);
+					$pages = make_page_list('', $details, true);
 				}
 				else
 				{
@@ -546,4 +584,85 @@ function select_menu_check($value, $key = '')
 	return h_radio('config[' . $key . ']', $radio_ary, $value, $key);
 }
 
+/**
+* Reset KB Database
+*/
+function reset_db()
+{
+	// Remove attach files
+	// Empty database tables
+	// Reset phpBB database fields
+	global $db;
+	
+	$sql = 'SELECT attach_id
+			FROM ' . KB_ATTACHMENTS_TABLE;
+	$result = $db->sql_query($sql);
+	
+	$attach_ids = array();
+	while($row = $db->sql_fetchrow($result))
+	{
+		$attach_ids[] = $row['attach_id'];
+	}
+	$db->sql_freeresult($result);
+	
+	kb_delete_attachments('attach', $attach_ids, false);
+	
+	$tables = array(KB_ATTACHMENTS_TABLE, KB_CATS_TABLE, KB_COMMENTS_TABLE, KB_EDITS_TABLE, KB_RATE_TABLE, KB_TAGS_TABLE, KB_TRACK_TABLE, KB_TABLE, KB_REQ_TABLE, KB_TYPE_TABLE, KB_PLUGIN_TABLE, KB_ACL_GROUPS_TABLE, KB_ACL_USERS_TABLE);
+	foreach($tables as $table)
+	{
+		$sql = 'TRUNCATE TABLE ' . $table;
+		$db->sql_query($sql);
+	}
+	
+	$sql = "UPDATE " . USERS_TABLE . "
+			SET user_articles = 0, user_kb_permissions = ''";
+	$db->sql_query($sql);
+	
+	$sql = 'UPDATE ' . EXTENSION_GROUPS_TABLE . '
+			SET allow_in_kb = 0';
+	$db->sql_query($sql);
+}
+
+function reset_perms()
+{
+	global $phpbb_root_path, $phpEx, $db;
+	
+	if(!class_exists('auth_admin'))
+	{
+		include($phpbb_root_path . 'includes/acp/auth.' . $phpEx);
+	}
+	$auth_admin = new auth_admin();
+	
+	$tables = array(KB_ACL_GROUPS_TABLE, KB_ACL_USERS_TABLE);
+	foreach($tables as $table)
+	{
+		$sql = 'TRUNCATE TABLE ' . $table;
+		$db->sql_query($sql);
+	}
+	
+	$sql = "SELECT role_id
+			FROM " . ACL_ROLES_TABLE . "
+			WHERE role_type = 'u_kb_'";
+	$result = $db->sql_query($sql);
+	
+	$role_ids = array();
+	while($row = $db->sql_fetchrow($result))
+	{
+		$role_ids[] = $row['role_id'];
+	}
+	$db->sql_freeresult($result);
+	
+	if(sizeof($role_ids))
+	{
+		$sql = 'DELETE FROM ' . ACL_ROLES_DATA_TABLE . '
+				WHERE ' . $db->sql_in_set('role_id', $role_ids);
+		$db->sql_query($sql);
+		
+		$sql = 'DELETE FROM ' . ACL_ROLES_TABLE . '
+				WHERE ' . $db->sql_in_set('role_id', $role_ids);
+		$db->sql_query($sql);
+	}
+	
+	$auth_admin->acl_clear_prefetch();
+}
 ?>

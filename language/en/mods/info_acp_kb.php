@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: info_acp_kb.php 356 2009-11-08 10:40:10Z tom.martin60@btinternet.com $
+* @version $Id: info_acp_kb.php 428 2010-01-20 15:32:37Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -41,7 +41,7 @@ $lang = array_merge($lang, array(
 	'ACL_TYPE_LOCAL_U_KB_'					=> 'Knowledge Base',
 	'ACP_KB'								=> 'Knowledge Base Configuration',
 	'ACP_KB_ARTICLE_TYPES'					=> 'Article Types Management',
-	'ACP_KB_HEALTH_CHECK'					=> 'Health Check',
+	'ACP_KB_HEALTH_CHECK'					=> 'Mod Maintenance',
 	'ACP_KB_HEALTH_CHECK_EXPLAIN'			=> 'This is where you can check that the knowledge base is up to date as well as run check to make sure it is running properly. You can also uninstall the Knowledge Base from here.',
 	'ACP_KB_MANAGEMENT'						=> 'Knowledge Base Management',
 	'ACP_KB_MENU_SETTINGS'					=> 'Menu settings',
@@ -87,13 +87,18 @@ $lang = array_merge($lang, array(
 	'KB_MODERN_LOOK'						=> 'Modern look',
 	'KB_PERCENT'							=> 'Percent',
 	'KB_PIXELS'								=> 'Pixels',
+	'KB_RESET_DB'							=> 'The database has been successfully reset.',
+	'KB_RESET_PERMS'						=> 'The permissions have successfully been reset.',
 	'KB_RIGHT_MENU_TYPE'					=> 'Width type',
 	'KB_RIGHT_MENU_WIDTH'					=> 'Right menu width',
 	'KB_RIGHT_MENU_WIDTH_EXPLAIN'			=> 'Specify the width of the right column in numbers. Specify below whether it is in pixels or percent. Beware, changing these numbers might break your layout.',
+	'KB_SEO_ENABLE'							=> 'Enable search engine optimization',
+	'KB_SEO_ENABLE_EXPLAIN'					=> 'Enable search engine optimization for the Knowledge Base, only for category, tag and article pages. It uses the Apache rewrite module, so please make sure you have edited your .htaccess',
 	'KB_SHOW_CONTRIB'						=> 'Show contributions list',
 	'KB_SHOW_CONTRIB_EXPLAIN'				=> 'Enable or disable the list of contributors shown on the article page, note that the user needs permission to view article history to see it.',
 	'KB_SHOW_RELART'						=> 'Show related articles',
 	'KB_SHOW_RELART_EXPLAIN'				=> 'Determine how many related articles you want displayed in the related article box. Use 0 to disable.',
+	'KB_UNINSTALL_CONTINUE'					=> 'The uninstallation will continue to the next step within seconds. Please do not close your browser or this window while the page loads. Click %shere%s if the uninstallation doesn\'t automatically continue.',
 
 	'LOG_CAT_ADD'							=> '<strong>Category added</strong><br /> - %1$s',
 	'LOG_CAT_DELETE_ARTICLES_DELETE_CATS'	=> '<strong>Deleted category: %1$s</strong><br />Deleted articles and subcategories',
@@ -106,6 +111,8 @@ $lang = array_merge($lang, array(
 	'LOG_CONFIG_PLUGINS'					=> '<strong>Changed KB Plugin settings</strong>',
 	'LOG_CONFIG_SETTINGS'					=> '<strong>Changed Knowledge Base settings</strong>',
 	'LOG_KB_INSTALL'						=> '<strong>Knowledge Base Mod installed</strong><br /> - Version %1$s',
+	'LOG_KB_RESET_DB'						=> '<strong>Knowledge Base Mod database reset</strong>',
+	'LOG_KB_RESET_PERMS'					=> '<strong>Knowledge Base Mod permissions reset</strong',
 	'LOG_KB_UNINSTALL'						=> '<strong>Knowledge Base Mod removed</strong>',
 	'LOG_KB_UPDATED'						=> '<strong>Knowledge Base Mod updated</strong><br /> - From version %2$s to %1$s',
 	'LOG_TYPE_ADD'							=> '<strong>Article type added</strong><br /> - %1$s ',
@@ -115,8 +122,14 @@ $lang = array_merge($lang, array(
 	'LOG_TYPE_MOVE_UP'						=> '<strong>Article type %1$s moved up </strong>',
 	'LOG_U_KB_ROLE_ADD'						=> '<strong>KB role added</strong><br /> - %1$s',
 	'LOG_U_KB_ROLE_EDIT'					=> '<strong>KB role edited</strong><br /> - %1$s',
-	'LOG_U_KB_ROLE_REMOVED'					=> '<strong>KB role remove</strong><br /> - %1$s',
-	
+	'LOG_U_KB_ROLE_REMOVED'					=> '<strong>KB role removed</strong><br /> - %1$s',
+
+	'RESET_DB'								=> 'Reset Database',
+	'RESET_DB_CONFIRM'						=> 'This will reset the Knowledge Base database, not removing the tables, but emptying them so you have a fresh install ready to go. It will also remove all attachments associated with the mod. Warning: This cannot be undone.',
+	'RESET_PERMS'							=> 'Reset Permissions',
+	'RESET_PERMS_CONFIRM'					=> 'This will reset all Knowledge Base permissions, so that you will have to remake them all from the start. It will also remove Knowledge Base related roles. Warning: This cannot be undone.',
+
+	'UNINSTALL_CONFIRM'						=> 'This will uninstall the mod completely, removing both data, permissions, configs and tables. Warning: This cannot be undone.',
 ));
 
 ?>

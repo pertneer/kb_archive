@@ -1,20 +1,5 @@
-<!-- IF S_IS_MCP -->
-<!-- INCLUDE mcp_header.html -->
-<!-- ELSEIF S_IS_UCP -->
-<!-- INCLUDE ucp_header.html -->
-<!-- ELSE -->
-<!-- INCLUDE overall_header.html -->
-<!-- ENDIF -->
-<!-- IF not S_IS_MCP and not S_IS_UCP -->
-<table style="width: 100%">
-	<tr>
-		<!-- IF .left_menu or not DISABLE_LEFT_MENU -->
-		<td id="left_menu" style="width: {LEFT_MENU_WIDTH}; vertical-align: top;">
-			<!-- INCLUDE kb/left_menu.html -->
-		</td>
-		<!-- ENDIF -->
-		<td style="vertical-align: top; <!-- IF .left_menu or not DISABLE_LEFT_MENU --> padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu or not DISABLE_RIGHT_MENU --> padding-right: 20px;<!-- ENDIF -->">
-			<!-- ENDIF -->
+<!-- INCLUDE kb/kb_header.html -->
+				<!-- IF U_MODCP -->&nbsp;<!-- ENDIF -->
 				<!-- IF .changerow -->
 				<div class="panel">
 					<div class="inner">
@@ -214,21 +199,4 @@
 				<!-- ENDIF -->
 				</div>
 			</div>
-<!-- IF not S_IS_MCP and not S_IS_UCP -->
-		</td>
-		<!-- IF .right_menu or not DISABLE_RIGHT_MENU -->
-		<td id="right_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
-			<!-- INCLUDE kb/right_menu.html -->
-		</td>
-		<!-- ENDIF -->
-	</tr>
-</table>
-<!-- IF S_DISPLAY_ONLINE_LIST -->
-	<h3><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a></h3>
-	<p>{LOGGED_IN_USER_LIST}</p>
-<!-- ENDIF -->
-
-<!-- INCLUDE overall_footer.html -->
-<!-- ELSE -->
-<!-- INCLUDE mcp_footer.html -->
-<!-- ENDIF -->
+<!-- INCLUDE kb/kb_footer.html -->

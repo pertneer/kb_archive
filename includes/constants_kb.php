@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: constants_kb.php 389 2009-11-24 14:55:34Z softphp $
+* @version $Id: constants_kb.php 405 2009-12-14 16:27:17Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -20,9 +20,8 @@ if (!defined('IN_PHPBB'))
 // This file holds extra constants defined to use in the KB mod.
 //
 
-define('KB_VERSION', '1.0.0');
+define('KB_VERSION', '1.0.1');
 //define('KB_DEV_VERSION', '1.0.0RC2');
-
 
 // Extra db tables
 define('KB_ATTACHMENTS_TABLE', 	$table_prefix . 'article_attachments');
@@ -36,6 +35,8 @@ define('KB_TABLE', 				$table_prefix . 'articles');
 define('KB_REQ_TABLE', 			$table_prefix . 'article_requests');
 define('KB_TYPE_TABLE', 		$table_prefix . 'article_types');
 define('KB_PLUGIN_TABLE', 		$table_prefix . 'article_plugins');
+define('KB_ACL_GROUPS_TABLE',	$table_prefix . 'article_acl_groups');
+define('KB_ACL_USERS_TABLE',	$table_prefix . 'article_acl_users');
 
 // Comment type constants
 define('COMMENT_GLOBAL', 0);

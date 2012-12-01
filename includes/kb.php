@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 361 2009-11-11 13:33:42Z softphp $
+* @version $Id: kb.php 421 2010-01-14 13:59:44Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -62,11 +62,11 @@ class knowledge_base
 				{
 					$this->mode = 'view_article';
 				}
-				elseif($this->cat_id > 0)
+				else if($this->cat_id > 0)
 				{
 					$this->mode = 'view_cat';					
 				}
-				elseif($this->tag !== '')
+				else if($this->tag !== '')
 				{
 					$this->mode = 'view_tag';
 				}
@@ -209,9 +209,9 @@ class knowledge_base
 		$sql = 'UPDATE ' . USERS_TABLE . '
 			SET user_emailtime = ' . time() . '
 			WHERE user_id = ' . $user->data['user_id'];
-		$result = $db->sql_query($sql);
+		$db->sql_query($sql);
 
-		$this->finclude('functions_messenger');
+		$this->finclude('functions_messenger', 'c:messenger');
 		$messenger = new messenger(false);
 		$email_tpl = 'kb_email_notify';
 		
@@ -236,8 +236,8 @@ class knowledge_base
 
 		$messenger->send($notify_type);
 		
-		meta_refresh(3, kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id));
-		$message = sprintf($user->lang['RETURN_KB_ARTICLE'], '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id) . '">', '</a>');
+		meta_refresh(3, append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id));
+		$message = sprintf($user->lang['RETURN_KB_ARTICLE'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id) . '">', '</a>');
 		trigger_error($user->lang['EMAIL_SENT'] . '<br /><br />' . $message);
 	}
 	
@@ -266,22 +266,45 @@ class knowledge_base
 	/**
 	* Include function
 	*/
-	function finclude($file, $once = false)
+	function finclude($file, $exists = '')
 	{
 		global $phpbb_root_path, $phpEx;
 		
+		if(isset($exists) && !is_array($exists))
+		{
+			$exists = explode(':', $exists);
+			$function = ($exists[0] == 'f') ? 'function_exists' : 'class_exists';
+			
+			if($function($exists[1]))
+			{
+				return;
+			}
+		}
+		
 		if(is_array($file))
 		{
-			foreach($file as $filename)
+			foreach($file as $n => $filename)
 			{
 				$path = $phpbb_root_path . 'includes/' . $filename . '.' . $phpEx;
-				($once) ? include_once($path) : include($path);
+				
+				if(isset($exists[$n]) && is_array($exists))
+				{
+					$exists_check = explode(':', $exists);
+					$function = ($exists_check[0] == 'f') ? 'function_exists' : 'class_exists';
+					
+					if($function($exists_check[1]))
+					{
+						continue;
+					}
+				}
+				
+				include($path);
 			}
 		}
 		else
 		{
 			$path = $phpbb_root_path . 'includes/' . $file . '.' . $phpEx;
-			($once) ? include_once($path) : include($path);
+			include($path);
 		}
 	}
 	
@@ -291,7 +314,7 @@ class knowledge_base
 	*/
 	function page_header($page_title)
 	{
-		global $template, $phpbb_root_path, $phpEx, $config;
+		global $template, $phpbb_root_path, $phpEx, $config, $user;
 		
 		page_header($page_title);
 		
@@ -301,7 +324,7 @@ class knowledge_base
 			$template->assign_vars(array(
 				'S_USER_PM_POPUP' 	=> true,
 				'S_NEW_PM'			=> 1,
-				'UA_POPUP_PM'		=> addslashes(kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=notify_popup&amp;a=' . $this->popup['article_id'])),
+				'UA_POPUP_PM'		=> addslashes(append_sid("{$phpbb_root_path}kb.$phpEx", 'i=notify_popup&amp;a=' . $this->popup['article_id'])),
 			));
 		}
 		
@@ -321,7 +344,7 @@ class knowledge_base
 		global $template, $config, $user, $db, $auth;
 		global $phpbb_root_path, $auth, $phpEx, $cache;
 		
-		$this->finclude('functions_display');
+		$this->finclude('functions_display', 'f:display_forums');
 		$user->add_lang('viewtopic');
 		
 		if(!$this->cat_id)
@@ -330,10 +353,11 @@ class knowledge_base
 		}
 		
 		$sql = "SELECT *
-				FROM " . KB_CATS_TABLE . "
-				WHERE cat_id = '" . $db->sql_escape($this->cat_id) . "'";
+				FROM " . KB_CATS_TABLE . '
+				WHERE cat_id = ' . $this->cat_id;
 		$result = $db->sql_query($sql);
 		$cat_data = $db->sql_fetchrow($result);
+		$db->sql_freeresult($result);
 		
 		if(!$cat_data)
 		{
@@ -348,17 +372,17 @@ class knowledge_base
 			}
 			
 			$red_url = ($this->start > 0) ? "&amp;start=$this->start" : '';
-			login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$this->cat_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_VIEW']);
+			login_box(append_sid("{$phpbb_root_path}kb.$phpEx", "c=$this->cat_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_VIEW']);
 		}		
 		
 		kb_display_cats($cat_data);
 		
 		// Show all articles to moderators
-		$is_mod = ($auth->acl_get('m_kb_view')) ? '' : 'AND article_status = ' . STATUS_APPROVED;
+		$is_mod = ($auth->acl_get('m_kb_view')) ? '' : ' AND article_status = ' . STATUS_APPROVED;
 		
 		$sql = 'SELECT COUNT(article_id) AS num_articles
-			FROM ' . KB_TABLE . "
-			WHERE cat_id = '" . $db->sql_escape($this->cat_id) . "' $is_mod";
+			FROM ' . KB_TABLE . '
+			WHERE cat_id = ' . $this->cat_id . $is_mod;
 		$result = $db->sql_query($sql);
 		$articles_count = (int) $db->sql_fetchfield('num_articles');
 		$db->sql_freeresult($result);
@@ -415,7 +439,7 @@ class knowledge_base
 					'ON' => 'a.article_id = r.article_id',
 				),
 			),
-			'WHERE'		=> "a.cat_id = '" . $db->sql_escape($this->cat_id) . "' $is_mod",
+			'WHERE'		=> 'a.cat_id = ' . $this->cat_id . $is_mod,
 			'GROUP_BY'	=> 'a.article_id',
 			'ORDER_BY'  => $order_by,
 		));
@@ -442,16 +466,17 @@ class knowledge_base
 				'ARTICLE_FOLDER_IMG_WIDTH'  => $user->img('topic_read', '', false, '', 'width'),
 				'ARTICLE_FOLDER_IMG_HEIGHT'	=> $user->img('topic_read', '', false, '', 'height'),
 				'ARTICLE_UNAPPROVED'		=> ($row['article_status'] != STATUS_APPROVED && $auth->acl_gets('m_kb_view', 'm_kb_status')) ? true : false,
-				'U_MCP_QUEUE'				=> kb_append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=kb&hmode=status&a=' . $row['article_id']),
+				'U_MCP_QUEUE'				=> append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=kb&hmode=status&a=' . $row['article_id']),
 	
 				'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
 				'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
 				'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
 				'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_kb_download', $this->cat_id) && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 				
-				'U_VIEW_ARTICLE'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $row['article_id']),
+				'U_VIEW_ARTICLE'			=> kb_append_sid('article', array('id' => $row['article_id'], 'title' => censor_text($article_type['article_title']))),
 			));
 		}
+		$db->sql_freeresult($result);
 		
 		$sort_direction = make_direction_select($this->dir);
 		$sort_options = make_sort_select('articles', $this->sort);
@@ -460,17 +485,17 @@ class knowledge_base
 			'L_AUTHOR'			=> $user->lang['ARTICLE_AUTHOR'],
 			'L_ARTICLES_LC' 	=> utf8_strtolower($user->lang['ARTICLES']),
 			'S_HAS_SUBCATS' 	=> ($cat_data['left_id'] != $cat_data['right_id'] - 1) ? true : false,
-			'PAGINATION'		=> generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$this->cat_id" . ((strlen($this->sort)) ? "&amp;sort=$this->sort" : '')), $articles_count, $config['kb_articles_per_page'], $this->start),
+			'PAGINATION'		=> generate_pagination(kb_append_sid('cat', array('id' => $this->cat_id, 'title' => $cat_data['cat_name'], 'extra' => ((strlen($this->sort)) ? "sort=$this->sort" : ''))), $articles_count, $config['kb_articles_per_page'], $this->start),
 			'PAGE_NUMBER'		=> on_page($articles_count, $config['kb_articles_per_page'], $this->start),
 			'TOTAL_ARTICLES' 	=> $articles_count,			
-			'U_ADD_NEW_ARTICLE'	=> ($auth->acl_get('u_kb_add', $this->cat_id)) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=" . $this->cat_id . '&amp;i=add') : '',			
+			'U_ADD_NEW_ARTICLE'	=> ($auth->acl_get('u_kb_add', $this->cat_id)) ? append_sid("{$phpbb_root_path}kb.$phpEx", "c=" . $this->cat_id . '&amp;i=add') : '',			
 			'S_NO_TOPIC'		=> false,
 			'S_IN_MAIN'			=> true,
 			'S_CAT_STYLE'		=> ($config['kb_layout_style']) ? true : false, // IF 1 then set to true bc. style = special
 			'S_COL_WIDTH'		=> ($config['kb_layout_style']) ? (100 / $config['kb_cats_per_row']) : 0,
 			'S_SORT_OPTIONS'	=> $sort_options,
 			'S_SORT_DIRECTION'	=> $sort_direction,
-			'S_ARTICLE_ACTION'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $this->cat_id),
+			'S_ARTICLE_ACTION'	=> append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $this->cat_id),
 			'UNAPPROVED_IMG'	=> $user->img('icon_topic_unapproved', 'ARTICLE_UNAPPROVED'),
 		));
 		
@@ -497,7 +522,7 @@ class knowledge_base
 		global $template, $config, $user, $db, $cache; 
 		global $user, $auth, $phpbb_root_path, $phpEx;
 		
-		$this->finclude('functions_display');
+		$this->finclude('functions_display', 'f:display_forums');
 		$user->add_lang('viewtopic');
 		$view = request_var('view', '');
 		
@@ -528,13 +553,14 @@ class knowledge_base
 					'ON' => 'a.article_id = t.article_id AND u.user_id = t.user_id',
 				),
 			),
-			'WHERE'		=> "a.article_id = '" . $db->sql_escape($this->article_id) . "'",
+			'WHERE'		=> 'a.article_id = ' . $this->article_id,
 			'GROUP_BY'	=> 'a.article_id',
 		));
 		
 		$result = $db->sql_query($sql);
 		$article_data = $db->sql_fetchrow($result);
-				
+		$db->sql_freeresult($result);
+		
 		if(!$article_data)
 		{
 			trigger_error('KB_NO_ARTICLE');
@@ -560,7 +586,7 @@ class knowledge_base
 		
 		handle_related_articles($this->article_id, $article_data['article_title'], $article_data['article_title_clean'], $config['kb_related_articles']);
 		
-		if($this->cat_id == 0)
+		if(($this->cat_id == 0) || ($this->cat_id != $article_data['cat_id']))
 		{
 			// No category id has been set via GET vars, set it yourself
 			$this->cat_id = $article_data['cat_id'];
@@ -576,7 +602,7 @@ class knowledge_base
 			
 			$red_url = ($this->start > 0) ? "&amp;start=$this->start" : '';
 			$red_url = ($this->hilit_words == '') ? $red_url : $red_url . "&amp;hilit=$this->hilit_words";
-			login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$this->cat_id&amp;a=$this->article_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_READ']);
+			login_box(append_sid("{$phpbb_root_path}kb.$phpEx", "c=$this->cat_id&amp;a=$this->article_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_READ']);
 		}
 		
 		// Was a highlight request part of the URI?
@@ -613,7 +639,7 @@ class knowledge_base
 		// Load custom profile fields
 		if ($config['load_cpf_viewtopic'])
 		{
-			$this->finclude('functions_profile_fields');
+			$this->finclude('functions_profile_fields', 'c:custom_profile');
 			$cp = new custom_profile();
 		
 			// Grab all profile fields from users in id cache for later use - similar to the poster cache
@@ -664,15 +690,15 @@ class knowledge_base
 				{
 					$sql = 'UPDATE ' . KB_TABLE . "
 						SET article_attachment = 0
-						WHERE article_id = '" . $db->sql_escape($this->article_id) . "'";
+						WHERE article_id = " . (int) $this->article_id;
 					$db->sql_query($sql);
 				}
 				else if (!$article_data['article_attachment'])
 				{
 					// Topic has approved attachments but its flag is wrong
-					$sql = 'UPDATE ' . KB_TABLE . "
+					$sql = 'UPDATE ' . KB_TABLE . '
 						SET article_attachment = 1
-						WHERE article_id = '" . $db->sql_escape($this->article_id) . "'";
+						WHERE article_id = ' . $this->article_id;
 					$db->sql_query($sql);
 		
 					$article_data['article_attachment'] = 1;
@@ -700,10 +726,7 @@ class knowledge_base
 		// Instantiate BBCode if need be
 		if ($bbcode_bitfield !== '')
 		{
-			if(!class_exists('bbcode'))
-			{
-				$this->finclude('bbcode');
-			}
+			$this->finclude('bbcode', 'c:bbcode');
 			$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 		}
 		
@@ -748,7 +771,7 @@ class knowledge_base
 	
 		if (!empty($attachments))
 		{
-			kb_parse_attachments($message, $attachments, $update_count, false, $article_data['cat_id']);
+			kb_parse_attachments($message, $attachments, $update_count, false);
 		}
 	
 		// Replace naughty words such as farty pants
@@ -775,7 +798,7 @@ class knowledge_base
 		
 		if (!empty($article_data['user_allow_viewemail']) || $auth->acl_get('a_email'))
 		{
-			$article_data['email'] = ($config['board_email_form'] && $config['email_enable']) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=email&amp;u=" . $article_data['article_user_id']) : (($config['board_hide_emails'] && !$auth->acl_get('a_email')) ? '' : 'mailto:' . $article_data['user_email']);
+			$article_data['email'] = ($config['board_email_form'] && $config['email_enable']) ? append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=email&amp;u=" . $article_data['article_user_id']) : (($config['board_hide_emails'] && !$auth->acl_get('a_email')) ? '' : 'mailto:' . $article_data['user_email']);
 		}
 		else
 		{
@@ -831,7 +854,7 @@ class knowledge_base
 				}
 
 				$lc_tag = utf8_strtolower($tag);
-				$parsed_tags_container[] = '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", "t=$lc_tag") . '">' . $tag . '</a>';
+				$parsed_tags_container[] = '<a href="' . kb_append_sid('tag', array('id' => $lc_tag, 'title' => $tag)) . '">' . $tag . '</a>';
 			}
 			
 			$article_tags = implode(', ', $parsed_tags_container);
@@ -841,9 +864,9 @@ class knowledge_base
 		if ($user->data['user_id'] != $article_data['article_user_id'])
 		{
 			$sql = "SELECT rating
-					FROM " . KB_RATE_TABLE . "
-					WHERE article_id = '" . $db->sql_escape($this->article_id) . "'
-					AND user_id = {$user->data['user_id']}";
+					FROM " . KB_RATE_TABLE . '
+					WHERE article_id = ' . $this->article_id . '
+					AND user_id = ' . (int) $user->data['user_id'];
 			$result = $db->sql_query($sql);	
 			$has_rated = ($db->sql_affectedrows()) ? true : false;
 			$db->sql_freeresult($result);
@@ -887,7 +910,7 @@ class knowledge_base
 		{
 			$sql = 'SELECT edit_user_id, edit_user_color, edit_user_name
 					FROM ' . KB_EDITS_TABLE . '
-					WHERE article_id = ' . $db->sql_escape($this->article_id) . ' 
+					WHERE article_id = ' . $this->article_id . ' 
 					AND edit_contribution = 1
 					GROUP BY edit_user_id'; // Group so we only get each contributor once
 			$result = $db->sql_query($sql);
@@ -914,12 +937,12 @@ class knowledge_base
 			'L_DELETE_ARTICLE'		=> $user->lang['KB_DELETE_ARTICLE'],
 			'L_HISTORY'				=> $user->lang['ARTICLE_HISTORY'],
 			'L_CONTENT' 			=> $user->lang['ARTICLE_CONTENT'],
-			'U_PERM_LINK'			=> generate_board_url() . '/kb.' . $phpEx . '?a=' . $this->article_id,
+			'U_PERM_LINK'			=> generate_board_url() . '/' . kb_append_sid('article', array('id' => $this->article_id, 'title' => $article_type['article_title']), true),			
 			
-			'U_VIEW_ARTICLE'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $this->cat_id . '&amp;a=' . $this->article_id),
-			'U_DLOAD_WORD'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=export&amp;a=' . $this->article_id),
+			'U_VIEW_ARTICLE'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $this->cat_id . '&amp;a=' . $this->article_id),
+			'U_DLOAD_WORD'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=export&amp;a=' . $this->article_id),
 			'POSTER_ARTICLES' 		=> $article_data['user_articles'],
-			'U_POSTER_ARTICLES'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search&amp;author_id=' . $article_data['article_user_id']),
+			'U_POSTER_ARTICLES'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search&amp;author_id=' . $article_data['article_user_id']),
 			'ARTICLE_AUTHOR_FULL'	=> get_username_string('full', $article_data['article_user_id'], $article_data['article_user_name'], $article_data['article_user_color']),
 			'ARTICLE_TAGS' 			=> $article_tags,
 			'ARTICLE_VIEWS'			=> ($article_data['article_views'] == 1) ? sprintf($user->lang['ARTICLES_VIEW'], $article_data['article_views']) : sprintf($user->lang['ARTICLES_VIEWS'], $article_data['article_views']),
@@ -944,13 +967,13 @@ class knowledge_base
 
 /* FOR LATER USE
 			'U_PRINT_TOPIC'			=> ($auth->acl_get('f_print', $forum_id)) ? $viewarticle_url . '&amp;view=print' : '',
-			'U_EMAIL_TOPIC'			=> ($auth->acl_get('f_email', $forum_id) && $config['email_enable']) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=email&amp;t=$article_id") : '',
+			'U_EMAIL_TOPIC'			=> ($auth->acl_get('f_email', $forum_id) && $config['email_enable']) ? append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=email&amp;t=$article_id") : '',
 */
-			'U_WATCH_ARTICLE' 		=> ($user->data['is_registered'] && $config['kb_allow_subscribe']) ? (($article_data['subscribed'] > 0) ? kb_append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=kb&amp;mode=subscribed&amp;action=delete&amp;a[' . $this->article_id . ']=1') : kb_append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=kb&amp;mode=subscribed&amp;action=add&amp;a=' . $this->article_id)) : '',
+			'U_WATCH_ARTICLE' 		=> ($user->data['is_registered'] && $config['kb_allow_subscribe']) ? (($article_data['subscribed'] > 0) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=kb&amp;mode=subscribed&amp;action=delete&amp;a[' . $this->article_id . ']=1') : append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=kb&amp;mode=subscribed&amp;action=add&amp;a=' . $this->article_id)) : '',
 			'L_WATCH_ARTICLE' 		=> ($user->data['is_registered'] && $config['kb_allow_subscribe']) ? (($article_data['subscribed'] > 0) ? $user->lang['STOP_WATCHING_ARTICLE'] : $user->lang['START_WATCHING_ARTICLE']) : '',
 			'S_WATCHING_ARTICLE'	=> ($user->data['is_registered'] && $config['kb_allow_subscribe'] && ($article_data['subscribed'] > 0)) ? true : false,
 		
-			'U_BOOKMARK_ARTICLE'	=> ($user->data['is_registered'] && $config['kb_allow_bookmarks']) ? (($article_data['bookmarked']) ? kb_append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=kb&amp;mode=bookmarks&amp;action=delete&amp;a[' . $this->article_id . ']=1') : kb_append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=kb&amp;mode=bookmarks&amp;action=add&amp;a=' . $this->article_id)) : '',
+			'U_BOOKMARK_ARTICLE'	=> ($user->data['is_registered'] && $config['kb_allow_bookmarks']) ? (($article_data['bookmarked']) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=kb&amp;mode=bookmarks&amp;action=delete&amp;a[' . $this->article_id . ']=1') : append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=kb&amp;mode=bookmarks&amp;action=add&amp;a=' . $this->article_id)) : '',
 			'L_BOOKMARK_ARTICLE'	=> ($user->data['is_registered'] && $config['kb_allow_bookmarks'] && $article_data['bookmarked']) ? $user->lang['BOOKMARK_ARTICLE_REMOVE'] : $user->lang['BOOKMARK_ARTICLE'],
 
 			'POST_AUTHOR_FULL'	=> get_username_string('full', $article_data['article_user_id'], $article_data['username'], $article_data['user_colour'], $article_data['username']),
@@ -978,24 +1001,24 @@ class knowledge_base
 			'ONLINE_IMG'			=> ($article_data['article_user_id'] == ANONYMOUS || !$config['load_onlinetrack']) ? '' : (($author_online) ? $user->img('icon_user_online', 'ONLINE') : $user->img('icon_user_offline', 'OFFLINE')),
 			'S_ONLINE'				=> ($article_data['article_user_id'] == ANONYMOUS || !$config['load_onlinetrack']) ? false : (($author_online) ? true : false),
 	
-			'U_EDIT'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb_edit') || ($article_data['article_open'] && $user->acl_get('u_kb_add_co', $this->cat_id))) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=edit&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
-			'U_STATUS'			=> ($auth->acl_get('m_kb_status')) ? kb_append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;&amp;hmode=status&amp;a=" . $this->article_id) : '',
-			'U_DELETE'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb_delete')) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=delete&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
-			'U_HISTORY'			=> (!$auth->acl_get('u_kb_viewhistory', $this->cat_id)) ? '' : kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;a=" . $this->article_id),
+			'U_EDIT'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb_edit') || ($article_data['article_open'] && $user->acl_get('u_kb_add_co', $this->cat_id))) ? append_sid("{$phpbb_root_path}kb.$phpEx", "i=edit&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
+			'U_STATUS'			=> ($auth->acl_get('m_kb_status')) ? append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;&amp;hmode=status&amp;a=" . $this->article_id) : '',
+			'U_DELETE'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb_delete')) ? append_sid("{$phpbb_root_path}kb.$phpEx", "i=delete&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
+			'U_HISTORY'			=> (!$auth->acl_get('u_kb_viewhistory', $this->cat_id)) ? '' : append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;a=" . $this->article_id),
 	
 			'S_RELATED_ARTICLES' => ($config['kb_related_articles']) ? true : false,
 			'S_KB_EMAIL'	=> ($config['kb_email_article'] && $config['email_enable'] && $auth->acl_get('u_sendemail')) ? true : false,
-			'U_KB_EMAIL'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=email&amp;starter=" . $article_data['article_user_name'] . '&amp;sender=' . $user->data['username'] . '&amp;a=' . $this->article_id . '&amp;a_t= ' . $article_data['article_title']),
-			'U_RSS_AUTHOR'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=user&amp;feed_user_id=' . $article_data['article_user_id'] . '&amp;feed_username=' . $article_data['article_user_name']),
-			'U_PROFILE'		=> kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=viewprofile&amp;u=" . $article_data['article_user_id']),
-			'U_PM'			=> ($article_data['article_user_id'] != ANONYMOUS && $config['allow_privmsg'] && $auth->acl_get('u_sendpm') && ($article_data['user_allow_pm'] || $auth->acl_gets('a_', 'm_') || $auth->acl_getf_global('m_'))) ? kb_append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=pm&amp;mode=compose') : '',
+			'U_KB_EMAIL'	=> append_sid("{$phpbb_root_path}kb.$phpEx", "i=email&amp;starter=" . $article_data['article_user_name'] . '&amp;sender=' . $user->data['username'] . '&amp;a=' . $this->article_id . '&amp;a_t= ' . $article_data['article_title']),
+			'U_RSS_AUTHOR'	=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=user&amp;feed_user_id=' . $article_data['article_user_id'] . '&amp;feed_username=' . $article_data['article_user_name']),
+			'U_PROFILE'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=viewprofile&amp;u=" . $article_data['article_user_id']),
+			'U_PM'			=> ($article_data['article_user_id'] != ANONYMOUS && $config['allow_privmsg'] && $auth->acl_get('u_sendpm') && ($article_data['user_allow_pm'] || $auth->acl_gets('a_', 'm_') || $auth->acl_getf_global('m_'))) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=pm&amp;mode=compose') : '',
 			'U_EMAIL'		=> $article_data['email'],
 			'U_WWW'			=> $article_data['user_website'],
 			'U_ICQ'			=> $article_data['icq'],
-			'U_AIM'			=> ($article_data['user_aim'] && $auth->acl_get('u_sendim')) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=aim&amp;u=" . $article_data['article_user_id']) : '',
-			'U_MSN'			=> ($article_data['user_msnm'] && $auth->acl_get('u_sendim')) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=msnm&amp;u=" . $article_data['article_user_id']) : '',
+			'U_AIM'			=> ($article_data['user_aim'] && $auth->acl_get('u_sendim')) ? append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=aim&amp;u=" . $article_data['article_user_id']) : '',
+			'U_MSN'			=> ($article_data['user_msnm'] && $auth->acl_get('u_sendim')) ? append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=msnm&amp;u=" . $article_data['article_user_id']) : '',
 			'U_YIM'			=> ($article_data['user_yim']) ? 'http://edit.yahoo.com/config/send_webmesg?.target=' . urlencode($article_data['user_yim']) . '&amp;.src=pg' : '',
-			'U_JABBER'		=> ($article_data['user_jabber'] && $auth->acl_get('u_sendim')) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=jabber&amp;u=" . $article_data['article_user_id']) : '',
+			'U_JABBER'		=> ($article_data['user_jabber'] && $auth->acl_get('u_sendim')) ? append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=jabber&amp;u=" . $article_data['article_user_id']) : '',
 	
 			'S_HAS_ATTACHMENTS'		=> (!empty($attachments)) ? true : false,
 			'S_ARTICLE_UNAPPROVED'	=> ($article_data['article_status'] == STATUS_APPROVED) ? false : true,
@@ -1013,7 +1036,7 @@ class knowledge_base
 			'U_RATE_5' 				=> ($config['kb_ajax_rating']) ? 'javascript:rateArticle(5)' : append_sid($phpbb_root_path . "kb.$phpEx", "i=rate&amp;a=$this->article_id&amp;rating=5"),
 			'U_RATE_6' 				=> ($config['kb_ajax_rating']) ? 'javascript:rateArticle(6)' : append_sid($phpbb_root_path . "kb.$phpEx", "i=rate&amp;a=$this->article_id&amp;rating=6"),
 			
-			'U_RATE' 				=> kb_append_sid("kb.$phpEx", "i=rate&a=$this->article_id"), // No phpbb_root_path ! Important !
+			'U_RATE' 				=> append_sid("kb.$phpEx", "i=rate&a=$this->article_id"), // No phpbb_root_path ! Important !
 			'RATING' 				=> $article_data['article_rating'],
 			'RATING_PX' 			=> $article_data['article_rating'] * 25, // Used for style purposes
 			'S_HAS_RATED' 			=> $has_rated,
@@ -1054,9 +1077,9 @@ class knowledge_base
 		// Update topic view and if necessary attachment view counters ... but only for humans and if this is the first 'page view'
 		if (isset($user->data['session_page']) && !$user->data['is_bot'] && strpos($user->data['session_page'], '&a=' . $this->article_id) === false)
 		{
-			$sql = 'UPDATE ' . KB_TABLE . "
+			$sql = 'UPDATE ' . KB_TABLE . '
 				SET article_views = article_views + 1
-				WHERE article_id = '" . $db->sql_escape($this->article_id) . "'";
+				WHERE article_id = ' . $this->article_id;
 			$db->sql_query($sql);
 		
 			// Update the attachment download counts
@@ -1073,8 +1096,8 @@ class knowledge_base
 		$sql = 'UPDATE ' . KB_TRACK_TABLE . '
 				SET subscribed = 1
 				WHERE subscribed > 1
-				AND user_id = ' . $user->data['user_id'] . "
-				AND article_id = '" . $db->sql_escape($this->article_id) . "'";
+				AND user_id = ' . $user->data['user_id'] . '
+				AND article_id = ' . $this->article_id;
 		$db->sql_query($sql);
 		
 		// Sorting also applies for comments
@@ -1112,10 +1135,10 @@ class knowledge_base
 		
 		// Get all comments, place them in id placeholder, the sort order is used here.
 		$sql = 'SELECT c.comment_id 
-				FROM ' . KB_COMMENTS_TABLE . " c
-				WHERE c.article_id = '" . $db->sql_escape($this->article_id) . "'
-				AND c.comment_type = " . (($module != '') ? COMMENT_MOD : COMMENT_GLOBAL) . "
-				ORDER BY $order_by";
+				FROM ' . KB_COMMENTS_TABLE . ' c
+				WHERE c.article_id = ' . $this->article_id . '
+				AND c.comment_type = ' . (($module != '') ? COMMENT_MOD : COMMENT_GLOBAL) . '
+				ORDER BY ' . $order_by;
 		$result = $db->sql_query($sql);
 		while($row = $db->sql_fetchrow($result))
 		{
@@ -1146,9 +1169,9 @@ class knowledge_base
 				)
 			),
 		
-			'WHERE'		=> "c.article_id = '" . $db->sql_escape($this->article_id) ."'
+			'WHERE'		=> 'c.article_id = ' . $this->article_id . '
 						AND c.comment_user_id = u.user_id
-						AND c.comment_type = " . (($module != '') ? COMMENT_MOD : COMMENT_GLOBAL),
+						AND c.comment_type = ' . (($module != '') ? COMMENT_MOD : COMMENT_GLOBAL),
 									
 			'ORDER_BY'  => $order_by,
 		));
@@ -1239,20 +1262,20 @@ class knowledge_base
 					'user_colour'			=> $row['user_colour'],
 	
 					'online'				=> false,
-					'profile'				=> kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=viewprofile&amp;u=$poster_id"),
+					'profile'				=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=viewprofile&amp;u=$poster_id"),
 					'www'					=> $row['user_website'],
-					'aim'					=> ($row['user_aim'] && $auth->acl_get('u_sendim')) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=aim&amp;u=$poster_id") : '',
-					'msn'					=> ($row['user_msnm'] && $auth->acl_get('u_sendim')) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=msnm&amp;u=$poster_id") : '',
+					'aim'					=> ($row['user_aim'] && $auth->acl_get('u_sendim')) ? append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=aim&amp;u=$poster_id") : '',
+					'msn'					=> ($row['user_msnm'] && $auth->acl_get('u_sendim')) ? append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=msnm&amp;u=$poster_id") : '',
 					'yim'					=> ($row['user_yim']) ? 'http://edit.yahoo.com/config/send_webmesg?.target=' . urlencode($row['user_yim']) . '&amp;.src=pg' : '',
-					'jabber'				=> ($row['user_jabber'] && $auth->acl_get('u_sendim')) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=jabber&amp;u=$poster_id") : '',
-					'search'				=> ($auth->acl_get('u_kb_search', $this->cat_id)) ? kb_append_sid("{$phpbb_root_path}search.$phpEx", "author_id=$poster_id&amp;sr=posts") : '',
+					'jabber'				=> ($row['user_jabber'] && $auth->acl_get('u_sendim')) ? append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=contact&amp;action=jabber&amp;u=$poster_id") : '',
+					'search'				=> ($auth->acl_get('u_kb_search', $this->cat_id)) ? append_sid("{$phpbb_root_path}search.$phpEx", "author_id=$poster_id&amp;sr=posts") : '',
 				);
 	
 				get_user_rank($row['user_rank'], $row['user_posts'], $user_cache[$poster_id]['rank_title'], $user_cache[$poster_id]['rank_image'], $user_cache[$poster_id]['rank_image_src']);
 	
 				if (!empty($row['user_allow_viewemail']) || $auth->acl_get('a_email'))
 				{
-					$user_cache[$poster_id]['email'] = ($config['board_email_form'] && $config['email_enable']) ? kb_append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=email&amp;u=$poster_id") : (($config['board_hide_emails'] && !$auth->acl_get('a_email')) ? '' : 'mailto:' . $row['user_email']);
+					$user_cache[$poster_id]['email'] = ($config['board_email_form'] && $config['email_enable']) ? append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=email&amp;u=$poster_id") : (($config['board_hide_emails'] && !$auth->acl_get('a_email')) ? '' : 'mailto:' . $row['user_email']);
 				}
 				else
 				{
@@ -1347,10 +1370,7 @@ class knowledge_base
 		// Instantiate BBCode if need be
 		if ($bbcode_bitfield !== '')
 		{
-			if(!class_exists('bbcode'))
-			{
-				$this->finclude('bbcode');
-			}
+			$this->finclude('bbcode', 'c:bbcode');
 			$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 		}
 		
@@ -1398,7 +1418,7 @@ class knowledge_base
 		
 			if (!empty($attachments[$row['comment_id']]))
 			{
-				kb_parse_attachments($message, $attachments[$row['comment_id']], $update_count, false, $this->cat_id);
+				kb_parse_attachments($message, $attachments[$row['comment_id']], $update_count, false);
 			}
 		
 			// Replace naughty words such as farty pants
@@ -1452,13 +1472,13 @@ class knowledge_base
 				'ONLINE_IMG'			=> ($poster_id == ANONYMOUS || !$config['load_onlinetrack']) ? '' : (($user_cache[$poster_id]['online']) ? $user->img('icon_user_online', 'ONLINE') : $user->img('icon_user_offline', 'OFFLINE')),
 				'S_ONLINE'				=> ($poster_id == ANONYMOUS || !$config['load_onlinetrack']) ? false : (($user_cache[$poster_id]['online']) ? true : false),
 		
-				'U_EDIT'				=> (!$user->data['is_registered']) ? '' : ((($user->data['user_id'] == $poster_id && $auth->acl_get('u_kb_comment', $this->cat_id)) || $auth->acl_get('m_kb_edit') || ($article_data['article_open'] && $user->acl_get('u_kb_add_co', $this->cat_id))) ? kb_append_sid($base_url, (($module != '') ? $base_arg . "&amp;action=edit&amp;comment_id=$comment_id" : "i=comment&amp;action=edit&amp;comment_id=$comment_id")) : ''),
-				'U_QUOTE'				=> ($auth->acl_get('u_kb_comment', $this->cat_id)) ? kb_append_sid($base_url, (($module != '') ? $base_arg . "action=add&amp;a=$this->article_id&amp;quote=$comment_id" : "i=comment&amp;action=add&amp;a=$this->article_id&amp;quote=$comment_id")) : '',
-				'U_DELETE'				=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $poster_id && $auth->acl_get('u_kb_comment', $this->cat_id)) || $auth->acl_get('m_kb_delete')) ? kb_append_sid($base_url, (($module != '') ? $base_arg . "&amp;action=delete&amp;comment_id=$comment_id" : "i=comment&amp;action=delete&amp;comment_id=$comment_id")) : '',
+				'U_EDIT'				=> (!$user->data['is_registered']) ? '' : ((($user->data['user_id'] == $poster_id && $auth->acl_get('u_kb_comment', $this->cat_id)) || $auth->acl_get('m_kb_edit') || ($article_data['article_open'] && $user->acl_get('u_kb_add_co', $this->cat_id))) ? append_sid($base_url, (($module != '') ? $base_arg . "&amp;action=edit&amp;comment_id=$comment_id" : "i=comment&amp;action=edit&amp;comment_id=$comment_id")) : ''),
+				'U_QUOTE'				=> ($auth->acl_get('u_kb_comment', $this->cat_id)) ? append_sid($base_url, (($module != '') ? $base_arg . "action=add&amp;a=$this->article_id&amp;quote=$comment_id" : "i=comment&amp;action=add&amp;a=$this->article_id&amp;quote=$comment_id")) : '',
+				'U_DELETE'				=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $poster_id && $auth->acl_get('u_kb_comment', $this->cat_id)) || $auth->acl_get('m_kb_delete')) ? append_sid($base_url, (($module != '') ? $base_arg . "&amp;action=delete&amp;comment_id=$comment_id" : "i=comment&amp;action=delete&amp;comment_id=$comment_id")) : '',
 		
 				'U_PROFILE'				=> $user_cache[$poster_id]['profile'],
 				'U_SEARCH'				=> $user_cache[$poster_id]['search'],
-				'U_PM'					=> ($poster_id != ANONYMOUS && $config['allow_privmsg'] && $auth->acl_get('u_sendpm') && ($user_cache[$poster_id]['allow_pm'] || $auth->acl_gets('a_', 'm_') || $auth->acl_getf_global('m_'))) ? kb_append_sid("{$phpbb_root_path}ucp.$phpEx", '') : '',
+				'U_PM'					=> ($poster_id != ANONYMOUS && $config['allow_privmsg'] && $auth->acl_get('u_sendpm') && ($user_cache[$poster_id]['allow_pm'] || $auth->acl_gets('a_', 'm_') || $auth->acl_getf_global('m_'))) ? append_sid("{$phpbb_root_path}ucp.$phpEx", '') : '',
 				'U_EMAIL'				=> $user_cache[$poster_id]['email'],
 				'U_WWW'					=> $user_cache[$poster_id]['www'],
 				'U_ICQ'					=> $user_cache[$poster_id]['icq'],
@@ -1482,7 +1502,7 @@ class knowledge_base
 				'S_ARTICLE_POSTER'		=> ($article_data['article_user_id'] == $poster_id) ? true : false,
 		
 				'S_IGNORE_POST'			=> ($row['hide_post']) ? true : false,
-				'L_IGNORE_POST'			=> ($row['hide_post']) ? sprintf($user->lang['POST_BY_FOE'], get_username_string('full', $poster_id, $row['username'], $row['user_colour']), '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=$this->article_id&amp;view=show') . '">', '</a>') : '',
+				'L_IGNORE_POST'			=> ($row['hide_post']) ? sprintf($user->lang['POST_BY_FOE'], get_username_string('full', $poster_id, $row['username'], $row['user_colour']), '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", 'a=$this->article_id&amp;view=show') . '">', '</a>') : '',
 			);
 		
 			if (isset($cp_row['row']) && sizeof($cp_row['row']))
@@ -1537,11 +1557,11 @@ class knowledge_base
 		
 		// Generate Pagination
 		$template->assign_vars(array(
-			'PAGINATION'	=> generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$this->article_id" . ((strlen($this->sort)) ? "&amp;sort=$this->sort" : '')), $comments_count, $config['kb_comments_per_page'], $this->start),
+			'PAGINATION'	=> generate_pagination(append_sid("{$phpbb_root_path}kb.$phpEx", "a=$this->article_id" . ((strlen($this->sort)) ? "&amp;sort=$this->sort" : '')), $comments_count, $config['kb_comments_per_page'], $this->start),
 			'PAGE_NUMBER'	=> on_page($comments_count, $config['kb_comments_per_page'], $this->start),
 			'TOTAL_COMMENTS' => $comments_count,
 			'L_COMMENTS_LC' => utf8_strtolower($user->lang['COMMENTS']),
-			'U_ADD_COMMENT' => kb_append_sid($base_url, (($module != '') ? $base_arg . "&amp;action=add&amp;a=$this->article_id" : "i=comment&amp;action=add&amp;a=$this->article_id")),
+			'U_ADD_COMMENT' => append_sid($base_url, (($module != '') ? $base_arg . "&amp;action=add&amp;a=$this->article_id" : "i=comment&amp;action=add&amp;a=$this->article_id")),
 			'S_IN_ARTICLE'	=> true,
 			'S_SORT_OPTIONS'	=> $sort_options,
 			'S_SORT_DIRECTION'	=> $sort_direction,
@@ -1576,7 +1596,7 @@ class knowledge_base
 		global $template, $config, $user, $db;
 		global $phpbb_root_path, $auth, $phpEx;
 		
-		$this->finclude('functions_display');
+		$this->finclude('functions_display', 'f:display_forums');
 		$user->add_lang('viewtopic');
 		
 		kb_display_cats();
@@ -1611,7 +1631,7 @@ class knowledge_base
 		global $db, $template, $user, $auth;
 		global $config, $phpbb_root_path, $phpEx;
 		
-		$this->finclude(array('functions_posting', 'functions_display', 'message_parser'));
+		$this->finclude(array('functions_posting', 'functions_display', 'message_parser'), array('f:generate_smilies', 'f:display_forums', 'c:message_parser'));
 		$user->add_lang(array('posting', 'mcp', 'viewtopic'));
 		
 		$submit		= (isset($_POST['post'])) ? true : false;
@@ -1627,8 +1647,8 @@ class knowledge_base
 		{
 			case 'add':
 				$sql = "SELECT *
-						FROM " . KB_CATS_TABLE . "
-						WHERE cat_id = '" . $db->sql_escape($this->cat_id) . "'";
+						FROM " . KB_CATS_TABLE . '
+						WHERE cat_id = ' . $this->cat_id;
 				break;
 				
 			case 'edit':
@@ -1641,18 +1661,17 @@ class knowledge_base
 				if($submit && !$preview && $old_cat != $this->cat_id)
 				{
 					// New category alter sql slightly
-					$where_sql = "AND c.cat_id = '" . $db->sql_escape($this->cat_id) . "'"; 
+					$where_sql = ' AND c.cat_id = ' . $this->cat_id; 
 				}
 				else
 				{
-					$where_sql = "AND c.cat_id = a.cat_id";
+					$where_sql = ' AND c.cat_id = a.cat_id';
 				}
 				
 				$sql = 'SELECT c.*, a.*, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_colour
-						FROM ' . KB_CATS_TABLE . ' c, ' . KB_TABLE . ' a, ' . USERS_TABLE . " u
-						WHERE a.article_id = $this->article_id
-							AND u.user_id = a.article_user_id
-							$where_sql";
+						FROM ' . KB_CATS_TABLE . ' c, ' . KB_TABLE . ' a, ' . USERS_TABLE . ' u
+						WHERE a.article_id = ' . $this->article_id . '
+							AND u.user_id = a.article_user_id' . $where_sql;
 				break;
 			
 			case 'smilies':
@@ -1677,6 +1696,7 @@ class knowledge_base
 		
 		$result = $db->sql_query($sql);
 		$article_data = $db->sql_fetchrow($result);
+		$db->sql_freeresult($result);
 		$old_data = array();
 		
 		if($this->cat_id == 0)
@@ -1707,7 +1727,7 @@ class knowledge_base
 		// Check permissions
 		if ($user->data['is_bot'])
 		{
-			redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx"));
+			redirect(append_sid("{$phpbb_root_path}kb.$phpEx"));
 		}
 		
 		// Is the user able to read within this forum?
@@ -1719,7 +1739,7 @@ class knowledge_base
 			}
 			
 			$red_url = ($this->mode == 'edit' || $this->mode == 'delete') ? "&amp;a=$this->article_id" : '';
-			login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=$this->mode&amp;c=$this->cat_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_' . strtoupper($this->mode)]);
+			login_box(append_sid("{$phpbb_root_path}kb.$phpEx", "i=$this->mode&amp;c=$this->cat_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_' . strtoupper($this->mode)]);
 		}
 		
 		// Permission to do the action asked?
@@ -1756,7 +1776,7 @@ class knowledge_base
 			}
 		
 			$red_url = ($this->mode == 'edit' || $this->mode == 'delete') ? "&amp;a=$this->article_id" : '';
-			login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=$this->mode&amp;c=$this->cat_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_' . strtoupper($this->mode)]);
+			login_box(append_sid("{$phpbb_root_path}kb.$phpEx", "i=$this->mode&amp;c=$this->cat_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_' . strtoupper($this->mode)]);
 		}
 		
 		// Handle delete mode...
@@ -2032,14 +2052,14 @@ class knowledge_base
 						// Update count
 						if($article_data['article_status'] == STATUS_APPROVED)
 						{
-							$sql = 'UPDATE ' . USERS_TABLE . "
+							$sql = 'UPDATE ' . USERS_TABLE . '
 								SET user_articles = user_articles - 1
-								WHERE user_id = '" . $db->sql_escape($article_data['article_user_id']) . "'";
+								WHERE user_id = ' . $article_data['article_user_id'];
 							$db->sql_query($sql);
 							
-							$sql = 'UPDATE ' . USERS_TABLE . "
+							$sql = 'UPDATE ' . USERS_TABLE . '
 								SET user_articles = user_articles + 1
-								WHERE user_id = '" . $db->sql_escape($user->data['user_id']) . "'";
+								WHERE user_id = ' . $user->data['user_id'];
 							$db->sql_query($sql);
 						}
 						
@@ -2065,14 +2085,14 @@ class knowledge_base
 						// Update count (from old till new)
 						if($article_data['article_status'] == STATUS_APPROVED)
 						{
-							$sql = 'UPDATE ' . USERS_TABLE . "
+							$sql = 'UPDATE ' . USERS_TABLE . '
 								SET user_articles = user_articles - 1
-								WHERE user_id = '" . $db->sql_escape($article_data['article_user_id']) . "'";
+								WHERE user_id = ' . $article_data['article_user_id'];
 							$db->sql_query($sql);
 							
-							$sql = 'UPDATE ' . USERS_TABLE . "
+							$sql = 'UPDATE ' . USERS_TABLE . '
 								SET user_articles = user_articles + 1
-								WHERE user_id = '" . $db->sql_escape($user_data['user_id']) . "'";
+								WHERE user_id = ' . $user_data['user_id'];
 							$db->sql_query($sql);
 						}
 						
@@ -2094,7 +2114,7 @@ class knowledge_base
 						$article_data['article_contribution'] = false;
 					}
 				}
-				elseif(!$auth->acl_get('m_kb_edit') && $auth->acl_get('u_kb_add_co') && $article_data['article_user_id'] == $user->data['user_id'])
+				else if(!$auth->acl_get('m_kb_edit') && $auth->acl_get('u_kb_add_co') && $article_data['article_user_id'] == $user->data['user_id'])
 				{
 					// Force contribution
 					$article_data['article_contribution'] = true;
@@ -2109,7 +2129,7 @@ class knowledge_base
 					$article_data['article_open'] = false;
 				}
 			}
-			elseif($this->mode == 'edit' && ($article_data['article_open'] == false) && ($old_data['article_open'] == true) && !$auth->acl_get('u_kb_add_op', $this->cat_id))
+			else if($this->mode == 'edit' && ($article_data['article_open'] == false) && ($old_data['article_open'] == true) && !$auth->acl_get('u_kb_add_op', $this->cat_id))
 			{
 				$article_data['article_open'] = true;
 			}
@@ -2152,7 +2172,7 @@ class knowledge_base
 					'article_status'				=> (int) ($this->mode == 'edit') ? $article_data['article_status'] : (($auth->acl_get('u_kb_add_wa', $this->cat_id)) ? STATUS_APPROVED : STATUS_UNREVIEW),
 					'create_tags'					=> $create_tags,
 					'current_time'					=> $current_time,
-					'request_id'					=> $article_data['request_id'],
+					'request_id'					=> (int) $article_data['request_id'],
 				);
 				
 				$article_id = article_submit($this->mode, $data, $update_message, $old_data);
@@ -2178,14 +2198,14 @@ class knowledge_base
 				
 					set_config('kb_last_updated', time(), true);
 					
-					$sql = 'UPDATE ' . KB_CATS_TABLE . "
+					$sql = 'UPDATE ' . KB_CATS_TABLE . '
 							SET cat_articles = cat_articles + 1
-							WHERE cat_id = '" . $db->sql_escape($data['cat_id']) . "'";
+							WHERE cat_id = ' . $data['cat_id'];
 					$db->sql_query($sql);
 					
-					$sql = 'UPDATE ' . USERS_TABLE . "
+					$sql = 'UPDATE ' . USERS_TABLE . '
 							SET user_articles = user_articles + 1
-							WHERE user_id = '" . $db->sql_escape($data['article_user_id']) . "'";
+							WHERE user_id = ' . $data['article_user_id'];
 					$db->sql_query($sql);
 					
 					set_config('kb_total_articles', $config['kb_total_articles'] + 1, true);
@@ -2214,10 +2234,10 @@ class knowledge_base
 					}
 				}
 				
-				$redirect_url = ($auth->acl_get('u_kb_add_wa', $this->cat_id)) ? kb_append_sid("{$phpbb_root_path}kb.{$phpEx}", 'a=' . $article_id) : kb_append_sid("{$phpbb_root_path}ucp.{$phpEx}", 'i=kb&amp;mode=articles&amp;ma=view&amp;a=' . $article_id);
+				$redirect_url = ($auth->acl_get('u_kb_add_wa', $this->cat_id)) ? append_sid("{$phpbb_root_path}kb.{$phpEx}", 'a=' . $article_id) : append_sid("{$phpbb_root_path}ucp.{$phpEx}", 'i=kb&amp;mode=articles&amp;ma=view&amp;a=' . $article_id);
 				$message = ($this->mode == 'edit') ? 'EDITED' : (($auth->acl_get('u_kb_add_wa', $this->cat_id)) ? 'ADDED_WA' : 'ADDED');
 				$message = sprintf($user->lang['KB_' . $message], '<a href="' . $redirect_url . '">', '</a>');
-				$message .= '<br /><br />' . sprintf($user->lang['RETURN_KB_CAT'], '<a href="' . kb_append_sid($phpbb_root_path . 'kb.' . $phpEx, 'c=' . $this->cat_id) . '">', '</a>') . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . kb_append_sid($phpbb_root_path . 'kb.' . $phpEx) . '">', '</a>');
+				$message .= '<br /><br />' . sprintf($user->lang['RETURN_KB_CAT'], '<a href="' . append_sid($phpbb_root_path . 'kb.' . $phpEx, 'c=' . $this->cat_id) . '">', '</a>') . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . append_sid($phpbb_root_path . 'kb.' . $phpEx) . '">', '</a>');
 				meta_refresh(5, $redirect_url);
 				trigger_error($message);
 			}
@@ -2261,7 +2281,7 @@ class knowledge_base
 				$update_count = array();
 				$attachment_data = $this->attachment_data;
 		
-				kb_parse_attachments($preview_message, $attachment_data, $update_count, true, $this->cat_id);
+				kb_parse_attachments($preview_message, $attachment_data, $update_count, true);
 		
 				foreach ($attachment_data as $i => $attachment)
 				{
@@ -2320,7 +2340,7 @@ class knowledge_base
 		$sig_checked		= $article_data['enable_sig'];
 		
 		// Page title & action URL, include session_id for security purpose
-		$s_action = kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=$this->mode&amp;c=$this->cat_id", true, $user->session_id);
+		$s_action = append_sid("{$phpbb_root_path}kb.$phpEx", "i=$this->mode&amp;c=$this->cat_id", true, $user->session_id);
 		$s_action .= ($this->article_id) ? "&amp;a=$this->article_id" : '';
 		
 		switch ($this->mode)
@@ -2384,15 +2404,15 @@ class knowledge_base
 			'EDIT_REASON'			=> $edit_reason,
 			'REASON_GLOBAL'			=> ($reason_global) ? 'checked="checked" ' : '',
 			'S_EDIT_REASON'			=> ($this->mode == 'edit') ? true : false,
-			'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($user->lang['BBCODE_IS_ON'], '<a href="' . kb_append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>') : sprintf($user->lang['BBCODE_IS_OFF'], '<a href="' . kb_append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>'),
+			'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($user->lang['BBCODE_IS_ON'], '<a href="' . append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>') : sprintf($user->lang['BBCODE_IS_OFF'], '<a href="' . append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>'),
 			'IMG_STATUS'			=> ($img_status) ? $user->lang['IMAGES_ARE_ON'] : $user->lang['IMAGES_ARE_OFF'],
 			'FLASH_STATUS'			=> ($flash_status) ? $user->lang['FLASH_IS_ON'] : $user->lang['FLASH_IS_OFF'],
 			'SMILIES_STATUS'		=> ($smilies_status) ? $user->lang['SMILIES_ARE_ON'] : $user->lang['SMILIES_ARE_OFF'],
 			'URL_STATUS'			=> ($bbcode_status && $url_status) ? $user->lang['URL_IS_ON'] : $user->lang['URL_IS_OFF'],
 			'POST_DATE'				=> ($article_data['article_time']) ? $user->format_date($article_data['article_time']) : '',
 			'ERROR'					=> (sizeof($error)) ? implode('<br />', $error) : '',
-			'U_PROGRESS_BAR'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=popup&amp;c=$this->cat_id"),
-			'UA_PROGRESS_BAR'		=> addslashes(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=popup&amp;c=$this->cat_id")),
+			'U_PROGRESS_BAR'		=> append_sid("{$phpbb_root_path}kb.$phpEx", "i=popup&amp;c=$this->cat_id"),
+			'UA_PROGRESS_BAR'		=> addslashes(append_sid("{$phpbb_root_path}kb.$phpEx", "i=popup&amp;c=$this->cat_id")),
 		
 			'S_CLOSE_PROGRESS_WINDOW'	=> (isset($_POST['add_file'])) ? true : false,
 			'S_SHOW_ARTICLE_TYPES'		=> $s_article_types,
@@ -2431,7 +2451,7 @@ class knowledge_base
 		$allowed = ($auth->acl_get('u_kb_attach', $this->cat_id) && $config['kb_allow_attachments'] && $form_enctype);
 		
 		// Attachment entry
-		kb_posting_gen_attachment_entry($attachment_data, $filename_data, $allowed, $article_data['cat_id']);
+		kb_posting_gen_attachment_entry($attachment_data, $filename_data, $allowed);
 		
 		// Output page ...
 		$this->page_header($page_title);
@@ -2452,7 +2472,7 @@ class knowledge_base
 		global $db, $template, $user, $auth;
 		global $config, $phpbb_root_path, $phpEx;
 		
-		$this->finclude(array('functions_posting', 'functions_display', 'message_parser'));
+		$this->finclude(array('functions_posting', 'functions_display', 'message_parser'), array('f:generate_smilies', 'f:display_forums', 'c:message_parser'));
 		$user->add_lang(array('posting', 'mcp', 'viewtopic'));
 		
 		$submit		= (isset($_POST['post'])) ? true : false;
@@ -2492,10 +2512,10 @@ class knowledge_base
 				{
 					trigger_error('KB_NO_ARTICLE');
 				}
-				$sql = "SELECT a.*, c.cat_name, c.parent_id, c.left_id, c.right_id
-						FROM " . KB_TABLE . " a, " . KB_CATS_TABLE . " c
-						WHERE article_id = '" . $db->sql_escape($this->article_id) . "'
-						AND a.cat_id = c.cat_id";
+				$sql = 'SELECT a.*, c.cat_name, c.parent_id, c.left_id, c.right_id
+						FROM ' . KB_TABLE . ' a, ' . KB_CATS_TABLE . ' c
+						WHERE article_id = ' . $this->article_id . '
+						AND a.cat_id = c.cat_id';
 				break;
 				
 			case 'edit':
@@ -2506,11 +2526,11 @@ class knowledge_base
 				}
 				
 				$sql = 'SELECT c.*, ca.cat_name, ca.parent_id, ca.left_id, ca.right_id, a.cat_id, a.article_id, a.article_title, a.article_user_id, a.article_status, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_colour
-						FROM ' . KB_COMMENTS_TABLE . ' c, ' . KB_TABLE . ' a, ' . USERS_TABLE . " u, " . KB_CATS_TABLE . " ca
+						FROM ' . KB_COMMENTS_TABLE . ' c, ' . KB_TABLE . ' a, ' . USERS_TABLE . ' u, ' . KB_CATS_TABLE . ' ca
 						WHERE a.article_id = c.article_id
 						AND u.user_id = c.comment_user_id
 						AND ca.cat_id = a.cat_id
-						AND c.comment_id = '" . $db->sql_escape($comment_id) . "'";
+						AND c.comment_id = ' . $comment_id;
 				break;
 			
 			case 'smilies':
@@ -2563,7 +2583,7 @@ class knowledge_base
 		// Check permissions
 		if ($user->data['is_bot'])
 		{
-			redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx"));
+			redirect(append_sid("{$phpbb_root_path}kb.$phpEx"));
 		}
 		
 		// Is the user able to read within this forum?
@@ -2575,7 +2595,7 @@ class knowledge_base
 			}
 			
 			$red_url = ($this->action == 'edit' || $this->action == 'delete') ? "&amp;comment_id=$comment_id" : '';
-			login_box(kb_append_sid($base_url, $base_arg . "&amp;action=$this->action&amp;a=$this->article_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_COMMENT_' . strtoupper($this->action)]);
+			login_box(append_sid($base_url, $base_arg . "&amp;action=$this->action&amp;a=$this->article_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_COMMENT_' . strtoupper($this->action)]);
 		}
 		
 		// Permission to do the action asked?
@@ -2606,7 +2626,7 @@ class knowledge_base
 			}
 		
 			$red_url = ($this->action == 'edit' || $this->action == 'delete') ? "&amp;comment_id=$comment_id" : '';
-			login_box(kb_append_sid($base_url, $base_arg . "action=$this->action&amp;&amp;a=$this->article_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_COMMENT_' . strtoupper($this->action)]);
+			login_box(append_sid($base_url, $base_arg . "&amp;action=$this->action&amp;a=$this->article_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_COMMENT_' . strtoupper($this->action)]);
 		}
 		
 		// Handle delete mode...
@@ -2649,10 +2669,10 @@ class knowledge_base
 		{
 			// Do not change to SELECT *
 			$sql = 'SELECT attach_id, is_orphan, attach_comment, real_filename
-				FROM ' . KB_ATTACHMENTS_TABLE . "
-				WHERE comment_id = '" . $db->sql_escape($comment_id) . "'
+				FROM ' . KB_ATTACHMENTS_TABLE . '
+				WHERE comment_id = ' . $comment_id . '
 				AND is_orphan = 0
-				ORDER BY filetime DESC";
+				ORDER BY filetime DESC';
 			$result = $db->sql_query($sql);
 			$this->attachment_data = array_merge($this->attachment_data, $db->sql_fetchrowset($result));
 			$db->sql_freeresult($result);
@@ -2804,17 +2824,17 @@ class knowledge_base
 					$notify_on = array(NOTIFY_MOD_COMMENT_NOT_GLOBAL);
 					kb_handle_notification($this->article_id, $comment_data['article_title'], $notify_on);
 					
-					$redirect_url = kb_append_sid("{$phpbb_root_path}mcp.{$phpEx}", 'i=kb&amp;hmode=view&amp;a=' . $this->article_id);
+					$redirect_url = append_sid("{$phpbb_root_path}mcp.{$phpEx}", 'i=kb&amp;hmode=view&amp;a=' . $this->article_id);
 					$message = ($this->action == 'edit') ? 'EDITED' : 'ADDED';
 					$message = sprintf($user->lang['KB_COMMENT_' . $message], '<a href="' . $redirect_url . '">', '</a>');
-					$message .= '<br /><br />' . sprintf($user->lang['RETURN_PAGE'], '<a href="' . kb_append_sid($phpbb_root_path . 'mcp.' . $phpEx, 'i=kb') . '">', '</a>');
+					$message .= '<br /><br />' . sprintf($user->lang['RETURN_PAGE'], '<a href="' . append_sid($phpbb_root_path . 'mcp.' . $phpEx, 'i=kb') . '">', '</a>');
 				}
 				else if($module == 'ucp')
 				{
-					$redirect_url = kb_append_sid("{$phpbb_root_path}ucp.{$phpEx}", 'i=kb&amp;mode=articles&amp;ma=view&amp;a=' . $this->article_id);
+					$redirect_url = append_sid("{$phpbb_root_path}ucp.{$phpEx}", 'i=kb&amp;mode=articles&amp;ma=view&amp;a=' . $this->article_id);
 					$message = ($this->action == 'edit') ? 'EDITED' : 'ADDED';
 					$message = sprintf($user->lang['KB_COMMENT_' . $message], '<a href="' . $redirect_url . '">', '</a>');
-					$message .= '<br /><br />' . sprintf($user->lang['RETURN_UCP'], '<a href="' . kb_append_sid($phpbb_root_path . 'ucp.' . $phpEx, 'i=kb') . '">', '</a>');
+					$message .= '<br /><br />' . sprintf($user->lang['RETURN_UCP'], '<a href="' . append_sid($phpbb_root_path . 'ucp.' . $phpEx, 'i=kb') . '">', '</a>');
 				}
 				else
 				{
@@ -2822,10 +2842,10 @@ class knowledge_base
 					$notify_on = ($user->data['user_id'] == $comment_data['article_user_id']) ? array_merge($notify_on, array(NOTIFY_AUTHOR_COMMENT, NOTIFY_COMMENT)) : array_merge($notify_on, array(NOTIFY_COMMENT));
 					kb_handle_notification($this->article_id, $comment_data['article_title'], $notify_on);
 					
-					$redirect_url = kb_append_sid("{$phpbb_root_path}kb.{$phpEx}", 'a=' . $this->article_id);
+					$redirect_url = append_sid("{$phpbb_root_path}kb.{$phpEx}", 'a=' . $this->article_id);
 					$message = ($this->action == 'edit') ? 'EDITED' : 'ADDED';
 					$message = sprintf($user->lang['KB_COMMENT_' . $message], '<a href="' . $redirect_url . '">', '</a>');
-					$message .= '<br /><br />' . sprintf($user->lang['RETURN_KB_ARTICLE'], '<a href="' . kb_append_sid($phpbb_root_path . 'kb.' . $phpEx, 'a=' . $this->article_id) . '">', '</a>') . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . kb_append_sid($phpbb_root_path . 'kb.' . $phpEx) . '">', '</a>');
+					$message .= '<br /><br />' . sprintf($user->lang['RETURN_KB_ARTICLE'], '<a href="' . append_sid($phpbb_root_path . 'kb.' . $phpEx, 'a=' . $this->article_id) . '">', '</a>') . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . append_sid($phpbb_root_path . 'kb.' . $phpEx) . '">', '</a>');
 				}
 				meta_refresh(5, $redirect_url);
 				trigger_error($message);
@@ -2870,7 +2890,7 @@ class knowledge_base
 				$update_count = array();
 				$attachment_data = $this->attachment_data;
 		
-				kb_parse_attachments($preview_message, $attachment_data, $update_count, true, $comment_data['cat_id']);
+				kb_parse_attachments($preview_message, $attachment_data, $update_count, true);
 		
 				foreach ($attachment_data as $i => $attachment)
 				{
@@ -2898,10 +2918,11 @@ class knowledge_base
 		if($this->action == 'add' && $quote)
 		{
 			$sql = 'SELECT comment_title, comment_user_name, comment_text, bbcode_uid
-					FROM ' . KB_COMMENTS_TABLE . "
-					WHERE comment_id = '" . $db->sql_escape($quote) . "'";
+					FROM ' . KB_COMMENTS_TABLE . '
+					WHERE comment_id = ' . $quote;
 			$result = $db->sql_query($sql);
 			$quoted_comment = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
 			
 			$message_parser->message = '[quote="' . $quoted_comment['comment_user_name'] . '"]' . $quoted_comment['comment_text'] . '[/quote]';
 			$message_parser->bbcode_uid = $quoted_comment['bbcode_uid'];
@@ -2927,7 +2948,7 @@ class knowledge_base
 		$sig_checked		= $comment_data['enable_sig'];
 		
 		// Page title & action URL, include session_id for security purpose
-		$s_action = kb_append_sid($base_url, $base_arg . "&amp;action=$this->action&amp;a=$this->article_id", true, $user->session_id);
+		$s_action = append_sid($base_url, $base_arg . "&amp;action=$this->action&amp;a=$this->article_id", true, $user->session_id);
 		$s_action .= ($comment_id) ? "&amp;comment_id=$comment_id" : '';
 		
 		switch ($this->action)
@@ -2958,15 +2979,15 @@ class knowledge_base
 			'ARTICLE_TITLE'			=> $comment_data['comment_title'],
 			'TEXT_MESSAGE'			=> $comment_data['comment_text'],
 			'USERNAME'				=> $comment_data['comment_user_name'],
-			'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($user->lang['BBCODE_IS_ON'], '<a href="' . kb_append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>') : sprintf($user->lang['BBCODE_IS_OFF'], '<a href="' . kb_append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>'),
+			'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($user->lang['BBCODE_IS_ON'], '<a href="' . append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>') : sprintf($user->lang['BBCODE_IS_OFF'], '<a href="' . append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>'),
 			'IMG_STATUS'			=> ($img_status) ? $user->lang['IMAGES_ARE_ON'] : $user->lang['IMAGES_ARE_OFF'],
 			'FLASH_STATUS'			=> ($flash_status) ? $user->lang['FLASH_IS_ON'] : $user->lang['FLASH_IS_OFF'],
 			'SMILIES_STATUS'		=> ($smilies_status) ? $user->lang['SMILIES_ARE_ON'] : $user->lang['SMILIES_ARE_OFF'],
 			'URL_STATUS'			=> ($bbcode_status && $url_status) ? $user->lang['URL_IS_ON'] : $user->lang['URL_IS_OFF'],
 			'POST_DATE'				=> ($comment_data['comment_time']) ? $user->format_date($comment_data['comment_time']) : '',
 			'ERROR'					=> (sizeof($error)) ? implode('<br />', $error) : '',
-			'U_PROGRESS_BAR'		=> kb_append_sid($base_url, $base_arg . "&amp;a=$this->article_id&amp;action=popup"),
-			'UA_PROGRESS_BAR'		=> addslashes(kb_append_sid($base_url, $base_arg . "&amp;a=$this->article_id&amp;action=popup")),
+			'U_PROGRESS_BAR'		=> append_sid($base_url, $base_arg . "&amp;a=$this->article_id&amp;action=popup"),
+			'UA_PROGRESS_BAR'		=> addslashes(append_sid($base_url, $base_arg . "&amp;a=$this->article_id&amp;action=popup")),
 		
 			'S_CLOSE_PROGRESS_WINDOW'	=> (isset($_POST['add_file'])) ? true : false,
 			'S_BBCODE_ALLOWED'			=> $bbcode_status,
@@ -2997,7 +3018,7 @@ class knowledge_base
 		$allowed = ($auth->acl_get('u_kb_attach', $comment_data['cat_id']) && $config['kb_allow_attachments'] && $form_enctype);
 		
 		// Attachment entry
-		kb_posting_gen_attachment_entry($attachment_data, $filename_data, $allowed, $comment_data['cat_id']);
+		kb_posting_gen_attachment_entry($attachment_data, $filename_data, $allowed);
 		
 		generate_kb_nav($page_title, $comment_data);
 		
@@ -3052,9 +3073,9 @@ class knowledge_base
 		else
 		{
 			$sql = "SELECT rating
-					FROM " . KB_RATE_TABLE . "
-					WHERE article_id = '" . $db->sql_escape($this->article_id) ."'
-					AND user_id = {$user->data['user_id']}";
+					FROM " . KB_RATE_TABLE . '
+					WHERE article_id = ' . $this->article_id . '
+					AND user_id = ' . $user->data['user_id'];
 			$result = $db->sql_query($sql);	
 			$has_rated = ($db->sql_affectedrows()) ? true : false;	
 			$db->sql_freeresult($result);
@@ -3085,8 +3106,8 @@ class knowledge_base
 		
 		if(!$config['kb_ajax_rating'])
 		{
-			$redirect_url = kb_append_sid("{$phpbb_root_path}kb.{$phpEx}", 'a=' . $this->article_id);
-			$message = $user->lang['RATED_THANKS'] . '<br /><br />' . sprintf($user->lang['RETURN_KB_ARTICLE'], '<a href="' . kb_append_sid($phpbb_root_path . 'kb.' . $phpEx, 'a=' . $this->article_id) . '">', '</a>') . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . kb_append_sid($phpbb_root_path . 'kb.' . $phpEx) . '">', '</a>');
+			$redirect_url = append_sid("{$phpbb_root_path}kb.{$phpEx}", 'a=' . $this->article_id);
+			$message = $user->lang['RATED_THANKS'] . '<br /><br />' . sprintf($user->lang['RETURN_KB_ARTICLE'], '<a href="' . append_sid($phpbb_root_path . 'kb.' . $phpEx, 'a=' . $this->article_id) . '">', '</a>') . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . append_sid($phpbb_root_path . 'kb.' . $phpEx) . '">', '</a>');
 			meta_refresh(5, $redirect_url);
 			trigger_error($message);
 		}
@@ -3315,7 +3336,7 @@ class knowledge_base
 			$search .= ($edit_time) ? '&amp;etime=1' : '';
 			$search .= '&amp;sort=' . $this->sort;
 			$search .= '&amp;dir=' . strtolower($this->dir);
-			$u_search = kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search' . $search);
+			$u_search = append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search' . $search);
 			
 			$l_search_matches = ($articles_found == 1) ? sprintf($user->lang['FOUND_SEARCH_MATCH'], $articles_found) : sprintf($user->lang['FOUND_SEARCH_MATCHES'], $articles_found);
 			
@@ -3375,7 +3396,7 @@ class knowledge_base
 					'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
 					'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_kb_download', $row['cat_id']) && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 					
-					'U_VIEW_ARTICLE'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $row['article_id'] . "&amp;hilit=$hilit"),
+					'U_VIEW_ARTICLE'			=> kb_append_sid('article', array('id' => $row['article_id'], 'title' => censor_text($row['article_title']), 'extra' => "hilit=$hilit")),
 				));
 			}
 			$db->sql_freeresult($result);
@@ -3497,7 +3518,7 @@ class knowledge_base
 			'S_CAT_OPTIONS'					=> $cat_options,
 			'S_SORT_OPTIONS'				=> $sort_options,
 			'S_TIME_OPTIONS'				=> $time_options,
-			'S_SEARCH_ACTION'				=> kb_append_sid("{$phpbb_root_path}kb.$phpEx"),
+			'S_SEARCH_ACTION'				=> append_sid("{$phpbb_root_path}kb.$phpEx"),
 			'S_HIDDEN_FIELDS'				=> build_hidden_fields(array('i' => 'search')),
 			'S_SEARCH_DESC'					=> ($config['kb_disable_desc']) ? false : true,
 			
@@ -3534,7 +3555,7 @@ class knowledge_base
 		global $db, $user, $template, $config, $cache;
 		global $phpbb_root_path, $phpEx, $auth;
 		
-		$this->finclude('functions_display');
+		$this->finclude('functions_display', 'f:display_forums');
 		$user->add_lang('viewtopic');
 		
 		$sql = 'SELECT article_id, tag_name
@@ -3549,6 +3570,7 @@ class knowledge_base
 			$articles[] = $row['article_id'];
 			$tag_name = $row['tag_name'];
 		}	
+		$db->sql_freeresult($result);
 		$articles_count = count($articles);
 		
 		// Make sure $start is set to the last page if it exceeds the amount
@@ -3638,16 +3660,17 @@ class knowledge_base
 				'ARTICLE_FOLDER_IMG_WIDTH'  => $user->img('topic_read', '', false, '', 'width'),
 				'ARTICLE_FOLDER_IMG_HEIGHT'	=> $user->img('topic_read', '', false, '', 'height'),
 				'ARTICLE_UNAPPROVED'		=> ($row['article_status'] != STATUS_APPROVED && $auth->acl_gets('m_kb_view', 'm_kb_status')) ? true : false,
-				'U_MCP_QUEUE'				=> kb_append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=kb&hmode=status&a=' . $row['article_id']),
+				'U_MCP_QUEUE'				=> append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=kb&hmode=status&a=' . $row['article_id']),
 	
 				'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
 				'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
 				'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
 				'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_kb_download', $row['cat_id']) && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 				
-				'U_VIEW_ARTICLE'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $row['article_id']),
+				'U_VIEW_ARTICLE'			=> kb_append_sid('article', array('id' => $row['article_id'], 'title' => censor_text($row['article_title']))),
 			));
 		}
+		$db->sql_freeresult($result);
 		
 		$sort_direction = make_direction_select($this->dir);
 		$sort_options = make_sort_select('articles', $this->sort);
@@ -3656,15 +3679,16 @@ class knowledge_base
 			'L_AUTHOR'			=> $user->lang['ARTICLE_AUTHOR'],
 			'L_ARTICLES_LC' 	=> utf8_strtolower($user->lang['ARTICLES']),
 			'S_HAS_SUBCATS' 	=> false,
-			'PAGINATION'		=> generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "t=$this->tag" . ((strlen($this->sort)) ? "&amp;sort=$this->sort" : '')), $articles_count, $config['kb_articles_per_page'], $this->start),
+			'PAGINATION'		=> generate_pagination(kb_append_sid('tag', array('id' => $this->tag, 'title' => $this->tag, 'extra' => strlen($this->sort) ? "sort=$this->sort" : '')), $articles_count, $config['kb_articles_per_page'], $this->start),
 			'PAGE_NUMBER'		=> on_page($articles_count, $config['kb_articles_per_page'], $this->start),
 			'TOTAL_ARTICLES' 	=> $articles_count,					
 			'S_NO_TOPIC'		=> false,
 			'S_IN_MAIN'			=> true,
 			'S_SORT_OPTIONS'	=> $sort_options,
 			'S_SORT_DIRECTION'	=> $sort_direction,
-			'S_ARTICLE_ACTION'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 't=' . $this->tag),
+			'S_ARTICLE_ACTION'	=> append_sid("{$phpbb_root_path}kb.$phpEx", 't=' . $this->tag),
 			'UNAPPROVED_IMG'	=> $user->img('icon_topic_unapproved', 'ARTICLE_UNAPPROVED'),
+			'IN_TAG'			=> true,
 		));
 		
 		// Build Navigation Links
@@ -3689,7 +3713,7 @@ class knowledge_base
 		global $db, $user, $template, $cache;
 		global $phpbb_root_path, $phpEx, $auth, $config;
 		
-		$this->finclude('functions_display');
+		$this->finclude('functions_display', 'f:display_forums');
 		
 		$edit_id = request_var('e', 0);
 		$diff_from = request_var('df', 0);
@@ -3744,7 +3768,7 @@ class knowledge_base
 					trigger_error('KB_NO_PERM_HISTORY');
 				}
 				
-				login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $this->article_id . '&amp;e=' . $edit_id), $user->lang['KB_LOGIN_EXPLAIN_HISTORY']);
+				login_box(append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $this->article_id . '&amp;e=' . $edit_id), $user->lang['KB_LOGIN_EXPLAIN_HISTORY']);
 			}
 			
 			// Process article tags
@@ -3763,7 +3787,7 @@ class knowledge_base
 					}
 	
 					$lc_tag = utf8_strtolower($tag);
-					$parsed_tags_container[] = '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", "t=$lc_tag") . '">' . $tag . '</a>';
+					$parsed_tags_container[] = '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "t=$lc_tag") . '">' . $tag . '</a>';
 				}
 				
 				$article_tags = implode(', ', $parsed_tags_container);
@@ -3780,10 +3804,7 @@ class knowledge_base
 			// Instantiate BBCode if need be
 			if ($bbcode_bitfield !== '')
 			{
-				if(!class_exists('bbcode'))
-				{
-					$this->finclude('bbcode');
-				}
+				$this->finclude('bbcode', 'c:bbcode');
 				$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 			}
 			
@@ -3923,15 +3944,11 @@ class knowledge_base
 					trigger_error('KB_NO_PERM_HISTORY');
 				}
 				
-				login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $this->article_id . '&amp;df=' . $diff_from . '&amp;dt=' . $diff_to), $user->lang['KB_LOGIN_EXPLAIN_HISTORY']);
+				login_box(append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $this->article_id . '&amp;df=' . $diff_from . '&amp;dt=' . $diff_to), $user->lang['KB_LOGIN_EXPLAIN_HISTORY']);
 			}
 			
 			$diff = array();
-			if($diff_from === -1)
-			{
-				
-			}
-			else
+			if($diff_from !== -1)
 			{
 				$sql = $db->sql_build_query('SELECT', array(
 					'SELECT'	=> 'e.edit_id, e.edit_article_title, e.edit_article_desc, e.edit_article_text, e.edit_bbcode_uid',
@@ -4030,7 +4047,7 @@ class knowledge_base
 					trigger_error('KB_NO_PERM_HISTORY');
 				}
 				
-				login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $this->article_id), $user->lang['KB_LOGIN_EXPLAIN_HISTORY']);
+				login_box(append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $this->article_id), $user->lang['KB_LOGIN_EXPLAIN_HISTORY']);
 			}
 			
 			$sql = $db->sql_build_query('SELECT', array(
@@ -4080,7 +4097,7 @@ class knowledge_base
 				'EDIT_TIME'			=> $user->format_date($data['article_last_edit_time'], false, true),
 				'EDIT_ID'			=> 'a_' . $this->article_id,
 				'EDIT_STATUS'		=> $user->lang[$article_status_ary[$data['article_status']]],
-				'U_EDIT'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'view_rev=true&amp;a=' . $this->article_id),
+				'U_EDIT'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'view_rev=true&amp;a=' . $this->article_id),
 				
 				// Numbers for the checkbox
 				'NUM'				=> $num,
@@ -4106,7 +4123,7 @@ class knowledge_base
 					'EDIT_TIME'			=> $user->format_date($edit['edit_time'], false, true),
 					'EDIT_ID'			=> $edit['edit_id'],
 					'EDIT_STATUS'		=> $user->lang[$article_status_ary[$edit['edit_article_status']]],
-					'U_EDIT'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;e=' . $edit['edit_id']),
+					'U_EDIT'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;e=' . $edit['edit_id']),
 					
 					// Numbers for the checkbox
 					'NUM'				=> $num,
@@ -4124,7 +4141,7 @@ class knowledge_base
 				'L_STATUS'			=> $user->lang['ARTICLE_STATUS'],
 				
 				// Form stuff
-				'U_DIFF_ACTION'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx"),
+				'U_DIFF_ACTION'		=> append_sid("{$phpbb_root_path}kb.$phpEx"),
 				'ARTICLE_ID'		=> $this->article_id, 
 				'L_VIEW_DIFF'		=> $user->lang['KB_VIEW_DIFF'],
 			));
@@ -4172,10 +4189,7 @@ class knowledge_base
 			$bbcode_bitfield = $request_data['bbcode_bitfield'];
 			if ($bbcode_bitfield !== '')
 			{
-				if(!class_exists('bbcode'))
-				{
-					$this->finclude('bbcode');
-				}
+				$this->finclude('bbcode', 'c:bbcode');
 				$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 			}
 			
@@ -4213,7 +4227,7 @@ class knowledge_base
 					$article_data = $db->sql_fetchrow($result);
 					$db->sql_freeresult($result);
 					
-					$explain = sprintf($user->lang['STATUS_ADDED_EXPLAIN'], get_username_string('full', $article_data['article_user_id'], $article_data['article_user_name'], $article_data['article_user_color'], $article_data['article_user_name']), '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $article_data['article_id']) . '">' . censor_text($article_data['article_title']) . '</a>');
+					$explain = sprintf($user->lang['STATUS_ADDED_EXPLAIN'], get_username_string('full', $article_data['article_user_id'], $article_data['article_user_name'], $article_data['article_user_color'], $article_data['article_user_name']), '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $article_data['article_id']) . '">' . censor_text($article_data['article_title']) . '</a>');
 				break;
 				
 				// Has been accepted by someone, retrieve userdata
@@ -4238,7 +4252,8 @@ class knowledge_base
 				case STATUS_REQUEST:
 				default:
 					$title = '[' . $user->lang['STATUS_REQUEST'] . '] ' . $request_data['request_title'];
-					$explain = sprintf($user->lang['STATUS_REQUEST_EXPLAIN'], '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=accept&amp;r=' . $request_id) . '">', '</a>');
+					$take_on = (($user->data['is_registered']) ? sprintf($user->lang['STATUS_REQUEST_TAKE_ON'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=accept&amp;r=' . $request_id) . '">', '</a>'): '');
+					$explain = $user->lang['STATUS_REQUEST_EXPLAIN'] . ' ' . $take_on;
 				break;
 			}
 			
@@ -4253,8 +4268,8 @@ class knowledge_base
 				'POST_DATE'			=> $user->format_date($request_data['request_time']),
 				'S_IN_MAIN'			=> true,
 				
-				'U_EDIT'			=> ($s_mod) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=edit&amp;r=' . $request_id) : '',
-				'U_DELETE'			=> ($s_mod) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=delete&amp;r=' . $request_id) : '',
+				'U_EDIT'			=> ($s_mod) ? append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=edit&amp;r=' . $request_id) : '',
+				'U_DELETE'			=> ($s_mod) ? append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=delete&amp;r=' . $request_id) : '',
 			));
 		}
 		else
@@ -4288,14 +4303,13 @@ class knowledge_base
 			trigger_error('REQUEST_NOT_ENABLED');
 		}
 		
-		$this->finclude(array('functions_posting', 'functions_display', 'message_parser'));
+		$this->finclude(array('functions_posting', 'functions_display', 'message_parser'), array('f:generate_smilies', 'f:display_forums', 'c:message_parser'));
 		$user->add_lang(array('posting', 'mcp', 'viewtopic'));
 		
-		$submit		= (isset($_POST['post'])) ? true : false;
-		
-		$error = array();
-		$current_time = time();
-		$request_id = request_var('r', 0);
+		$submit			= (isset($_POST['post'])) ? true : false;
+		$error 			= array();
+		$current_time 	= time();
+		$request_id 	= request_var('r', 0);
 		
 		// We need to obtain basic category and post info
 		// This function also passes the user unto the view and alterations functions
@@ -4307,11 +4321,11 @@ class knowledge_base
 			break;
 			
 			case 'accept':
-				if(!$request_id)
+				if(!$request_id || !$user->lang['is_registered'])
 				{
 					trigger_error('KB_NO_REQUEST');
 				}
-			
+				
 				if(confirm_box(true))
 				{
 					// Accept it
@@ -4320,8 +4334,8 @@ class knowledge_base
 							WHERE request_id = ' . $request_id;
 					$db->sql_query($sql);
 					
-					$meta_info = kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=view&amp;r=' . $request_id);
-					$message = $user->lang['REQUEST_ACCEPTED'] . '<br /><br />' . sprintf($user->lang['RETURN_REQ'], '<a href="' . $meta_info . '">', '</a>') . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx") . '">', '</a>');
+					$meta_info = append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=view&amp;r=' . $request_id);
+					$message = $user->lang['REQUEST_ACCEPTED'] . '<br /><br />' . sprintf($user->lang['RETURN_REQ'], '<a href="' . $meta_info . '">', '</a>') . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx") . '">', '</a>');
 					meta_refresh(5, $meta_info);
 					trigger_error($message);
 				}
@@ -4334,7 +4348,7 @@ class knowledge_base
 					confirm_box(false, 'ACCEPT_REQUEST', $s_hidden_fields);
 				}
 				
-				redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=view&amp;r=$request_id"));
+				redirect(append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=view&amp;r=$request_id"));
 			break;
 			
 			case 'add':
@@ -4379,7 +4393,7 @@ class knowledge_base
 		// Check permissions
 		if ($user->data['is_bot'])
 		{
-			redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx"));
+			redirect(append_sid("{$phpbb_root_path}kb.$phpEx"));
 		}
 		
 		// Permission to do the action asked?
@@ -4387,7 +4401,7 @@ class knowledge_base
 		switch ($this->action)
 		{
 			case 'add':
-				if ($user->data['is_registered'] && $auth->acl_get('u_kb_request'))
+				if ($auth->acl_get('u_kb_request'))
 				{
 					$is_authed = true;
 				}
@@ -4410,7 +4424,7 @@ class knowledge_base
 			}
 		
 			$red_url = ($this->action == 'edit' || $this->action == 'delete') ? "&amp;r=$request_id" : '';
-			login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=$this->action" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_REQUEST_' . strtoupper($this->action)]);
+			login_box(append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=$this->action" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_REQUEST_' . strtoupper($this->action)]);
 		}
 		
 		// Handle delete mode...
@@ -4522,7 +4536,7 @@ class knowledge_base
 					'message_md5'			=> (string) $message_md5,
 					'request_status'		=> (int) ($this->action == 'edit') ? $request_data['request_status'] : 0,
 					'request_user_id'		=> (int) ($this->action == 'edit') ? $request_data['request_user_id'] : $user->data['user_id'],
-					'request_user_name'		=> ($this->action == 'edit') ? $request_data['username'] : $user->data['username'],
+					'request_user_name'		=> ($this->action == 'edit') ? $request_data['username'] : ($user->data['is_registered'] ? $user->data['username'] : utf8_normalize_nfc(request_var('guest_username', $user->data['username'], true))),
 					'request_user_color'	=> ($this->action == 'edit') ? $request_data['user_colour'] : $user->data['user_colour'],
 					'request_time'			=> $current_time,
 					'bbcode_bitfield'		=> $message_parser->bbcode_bitfield,
@@ -4531,10 +4545,10 @@ class knowledge_base
 	
 				$request_id = request_submit($this->action, $data, $update_message);
 				
-				$redirect_url = kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=view&amp;r=' . $request_id);
+				$redirect_url = append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=view&amp;r=' . $request_id);
 				$message = ($this->action == 'edit') ? 'EDITED' : 'ADDED';
 				$message = sprintf($user->lang['KB_REQUEST_' . $message], '<a href="' . $redirect_url . '">', '</a>');
-				$message .= '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . kb_append_sid($phpbb_root_path . 'kb.' . $phpEx) . '">', '</a>');
+				$message .= '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . append_sid($phpbb_root_path . 'kb.' . $phpEx) . '">', '</a>');
 				meta_refresh(5, $redirect_url);
 				trigger_error($message);
 			}
@@ -4548,7 +4562,7 @@ class knowledge_base
 		kb_generate_smilies('inline');
 		
 		// Page title & action URL, include session_id for security purpose
-		$s_action = kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=$this->action", true, $user->session_id);
+		$s_action = append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=$this->action", true, $user->session_id);
 		$s_action .= ($request_id) ? "&amp;r=$request_id" : '';
 		
 		switch ($this->action)
@@ -4576,7 +4590,7 @@ class knowledge_base
 
 			'REQUEST_TITLE'			=> $request_data['request_title'],
 			'TEXT_MESSAGE'			=> $request_data['request_text'],
-			'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($user->lang['BBCODE_IS_ON'], '<a href="' . kb_append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>') : sprintf($user->lang['BBCODE_IS_OFF'], '<a href="' . kb_append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>'),
+			'BBCODE_STATUS'			=> ($bbcode_status) ? sprintf($user->lang['BBCODE_IS_ON'], '<a href="' . append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>') : sprintf($user->lang['BBCODE_IS_OFF'], '<a href="' . append_sid("{$phpbb_root_path}faq.$phpEx", 'mode=bbcode') . '">', '</a>'),
 			'IMG_STATUS'			=> ($img_status) ? $user->lang['IMAGES_ARE_ON'] : $user->lang['IMAGES_ARE_OFF'],
 			'FLASH_STATUS'			=> $user->lang['FLASH_IS_OFF'],
 			'SMILIES_STATUS'		=> ($smilies_status) ? $user->lang['SMILIES_ARE_ON'] : $user->lang['SMILIES_ARE_OFF'],
@@ -4593,6 +4607,7 @@ class knowledge_base
 			'S_BBCODE_IMG'			=> $img_status,
 			'S_BBCODE_URL'			=> $url_status,
 			'S_BBCODE_FLASH'		=> false,
+			'S_SHOW_USERNAME_FIELD'	=> (!$user->data['is_registered'] && $this->action == 'add') ? true : false,
 		));
 		
 		// Build custom bbcodes array
@@ -4631,20 +4646,21 @@ class knowledge_base
 		{
 			trigger_error('NO_ARTICLE');
 		}
+		$db->sql_freeresult($result);
 		
 		$template->assign_vars(array(
 			'MESSAGE'			=> sprintf($user->lang['KB_NOTIFY_POPUP_EXPLAIN'], $article_data['article_title']),
 			'S_NOT_LOGGED_IN'	=> false,
-			'CLICK_TO_VIEW'		=> sprintf($user->lang['CLICK_VIEW_ARTICLE'], '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id) . '" onclick="jump_to_inbox(this.href); return false;">', '</a>'),
-			'U_INBOX'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id),
-			'UA_INBOX'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id, false))
+			'CLICK_TO_VIEW'		=> sprintf($user->lang['CLICK_VIEW_ARTICLE'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id) . '" onclick="jump_to_inbox(this.href); return false;">', '</a>'),
+			'U_INBOX'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id),
+			'UA_INBOX'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $this->article_id, false))
 		);
 		
 		// Clear popup notification from db
-		$sql = 'UPDATE ' . KB_TRACK_TABLE . "
+		$sql = 'UPDATE ' . KB_TRACK_TABLE . '
 				SET subscribed = 1
-				WHERE user_id = {$user->data['user_id']}
-				AND article_id = $this->article_id";
+				WHERE user_id = ' . $user->data['user_id'] . '
+				AND article_id = ' . $this->article_id;
 		$db->sql_query($sql);
 		
 		$this->page_header($user->lang['KB_NOTIFY_POPUP']);
@@ -4751,7 +4767,7 @@ class knowledge_base
 			// Perform actions on temporary attachments
 			if ($delete_file)
 			{
-				$this->finclude('functions_admin', true);
+				$this->finclude('functions_admin', 'f:phpbb_unlink');
 
 				$index = array_keys(request_var('delete_file', array(0 => 0)));
 				$index = (!empty($index)) ? $index[0] : false;

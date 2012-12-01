@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: mcp_kb.php 366 2009-11-14 11:51:09Z softphp $
+* @version $Id: mcp_kb.php 405 2009-12-14 16:27:17Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -41,6 +41,9 @@ class mcp_kb
 		include($phpbb_root_path . 'includes/functions_kb.' . $phpEx);
 		include($phpbb_root_path . 'includes/functions_plugins_kb.' . $phpEx);
 		include($phpbb_root_path . 'includes/kb.' . $phpEx);
+		include($phpbb_root_path . 'includes/kb_auth.' . $phpEx);
+		$kb_auth = new kb_auth;
+		$kb_auth->acl($user->data, $auth);
 
 		$submit = (isset($_POST['submit'])) ? true : false;
 		$kb = new knowledge_base(0, false);

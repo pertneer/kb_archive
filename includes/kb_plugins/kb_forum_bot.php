@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_forum_bot.php 370 2009-11-14 14:49:36Z tom.martin60@btinternet.com $
+* @version $Id: kb_forum_bot.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -32,9 +32,9 @@ if (defined('IN_KB_PLUGIN'))
 	$acp_options['kb_forum_bot_message'] 		= array('lang' => 'ARTICLE_POST_BOT_MSG',		'validate' => 'string',	'type' => 'textarea:10:12', 'explain' 	=> true);
 		
 	$details = array(
-		'PLUGIN_NAME'			=> 'Knowledge Base Forum Bot',
-		'PLUGIN_DESC'			=> 'Posts a new topic in a selected forum, when a article is added',
-		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
+		'PLUGIN_NAME'			=> 'PLUGIN_BOT',
+		'PLUGIN_DESC'			=> 'PLUGIN_BOT_DESC',
+		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.0',
 		'PLUGIN_MENU'			=> NO_MENU,
 		'PLUGIN_PAGE_PERM'		=> array('add'),
@@ -158,8 +158,8 @@ function change_auth($user_id, $mode = 'replace', $data = false)
 			);
 
 			$sql = 'SELECT *
-				FROM ' . USERS_TABLE . "
-				WHERE user_id = '" . $db->sql_escape($user_id) . "'";
+				FROM ' . USERS_TABLE . '
+				WHERE user_id = ' . (int) $user_id;
 			$result	= $db->sql_query($sql);
 			$row = $db->sql_fetchrow($result);
 			$row['is_registered'] = true;
@@ -200,7 +200,7 @@ function post_new_article($data)
 	}
 	
 	$vars = array(
-		'{AUTHOR}'		=> '[url=' . generate_board_url() . '/memberlist.php?mode=viewprofile&u=' . $data['article_user_id'] . '][color=#' . $data['article_user_color'] . ']' . $data['article_user_name'] . '[/color][/url]',
+		'{AUTHOR}'		=> '[url=' . generate_board_url() . '/memberlist.' . $phpEx . '?mode=viewprofile&u=' . $data['article_user_id'] . '][color=#' . $data['article_user_color'] . ']' . $data['article_user_name'] . '[/color][/url]',
 		'{TITLE}'		=> $data['article_title'],
 		'{DESC}'		=> $data['article_desc'],
 		'{TIME}'		=> $user->format_date($data['article_time']),
@@ -907,18 +907,18 @@ function kb_submit_post($mode, $subject, $username, $topic_type, &$poll, &$data,
 					$sql = 'SELECT MAX(topic_last_post_id) as last_post_id
 						FROM ' . TOPICS_TABLE . '
 						WHERE forum_id = ' . (int) $data['forum_id'] . '
-							AND topic_approved = 1';
+						AND topic_approved = 1';
 					$result = $db->sql_query($sql);
-					$row = $db->sql_fetchrow($result);
+					$last_post_id = (int) $db->sql_fetchfield('last_post_id', $result);
 					$db->sql_freeresult($result);
 
 					// any posts left in this forum?
-					if (!empty($row['last_post_id']))
+					if (!empty($last_post_id))
 					{
 						$sql = 'SELECT p.post_id, p.post_subject, p.post_time, p.poster_id, p.post_username, u.user_id, u.username, u.user_colour
 							FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 							WHERE p.poster_id = u.user_id
-								AND p.post_id = ' . (int) $row['last_post_id'];
+								AND p.post_id = ' . $last_post_id;
 						$result = $db->sql_query($sql);
 						$row = $db->sql_fetchrow($result);
 						$db->sql_freeresult($result);
@@ -952,28 +952,28 @@ function kb_submit_post($mode, $subject, $username, $topic_type, &$poll, &$data,
 			FROM ' . FORUMS_TABLE . '
 			WHERE forum_id = ' . (int) $data['forum_id'];
 		$result = $db->sql_query($sql);
-		$forum_row = $db->sql_fetchrow($result);
+		$forum_last_post_id = (int) $db->sql_fetchfield('forum_last_post_id', $result);
 		$db->sql_freeresult($result);
 
 		// we made a topic global, go get new data
-		if ($topic_row['topic_type'] != POST_GLOBAL && $topic_type == POST_GLOBAL && $forum_row['forum_last_post_id'] == $topic_row['topic_last_post_id'])
+		if ($topic_row['topic_type'] != POST_GLOBAL && $topic_type == POST_GLOBAL && $forum_last_post_id == $topic_row['topic_last_post_id'])
 		{
 			// we need a fresh change of socks, everything has become invalidated
 			$sql = 'SELECT MAX(topic_last_post_id) as last_post_id
 				FROM ' . TOPICS_TABLE . '
 				WHERE forum_id = ' . (int) $data['forum_id'] . '
-					AND topic_approved = 1';
+				AND topic_approved = 1';
 			$result = $db->sql_query($sql);
-			$row = $db->sql_fetchrow($result);
+			$last_post_id = (int) $db->sql_fetchfield('last_post_id', $result);
 			$db->sql_freeresult($result);
 
 			// any posts left in this forum?
-			if (!empty($row['last_post_id']))
+			if (!empty($last_post_id))
 			{
 				$sql = 'SELECT p.post_id, p.post_subject, p.post_time, p.poster_id, p.post_username, u.user_id, u.username, u.user_colour
 					FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 					WHERE p.poster_id = u.user_id
-						AND p.post_id = ' . (int) $row['last_post_id'];
+						AND p.post_id = ' . $last_post_id;
 				$result = $db->sql_query($sql);
 				$row = $db->sql_fetchrow($result);
 				$db->sql_freeresult($result);
@@ -997,7 +997,7 @@ function kb_submit_post($mode, $subject, $username, $topic_type, &$poll, &$data,
 				$sql_data[FORUMS_TABLE]['stat'][] = "forum_last_poster_colour = ''";
 			}
 		}
-		else if ($topic_row['topic_type'] == POST_GLOBAL && $topic_type != POST_GLOBAL && $forum_row['forum_last_post_id'] < $topic_row['topic_last_post_id'])
+		else if ($topic_row['topic_type'] == POST_GLOBAL && $topic_type != POST_GLOBAL && $forum_last_post_id < $topic_row['topic_last_post_id'])
 		{
 			// this post has a higher id, it is newer
 			$sql = 'SELECT p.post_id, p.post_subject, p.post_time, p.poster_id, p.post_username, u.user_id, u.username, u.user_colour
@@ -1052,16 +1052,16 @@ function kb_submit_post($mode, $subject, $username, $topic_type, &$poll, &$data,
 			WHERE topic_id = ' . (int) $data['topic_id'] . '
 				AND post_approved = 1';
 		$result = $db->sql_query($sql);
-		$row = $db->sql_fetchrow($result);
+		$last_post_id = (int) $db->sql_fetchfield('last_post_id', $result);
 		$db->sql_freeresult($result);
 
 		// any posts left in this forum?
-		if (!empty($row['last_post_id']))
+		if (!empty($last_post_id))
 		{
 			$sql = 'SELECT p.post_id, p.post_subject, p.post_time, p.poster_id, p.post_username, u.user_id, u.username, u.user_colour
 				FROM ' . POSTS_TABLE . ' p, ' . USERS_TABLE . ' u
 				WHERE p.poster_id = u.user_id
-					AND p.post_id = ' . (int) $row['last_post_id'];
+					AND p.post_id = ' . $last_post_id;
 			$result = $db->sql_query($sql);
 			$row = $db->sql_fetchrow($result);
 			$db->sql_freeresult($result);

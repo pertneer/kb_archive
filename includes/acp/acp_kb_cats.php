@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: acp_kb_cats.php 386 2009-11-19 18:02:23Z softphp $
+* @version $Id: acp_kb_cats.php 418 2010-01-13 14:12:50Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -87,7 +87,7 @@ class acp_kb_cats
 			
 				case 'edit':
 					$cat_data = array(
-						'cat_id'		=>	$cat_id
+						'cat_id'		=>	(int) $cat_id,
 					);
 
 				// No break here
@@ -134,14 +134,12 @@ class acp_kb_cats
 							if ($action == 'edit')
 							{
 								// KB BEGIN
-								$sql = 'DELETE FROM ' . ACL_USERS_TABLE . '
-									WHERE forum_id = ' . (int) $cat_data['cat_id'] . '
-									AND kb_auth = 1';
+								$sql = 'DELETE FROM ' . KB_ACL_USERS_TABLE . '
+									WHERE forum_id = ' . $cat_data['cat_id'];
 								$db->sql_query($sql);
 
-								$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '
-									WHERE forum_id = ' . (int) $cat_data['cat_id'] . '
-									AND kb_auth = 1';
+								$sql = 'DELETE FROM ' . KB_ACL_GROUPS_TABLE . '
+									WHERE forum_id = ' . $cat_data['cat_id'];
 								$db->sql_query($sql);
 							}
 
@@ -151,9 +149,8 @@ class acp_kb_cats
 
 							// Copy permisisons from/to the acl users table (only forum_id gets changed)
 							$sql = 'SELECT user_id, auth_option_id, auth_role_id, auth_setting
-								FROM ' . ACL_USERS_TABLE . '
-								WHERE forum_id = ' . $cat_perm_from . '
-								AND kb_auth = 1';
+								FROM ' . KB_ACL_USERS_TABLE . '
+								WHERE forum_id = ' . $cat_perm_from;
 							$result = $db->sql_query($sql);
 
 							$users_sql_ary = array();
@@ -165,16 +162,14 @@ class acp_kb_cats
 									'auth_option_id'	=> (int) $row['auth_option_id'],
 									'auth_role_id'		=> (int) $row['auth_role_id'],
 									'auth_setting'		=> (int) $row['auth_setting'],
-									'kb_auth'			=> (int) 1,
 								);
 							}
 							$db->sql_freeresult($result);
 
 							// Copy permisisons from/to the acl groups table (only forum_id gets changed)
 							$sql = 'SELECT group_id, auth_option_id, auth_role_id, auth_setting
-								FROM ' . ACL_GROUPS_TABLE . '
-								WHERE forum_id = ' . $cat_perm_from . '
-								AND kb_auth = 1';
+								FROM ' . KB_ACL_GROUPS_TABLE . '
+								WHERE forum_id = ' . $cat_perm_from;
 							$result = $db->sql_query($sql);
 
 							$groups_sql_ary = array();
@@ -186,14 +181,13 @@ class acp_kb_cats
 									'auth_option_id'	=> (int) $row['auth_option_id'],
 									'auth_role_id'		=> (int) $row['auth_role_id'],
 									'auth_setting'		=> (int) $row['auth_setting'],
-									'kb_auth'			=> (int) 1,
 								);
 							}
 							$db->sql_freeresult($result);
 
 							// Now insert the data
-							$db->sql_multi_insert(ACL_USERS_TABLE, $users_sql_ary);
-							$db->sql_multi_insert(ACL_GROUPS_TABLE, $groups_sql_ary);
+							$db->sql_multi_insert(KB_ACL_USERS_TABLE, $users_sql_ary);
+							$db->sql_multi_insert(KB_ACL_GROUPS_TABLE, $groups_sql_ary);
 						}
 						
 						$auth->acl_clear_prefetch();
@@ -802,14 +796,12 @@ class acp_kb_cats
 			$db->sql_query($sql);
 			
 			// Delete auth stuff aswell
-			$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
-					WHERE " . $db->sql_in_set('forum_id', $cat_ids) . " 
-					AND kb_auth = 1";
+			$sql = 'DELETE FROM ' . KB_ACL_GROUPS_TABLE . "
+					WHERE " . $db->sql_in_set('forum_id', $cat_ids);
 			$db->sql_query($sql);
 
-			$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
-					WHERE " . $db->sql_in_set('forum_id', $cat_ids) . " 
-					AND kb_auth = 1";
+			$sql = 'DELETE FROM ' . KB_ACL_USERS_TABLE . "
+					WHERE " . $db->sql_in_set('forum_id', $cat_ids);
 			$db->sql_query($sql);
 			
 			set_config('kb_total_cats', $config['kb_total_cats'] - count($cat_ids));
@@ -868,14 +860,12 @@ class acp_kb_cats
 					$cache->destroy('config');
 					
 					// Auth entries
-					$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
-							WHERE forum_id = $cat_id
-							AND kb_auth = 1";
+					$sql = 'DELETE FROM ' . KB_ACL_GROUPS_TABLE . '
+							WHERE forum_id = ' . $cat_id;
 					$db->sql_query($sql);
 					
-					$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
-							WHERE forum_id = $cat_id
-							AND kb_auth = 1";
+					$sql = 'DELETE FROM ' . KB_ACL_USERS_TABLE . '
+							WHERE forum_id = ' . $cat_id;
 					$db->sql_query($sql);
 				}
 			}
@@ -895,14 +885,12 @@ class acp_kb_cats
 			set_config('kb_total_cats', $config['kb_total_cats'] - 1);
 			$cache->destroy('config');
 			
-			$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
-					WHERE forum_id = $cat_id
-					AND kb_auth = 1";
+			$sql = 'DELETE FROM ' . KB_ACL_GROUPS_TABLE . '
+					WHERE forum_id = ' . $cat_id;
 			$db->sql_query($sql);
 
-			$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
-					WHERE forum_id = $cat_id
-					AND kb_auth = 1";
+			$sql = 'DELETE FROM ' . KB_ACL_USERS_TABLE . '
+					WHERE forum_id = ' . $cat_id;
 			$db->sql_query($sql);
 		}
 
@@ -959,7 +947,7 @@ class acp_kb_cats
 		// Retrieve all articles in category
 		$sql = 'SELECT article_id
 				FROM ' . KB_TABLE . ' 
-				WHERE cat_id = ' . $db->sql_escape($from_id);
+				WHERE cat_id = ' . $from_id;
 		$result = $db->sql_query($sql);
 		while($row = $db->sql_fetchrow($result))
 		{
@@ -970,14 +958,14 @@ class acp_kb_cats
 		
 		// Update article table
 		$sql = 'UPDATE ' . KB_TABLE . '
-				SET cat_id = ' . $db->sql_escape($to_id) . '
+				SET cat_id = ' . $to_id . '
 				WHERE ' . $db->sql_in_set('article_id', $article_ids);
 		$db->sql_query($sql);
 		
 		// Update count
 		$sql = 'UPDATE ' . KB_CATS_TABLE . "
 				SET cat_articles = cat_articles + $article_count
-				WHERE cat_id = " . $db->sql_escape($to_id);
+				WHERE cat_id = " . (int) $to_id;
 		$db->sql_query($sql);
 		
 		return $errors;
@@ -995,7 +983,7 @@ class acp_kb_cats
 		// Retrieve all articles in category
 		$sql = 'SELECT article_id
 				FROM ' . KB_TABLE . ' 
-				WHERE cat_id = ' . $db->sql_escape($cat_id);
+				WHERE cat_id = ' . $cat_id;
 		$result = $db->sql_query($sql);
 		while($row = $db->sql_fetchrow($result))
 		{
@@ -1148,10 +1136,10 @@ class acp_kb_cats
 					FROM ' . KB_CATS_TABLE . '
 					WHERE ' . $db->sql_in_set('cat_id', $moved_ids, true);
 			$result = $db->sql_query($sql);
-			$row = $db->sql_fetchrow($result);
+			$right_id = $db->sql_fetchfield('right_id', $result);
 			$db->sql_freeresult($result);
 
-			$diff = '+ ' . ($row['right_id'] - $from_data['left_id'] + 1);
+			$diff = '+ ' . ($right_id - $from_data['left_id'] + 1);
 		}
 
 		$sql = 'UPDATE ' . KB_CATS_TABLE . "

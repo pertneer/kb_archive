@@ -9,6 +9,13 @@
 	<fieldset class="fields1">
 	<!-- IF ERROR --><p class="error">{ERROR}</p><!-- ENDIF -->
 
+	<!-- IF S_SHOW_USERNAME_FIELD -->
+	<dl style="clear: left;">
+		<dt><label for="guest_username">{L_USERNAME}:</label></dt>
+		<dd><input type="text" tabindex="1" name="guest_username" id="guest_username" size="25" value="{USERNAME}" class="inputbox" /></dd>
+	</dl>
+	<!-- ENDIF -->
+		
 	<!-- IF S_POST_ACTION -->
 	<dl style="clear: left;">
 		<dt><label for="title">{L_REQUEST_TITLE}:</label></dt>

@@ -4,7 +4,7 @@
 	
 <!-- IF S_VERSION_CHECK -->
 
-	<h1>{L_VERSION_CHECK}</h1>
+	<h1>{L_ACP_KB_HEALTH_CHECK}</h1>
 
 	<p>{L_VERSION_CHECK_EXPLAIN}</p>
 
@@ -19,7 +19,7 @@
 	<!-- ENDIF -->
 
 	<fieldset>
-		<legend></legend>
+		<legend>{L_VERSION_CHECK}</legend>
 	<dl>
 		<dt><label>{L_CURRENT_VERSION}</label></dt>
 		<dd><strong>{CURRENT_VERSION}</strong></dd>
@@ -34,9 +34,21 @@
 		<fieldset>
 			<legend>{L_KB_MANAGEMENT}</legend>
 			<dl>
-				<dt><label for="uninstall">{L_UNINSTALL}:</label></dt>
+				<dt><label for="uninstall">{L_UNINSTALL}:</label><br /><span>{L_UNINSTALL_CONFIRM}</span></dt>
 				<dd>					
-					<input class="button1" type="submit" id="submit" name="uninstall" value="{L_RUN_NOW}" />						
+					<input class="button1" type="submit" id="uninstall" name="uninstall" value="{L_RUN_NOW}" />						
+				</dd>
+			</dl>
+			<dl>
+				<dt><label for="reset_db">{L_RESET_DB}:</label><br /><span>{L_RESET_DB_CONFIRM}</span></dt>
+				<dd>					
+					<input class="button1" type="submit" id="reset_db" name="reset_db" value="{L_RUN_NOW}" />						
+				</dd>
+			</dl>
+			<dl>
+				<dt><label for="reset_perms">{L_RESET_PERMS}:</label><br /><span>{L_RESET_PERMS_CONFIRM}</span></dt>
+				<dd>					
+					<input class="button1" type="submit" id="reset_perms" name="reset_perms" value="{L_RUN_NOW}" />						
 				</dd>
 			</dl>
 		</fieldset>

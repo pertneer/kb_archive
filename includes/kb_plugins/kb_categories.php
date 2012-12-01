@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_categories.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: kb_categories.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -24,9 +24,9 @@ if (defined('IN_KB_PLUGIN'))
 	$acp_options['kb_categories_menu']		= array('lang' => 'WHICH_MENU',			'validate' => 'int',	'type' => 'custom', 		'function' 	=> 'select_menu_check', 	'explain' 	=> false);
 		
 	$details = array(
-		'PLUGIN_NAME'			=> 'List Categories',
-		'PLUGIN_DESC'			=> 'Adds a categories list to your menu for easy navigation',
-		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
+		'PLUGIN_NAME'			=> 'PLUGIN_CATS',
+		'PLUGIN_DESC'			=> 'PLUGIN_CATS_DESC',
+		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.0',
 		'PLUGIN_MENU'			=> LEFT_MENU,
 		'PLUGIN_PAGES'			=> array('all'),
@@ -54,7 +54,7 @@ function categories($cat_id = 0)
 		$template->assign_block_vars('cat_list', array(
 			'CAT_SEL'				=> $cat['selected'],
 			'CAT_NAME'				=> $cat['padding'] . $cat['cat_name'],
-			'U_VIEW_CAT'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=" . $cat['cat_id']),
+			'U_VIEW_CAT'			=> kb_append_sid('cat', array('id' => $cat['cat_id'], 'title' => $cat['cat_name'])),
 		));
 	}
 	unset($cats);

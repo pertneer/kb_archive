@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: functions_plugins_kb.php 352 2009-11-02 13:27:46Z softphp $
+* @version $Id: functions_plugins_kb.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -102,34 +102,31 @@ function latest_article_versions()
 */
 function generate_menu($page = 'index', $cat_id = 0)
 {
-	global $template, $phpbb_root_path, $phpEx, $config, $user;
+	global $template, $phpbb_root_path, $phpEx, $config;
 	
 	// Article injection variables
 	global $on_article_post, $on_article_del, $on_article_edit;
 	
 	$plugin_loc = $phpbb_root_path . 'includes/kb_plugins/';
-	
-	if ($page == '')
+	switch($page)
 	{
-		$page = 'index';
-	}
-	
-	if ($page == 'edit')
-	{
-		$page = 'add';
-	}
-	
-	if ($page == 'delete')
-	{
-		$page = 'add';
-	}
+		case '':
+			$page = 'index';
+		break;
+		
+		case 'edit':
+		case 'delete':
+			$page = 'add';
+		break;
+	}	
 	
 	$template->assign_var('T_THEME_PATH', "{$phpbb_root_path}styles/" . $user->theme['theme_path'] . '/theme');
 	
-	if(!$config['kb_disable_left_menu'])
+	$menus = array('left', 'right', 'no');
+	$plugins = cached_plugins();
+	foreach($menus as $menu)
 	{
-		$left_menu = cached_plugins('left');
-		foreach ($left_menu as $plugin)
+		foreach ($plugins[$menu] as $plugin)
 		{
 			if (isset($config['kb_' . $plugin['FILE'] . '_enable']) ? !$config['kb_' . $plugin['FILE'] . '_enable'] && !$plugin['PERMANENT'] === true : !$plugin['PERMANENT'] === true) // Permanent plugins doesn't nescesarily need to be enabled via usual vars
 			{
@@ -141,182 +138,102 @@ function generate_menu($page = 'index', $cat_id = 0)
 			{	
 				include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
 				
-				$template->assign_block_vars('left_menu', array(
-					'CONTENT'		=> $plugin['FILE']($cat_id),
-				));
+				if($menu != 'no')
+				{
+					$template->assign_block_vars($menu . '_menu', array(
+						'CONTENT'		=> $plugin['FILE']($cat_id),
+					));
+				}
 			}
-		}
-	}
-	
-	if(!$config['kb_disable_right_menu'])
-	{
-		$right_menu = cached_plugins('right');
-		foreach ($right_menu as $plugin)
-		{
-			if (isset($config['kb_' . $plugin['FILE'] . '_enable']) ? !$config['kb_' . $plugin['FILE'] . '_enable'] && !$plugin['PERMANENT'] === true : !$plugin['PERMANENT'] === true)
-			{
-				continue;
-			}
-		
-			$show_pages = unserialize($plugin['PERM']);
-			if (in_array($page, $show_pages))
-			{	
-				include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
-				
-				$template->assign_block_vars('right_menu', array(
-					'CONTENT'		=> $plugin['FILE']($cat_id),
-				));
-			}
-		}
-	}
-	
-	$no_menu = cached_plugins('no');
-	foreach ($no_menu as $plugin)
-	{
-		if (isset($config['kb_' . $plugin['FILE'] . '_enable']) ? !$config['kb_' . $plugin['FILE'] . '_enable'] && !$plugin['PERMANENT'] === true : !$plugin['PERMANENT'] === true)
-		{
-			continue;
-		}
-	
-		$show_pages = unserialize($plugin['PERM']);
-		if (in_array($page, $show_pages))
-		{	
-			include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
 		}
 	}
 }
 
-// Not used going to be used to cache left right menus etc
-function cached_plugins($mode)
+// Retrieves cached plugins and recaches
+function cached_plugins()
 {
 	global $cache, $db, $phpbb_root_path, $phpEx, $table_prefix;
 	
 	$recache = false;
+	$return = array(
+		'left'		=> array(),
+		'right'		=> array(),
+		'no'		=> array(),
+	);
 	
-	switch ($mode)
+	foreach($return as $key => $value)
 	{
-		case 'left':
-			if (($left_menu = $cache->get('_kb_plugin_left_menu')) === false)
-			{
-				$recache = true;
-			}
-			else
-			{
-				return $left_menu;
-			}
-		break;
+		if($key != 'no' && $config['kb_disable_' . $key . '_menu'])
+		{
+			continue;
+		}
 		
-		case 'right':
-			if (($right_menu = $cache->get('_kb_plugin_right_menu')) === false)
-			{
-				$recache = true;
-			}
-			else
-			{
-				return $right_menu;
-			}
-		break;
-		
-		case 'no':
-			if (($no_menu = $cache->get('_kb_plugin_no_menu')) === false)
-			{
-				$recache = true;
-			}
-			else
-			{
-				return $no_menu;
-			}
-		break;
+		if(($menu = $cache->get('_kb_plugin_' . $key . '_menu')) === false)
+		{
+			$recache = true;
+		}
+		else
+		{
+			$return[$key] = $menu;
+		}
+	}
+	
+	if(!$recache)
+	{
+		return $return;
 	}
 	
 	// Cache them all as they will all need doing within seconds anyway
 	// Plus saves sql queries
-	if ($recache)
+	// Must destroy them all as it will just add them otherwise
+	foreach($return as $key	=> $value)
 	{
-		// Must destroy them all as it will just add them otherwise
-		$cache->destroy('_kb_plugin_left_menu');
-		$cache->destroy('_kb_plugin_right_menu');
-		$cache->destroy('_kb_plugin_no_menu');
-	
-		if (!defined('KB_PLUGIN_TABLE'))
-		{
-			include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
-		}
-		
-		$sql = 'SELECT plugin_pages, plugin_filename, plugin_menu, plugin_order, plugin_pages_perm, plugin_perm
-			FROM ' . KB_PLUGIN_TABLE . ' 
-			ORDER BY plugin_order ASC';
-		$result = $db->sql_query($sql);		
-		$rows = $db->sql_fetchrowset($result);
-		
-		$kb_left_plugins = array();
-		$kb_right_plugins = array();
-		$kb_no_menu_plugins = array();
-		
-		foreach($rows as $row)
-		{
-			$file = $row['plugin_filename'];
-			$view = $row['plugin_pages'];
-			$perm = $row['plugin_pages_perm'];
-			
-			// Unserialize so can be merged
-			$view = unserialize($view);
-			$perm = unserialize($perm);
-			
-			// Merge arrays
-			$merge = array_merge($view, $perm);
-			
-			// Make sure there are no duplicates
-			$result = array_unique($merge);
-			$result = serialize($result);
-		
-			if ($row['plugin_menu'] == LEFT_MENU)
-			{
-				$kb_left_plugins[] = array(
-					'FILE'		=> $file,
-					'PERM'		=> $result,
-					'PERMANENT' => $row['plugin_perm'],
-				);
-			}
-			
-			if ($row['plugin_menu'] == RIGHT_MENU)
-			{
-				$kb_right_plugins[] = array(
-					'FILE'		=> $file,
-					'PERM'		=> $result,
-					'PERMANENT' => $row['plugin_perm'],
-				);
-			}
-			
-			if ($row['plugin_menu'] == NO_MENU)
-			{
-				$kb_no_menu_plugins[] = array(
-					'FILE'		=> $file,
-					'PERM'		=> $result,
-					'PERMANENT' => $row['plugin_perm'],
-				);
-			}
-		}
-		
-		$cache->put('_kb_plugin_left_menu', $kb_left_plugins);
-		$cache->put('_kb_plugin_right_menu', $kb_right_plugins);
-		$cache->put('_kb_plugin_no_menu', $kb_no_menu_plugins);
-		
-		switch ($mode)
-		{
-			case 'left':
-				return $kb_left_plugins;
-			break;
-			
-			case 'right':
-				return $kb_right_plugins;
-			break;
-			
-			case 'no':
-				return $kb_no_menu_plugins;
-			break;
-		}
+		$cache->destroy('_kb_plugin_' . $key . '_menu');
 	}
+	
+	$sql = 'SELECT plugin_pages, plugin_filename, plugin_menu, plugin_order, plugin_pages_perm, plugin_perm
+		FROM ' . KB_PLUGIN_TABLE . ' 
+		ORDER BY plugin_order ASC';
+	$result = $db->sql_query($sql);		
+	$rows = $db->sql_fetchrowset($result);
+	$db->sql_freeresult($result);
+	
+	$menu_keys = array(
+		LEFT_MENU	=> 'left',
+		RIGHT_MENU	=> 'right',
+		NO_MENU		=> 'no',
+	);
+	
+	foreach($rows as $row)
+	{
+		$file = $row['plugin_filename'];
+		$view = $row['plugin_pages'];
+		$perm = $row['plugin_pages_perm'];
+		
+		// Unserialize so can be merged
+		$view = unserialize($view);
+		$perm = unserialize($perm);
+		
+		// Merge arrays
+		$merge = array_merge($view, $perm);
+		
+		// Make sure there are no duplicates
+		$result = array_unique($merge);
+		$result = serialize($result);
+		
+		$return[$menu_keys[$row['plugin_menu']]][] = array(
+			'FILE'		=> $file,
+			'PERM'		=> $result,
+			'PERMANENT' => $row['plugin_perm'],
+		);
+	}
+	
+	foreach($return as $key => $value)
+	{
+		$cache->put('_kb_plugin_' . $key . '_menu', $value);
+	}
+	
+	return $return;
 }
 
 /**
@@ -355,13 +272,13 @@ function available_plugins()
 */
 function add_plugin($filename, $details)
 {
-	global $db, $cache;
+	global $db, $cache, $user;
 	
 	$data = array(
-		'plugin_name'		=> $details['PLUGIN_NAME'],
+		'plugin_name'		=> $user->lang[$details['PLUGIN_NAME']],
 		'plugin_filename'	=> $filename,
-		'plugin_desc'		=> $details['PLUGIN_DESC'],
-		'plugin_copy'		=> $details['PLUGIN_COPY'],
+		'plugin_desc'		=> $user->lang[$details['PLUGIN_DESC']],
+		'plugin_copy'		=> $user->lang[$details['PLUGIN_COPY']],
 		'plugin_version'	=> $details['PLUGIN_VERSION'],
 		'plugin_menu'		=> $details['PLUGIN_MENU'],
 		'plugin_pages'		=> 'a:0:{}',
@@ -386,9 +303,9 @@ function update_plugin_table($filename, $details)
 	global $db, $cache;
 	
 	$data = array(
-		'plugin_name'		=> $details['PLUGIN_NAME'],
-		'plugin_desc'		=> $details['PLUGIN_DESC'],
-		'plugin_copy'		=> $details['PLUGIN_COPY'],
+		'plugin_name'		=> $user->lang[$details['PLUGIN_NAME']],
+		'plugin_desc'		=> $user->lang[$details['PLUGIN_DESC']],
+		'plugin_copy'		=> $user->lang[$details['PLUGIN_COPY']],
 		'plugin_version'	=> $details['PLUGIN_VERSION'],
 		'plugin_pages_perm'	=> (!empty($details['PLUGIN_PAGE_PERM'])) ? serialize($details['PLUGIN_PAGE_PERM']) : 'a:0:{}',
 	);
@@ -434,7 +351,7 @@ function update_plugin_menu($filename, $config_value)
 	if ($add)
 	{	
 		$sql = 'UPDATE ' . KB_PLUGIN_TABLE . " SET  
-			plugin_menu = '"  . $db->sql_escape($config_value) . "'
+			plugin_menu = "  . (int) $config_value . "
 			WHERE plugin_filename = '" . $db->sql_escape($filename) . "'";
 		$db->sql_query($sql);	
 		
@@ -567,12 +484,16 @@ function uninstall_plugin($filename, $plugin_loc, $u_action)
 {
 	global $phpbb_root_path, $phpEx, $config;
 	
-	if (!file_exists($phpbb_root_path . 'umil/umil.' . $phpEx))
+	if (!class_exists('umil'))
 	{
-		trigger_error('KB_UPDATE_UMIL', E_USER_ERROR);
-	}
+		$umil_file = $phpbb_root_path . 'umil/umil.' . $phpEx;
+		if (!file_exists($umil_file))
+		{
+			trigger_error('KB_UPDATE_UMIL', E_USER_ERROR);
+		}
 
-	include($phpbb_root_path . 'umil/umil.' . $phpEx);
+		include($umil_file);
+	}
 	$umil = new umil(true);
 
 	$function = $filename . '_versions';
@@ -599,8 +520,8 @@ function sort_plugin_order($mode, $menu, $filename, $action = 'move_up')
 	{
 		case 'add':
 			$sql = 'SELECT plugin_filename, plugin_menu, plugin_order
-				FROM ' . KB_PLUGIN_TABLE . " 
-				WHERE plugin_menu = '"  . $db->sql_escape($menu) . "'
+				FROM ' . KB_PLUGIN_TABLE . ' 
+				WHERE plugin_menu = '  . (int) $menu . "
 					AND plugin_filename <> '" . $db->sql_escape($filename) . "'
 				ORDER BY plugin_order DESC";
 			$result = $db->sql_query($sql);
@@ -623,7 +544,7 @@ function sort_plugin_order($mode, $menu, $filename, $action = 'move_up')
 				$order_num = $menu_order[0] + 1;
 				
 				$sql = 'UPDATE ' . KB_PLUGIN_TABLE . " SET  
-					plugin_order = " . $order_num . " 
+					plugin_order = " . (int) $order_num . " 
 					WHERE plugin_filename = '" . $db->sql_escape($filename) . "'";
 				$db->sql_query($sql);
 			}	
@@ -646,7 +567,7 @@ function sort_plugin_order($mode, $menu, $filename, $action = 'move_up')
 					// Move higher one down
 					$sql = 'UPDATE ' . KB_PLUGIN_TABLE . ' SET  
 						plugin_order = plugin_order + 1 
-						WHERE plugin_menu = ' . $row['plugin_menu'] . '
+						WHERE plugin_menu = ' . (int) $row['plugin_menu'] . '
 							AND plugin_order = ' . $prev_num;
 					$db->sql_query($sql);
 				
@@ -663,7 +584,7 @@ function sort_plugin_order($mode, $menu, $filename, $action = 'move_up')
 					// Move higher one up
 					$sql = 'UPDATE ' . KB_PLUGIN_TABLE . ' SET  
 						plugin_order = plugin_order - 1 
-						WHERE plugin_menu = ' . $row['plugin_menu'] . '
+						WHERE plugin_menu = ' . (int) $row['plugin_menu'] . '
 							AND plugin_order = ' . $next_num;
 					$db->sql_query($sql);
 				
@@ -694,8 +615,8 @@ function sort_plugin_order($mode, $menu, $filename, $action = 'move_up')
 			
 			$sql = 'UPDATE ' . KB_PLUGIN_TABLE . ' SET  
 				plugin_order = plugin_order - 1 
-				WHERE plugin_menu = ' . $row['plugin_menu'] . '
-					AND plugin_order > ' . $row['plugin_order'];
+				WHERE plugin_menu = ' . (int) $row['plugin_menu'] . '
+					AND plugin_order > ' . (int) $row['plugin_order'];
 			$db->sql_query($sql);
 			
 			return true;
@@ -709,10 +630,61 @@ function sort_plugin_order($mode, $menu, $filename, $action = 'move_up')
 /**
 * Used for appending kb_sid
 * Plugin going to be for seo mod
+
+* Credit to EXreaction, Lithium Studios for some of the code used here
 */
-function kb_append_sid($page, $params = '')
+function clean_url($url)
 {
-	return append_sid($page, $params);
+	$match = array('-', '?', '/', '\\', '\'', '&amp;', '&lt;', '&gt;', '&quot;', ':');
+
+	// First replace all the above items with nothing, then replace spaces with _, then replace 3 _ in a row with a 1 _
+	return str_replace(array(' ', '___'), '_', str_replace($match, '', $url));
+}
+
+function kb_append_sid($mode, $info, $return = false, $page_name = 'kb')
+{
+	global $phpbb_root_path, $phpEx, $user, $config;
+
+	$need_html = true;
+	
+	switch ($mode)
+	{
+		case 'article':
+			$area = $user->lang['ARTICLE'];
+			$clause = 'a';
+		break;
+		
+		case 'cat':
+			$area = $user->lang['KB_SORT_CAT'];
+			$clause = 'c';
+		break;
+		
+		case 'tag':
+			$area = 'tag';
+			$clause = 't';
+			$need_html = false;
+		break;
+	}
+	
+	$add = '';
+	if (isset($info['extra']))
+	{		
+		$url_delim = ($config['kb_seo']) ? '?' : '&amp;';
+		$add = $url_delim . $info['extra'];
+	}
+	
+	if ($config['kb_seo'])
+	{
+		$append = ($need_html) ? $clause . $info['id'] . '.html' . $add : $add;
+		$send = $area . '/' . clean_url($info['title']) . '/' . $append;
+	}
+	else
+	{
+		// We are not using seo so lets build a normal one
+		$send = $page_name . '.' . $phpEx . '?' . $clause . '=' . $info['id'] . $add;
+	}
+	
+	return ($return) ? $send : append_sid($phpbb_root_path . $send);
 }
 
 // Makes a list of pages for acp select
@@ -732,16 +704,16 @@ function make_page_list($filename, $details, $page_list = false)
 		'add'			=> $user->lang['POSTING'],
 	);
 	
+	foreach($page_options as $page => $lang)
+	{
+		if(!in_array($page, $details['PLUGIN_PAGES']) && !in_array('all', $details['PLUGIN_PAGES']))
+		{
+			unset($page_options[$page]);
+		}
+	}
+		
 	if (!$page_list)
 	{
-		foreach($page_options as $page => $lang)
-		{
-			if(!in_array($page, $details['PLUGIN_PAGES']) && !in_array('all', $details['PLUGIN_PAGES']))
-			{
-				unset($page_options[$page]);
-			}
-		}
-		
 		$sql = 'SELECT plugin_pages
 			FROM ' . KB_PLUGIN_TABLE . " 
 			WHERE plugin_filename = '" . $db->sql_escape($filename) . "'";

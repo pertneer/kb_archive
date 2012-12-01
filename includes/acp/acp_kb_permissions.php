@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: acp_kb_permissions.php 388 2009-11-24 13:25:18Z softphp $
+* @version $Id: acp_kb_permissions.php 416 2010-01-12 21:02:01Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -32,10 +32,13 @@ class acp_kb_permissions
 
 		include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
 		include($phpbb_root_path . 'includes/functions_kb.' . $phpEx);
+		include($phpbb_root_path . 'includes/kb_auth.' . $phpEx);
 		include_once($phpbb_root_path . 'includes/functions_user.' . $phpEx);
 		include_once($phpbb_root_path . 'includes/acp/auth.' . $phpEx);
 
 		$auth_admin = new auth_admin();
+		$kb_auth = new kb_auth();
+		$kb_auth->acl($user->data, $auth);
 
 		$user->add_lang('acp/permissions');
 		add_permission_language();
@@ -241,8 +244,9 @@ class acp_kb_permissions
 							$sql = 'SELECT auth_option_id, auth_option
 								FROM ' . ACL_OPTIONS_TABLE . "
 								WHERE auth_option " . $db->sql_like_expression($permission_type . $db->any_char) . "
-									AND auth_option <> '{$permission_type}'
-									AND auth_option <> '{$dummy_type}'
+									AND auth_option <> '" . $db->sql_escape($permission_type) . "'
+									AND auth_option <> '" . $db->sql_escape($dummy_type) . "'
+									AND auth_option <> 'u_kb_request'
 								ORDER BY auth_option_id";
 							$result = $db->sql_query($sql);
 
@@ -275,7 +279,8 @@ class acp_kb_permissions
 								FROM ' . ACL_ROLES_DATA_TABLE . ' p, ' . ACL_OPTIONS_TABLE . ' o
 								WHERE o.auth_option_id = p.auth_option_id
 									AND p.role_id = ' . $role_id . "
-									AND o.auth_option <> '{$dummy_type}'
+									AND o.auth_option <> '" . $db->sql_escape($dummy_type) . "'
+									AND o.auth_option <> 'u_kb_request'
 								ORDER BY p.auth_option_id";
 							$result = $db->sql_query($sql);
 
@@ -309,8 +314,9 @@ class acp_kb_permissions
 						$sql = 'SELECT auth_option_id, auth_option
 							FROM ' . ACL_OPTIONS_TABLE . "
 							WHERE auth_option " . $db->sql_like_expression($permission_type . $db->any_char) . "
-								AND auth_option <> '{$permission_type}'
-								AND auth_option <> '{$dummy_type}'
+								AND auth_option <> '" . $db->sql_escape($permission_type) . "'
+								AND auth_option <> '" . $db->sql_escape($dummy_type) . "'
+								AND auth_option <> 'u_kb_request'
 							ORDER BY auth_option_id";
 						$result = $db->sql_query($sql);
 
@@ -355,13 +361,13 @@ class acp_kb_permissions
 
 						$order = request_var('order', 0);
 						$order_total = $order * 2 + (($action == 'move_up') ? -1 : 1);
-
+						$order = array($order, (($action == 'move_up') ? $order - 1 : $order + 1));
+						
 						$sql = 'UPDATE ' . ACL_ROLES_TABLE . '
 							SET role_order = ' . $order_total . " - role_order
 							WHERE role_type = '" . $db->sql_escape($permission_type) . "'
-								AND role_order IN ($order, " . (($action == 'move_up') ? $order - 1 : $order + 1) . ')';
+							AND " . $db->sql_in_set('role_order', $order);
 						$db->sql_query($sql);
-
 					break;
 				}
 
@@ -574,6 +580,7 @@ class acp_kb_permissions
 						'padding' 		=> '',
 					);
 				}
+				$db->sql_freeresult($result);
 
 				$hold_ary = $this->get_mask('set', (sizeof($user_id)) ? $user_id : false, (sizeof($group_id)) ? $group_id : false, (sizeof($forum_id)) ? $forum_id : false, $permission_type, 'local', ACL_NO);
 				$auth_admin->display_mask('set', $permission_type, $hold_ary, ((sizeof($user_id)) ? 'user' : 'group'), true , true, $cat_data);
@@ -584,7 +591,7 @@ class acp_kb_permissions
 					'S_HIDDEN_FIELDS'		=> $s_hidden_fields,
 				));
 			}
-			elseif($all_forums or sizeof($forum_id) or $subforum_id)
+			else if($all_forums or sizeof($forum_id) or $subforum_id)
 			{
 				$items = $this->retrieve_defined_user_groups('local', $forum_id, $permission_type);
 				$template->assign_vars(array(
@@ -720,11 +727,11 @@ class acp_kb_permissions
 		}
 
 		// Remove role from users and groups just to be sure (happens through acl_set)
-		$sql = 'DELETE FROM ' . ACL_USERS_TABLE . '
+		$sql = 'DELETE FROM ' . KB_ACL_USERS_TABLE . '
 			WHERE auth_role_id = ' . $role_id;
 		$db->sql_query($sql);
 
-		$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '
+		$sql = 'DELETE FROM ' . KB_ACL_GROUPS_TABLE . '
 			WHERE auth_role_id = ' . $role_id;
 		$db->sql_query($sql);
 
@@ -768,7 +775,7 @@ class acp_kb_permissions
 		}
 
 		$option_id_ary = array();
-		$table = ($mode == 'user') ? ACL_USERS_TABLE : ACL_GROUPS_TABLE;
+		$table = ($mode == 'user') ? KB_ACL_USERS_TABLE : KB_ACL_GROUPS_TABLE;
 		$id_field = $mode . '_id';
 
 		$where_sql = array();
@@ -805,7 +812,7 @@ class acp_kb_permissions
 				FROM $table, " . ACL_ROLES_TABLE . " r
 				WHERE auth_role_id <> 0
 					AND auth_role_id = r.role_id
-					AND r.role_type = '{$permission_type}'
+					AND r.role_type = '" . $db->sql_escape($permission_type) . "'
 					AND " . implode(' AND ', $where_sql) . '
 				ORDER BY auth_role_id';
 			$result = $db->sql_query($sql);
@@ -1030,7 +1037,7 @@ class acp_kb_permissions
 		$forum_sql = $db->sql_in_set('forum_id', array_map('intval', $forum_id));
 
 		// Instead of updating, inserting, removing we just remove all current settings and re-set everything...
-		$table = ($ug_type == 'user') ? ACL_USERS_TABLE : ACL_GROUPS_TABLE;
+		$table = ($ug_type == 'user') ? KB_ACL_USERS_TABLE : KB_ACL_GROUPS_TABLE;
 		$id_field = $ug_type . '_id';
 
 		// Get any flags as required
@@ -1084,6 +1091,7 @@ class acp_kb_permissions
 		}
 
 		// Ok, include the any-flag if one or more auth options are set to yes...
+		$flag = 'u_';
 		foreach ($auth as $auth_option => $setting)
 		{
 			if ($setting == ACL_YES && (!isset($auth[$flag]) || $auth[$flag] == ACL_NEVER))
@@ -1105,7 +1113,6 @@ class acp_kb_permissions
 						$id_field			=> (int) $id,
 						'forum_id'			=> (int) $forum,
 						'auth_option_id'	=> 0,
-						'kb_auth'			=> 1, // KB flag
 						'auth_setting'		=> 0,
 						'auth_role_id'		=> (int) $role_id,
 					);
@@ -1123,7 +1130,6 @@ class acp_kb_permissions
 						{
 							$sql_ary[] = array(
 								$id_field			=> (int) $id,
-								'kb_auth'			=> 1, // KB Flag
 								'forum_id'			=> (int) $forum,
 								'auth_option_id'	=> (int) $auth_option_id,
 								'auth_setting'		=> (int) $setting
@@ -1185,7 +1191,6 @@ class acp_kb_permissions
 		}
 
 		$auth_admin->acl_clear_prefetch();
-
 
 		//$this->log_action($mode, 'add', $permission_type, $ug_type, $ug_ids, $forum_ids);
 		if ($mode == 'setting_forum_local' || $mode == 'setting_mod_local')
@@ -1250,8 +1255,10 @@ class acp_kb_permissions
 	*/
 	function get_mask($mode, $user_id = false, $group_id = false, $categorie_id = false, $auth_option = false, $scope = false, $acl_fill = ACL_NEVER)
 	{
-		global $db, $user, $auth_admin;
+		global $db, $user, $auth_admin, $kb_auth;
 		$auth_admin = new auth_admin();
+		$kb_auth = new kb_auth();
+		
 		$hold_ary = array();
 		$view_user_mask = ($mode == 'view' && $group_id === false) ? true : false;
 
@@ -1266,11 +1273,11 @@ class acp_kb_permissions
 		{
 			if ($categorie_id !== false)
 			{
-				$hold_ary = ($group_id !== false) ? $auth_admin->acl_group_raw_data($group_id, $auth_option . '%', $categorie_id) : $auth_admin->$acl_user_function($user_id, $auth_option . '%', $categorie_id);
+				$hold_ary = ($group_id !== false) ? $kb_auth->acl_group_raw_data($group_id, $auth_option . '%', $categorie_id) : $kb_auth->$acl_user_function($user_id, $auth_option . '%', $categorie_id);
 			}
 			else
 			{
-				$hold_ary = ($group_id !== false) ? $auth_admin->acl_group_raw_data($group_id, $auth_option . '%', ($scope == 'global') ? 0 : false) : $auth_admin->$acl_user_function($user_id, $auth_option . '%', ($scope == 'global') ? 0 : false);
+				$hold_ary = ($group_id !== false) ? $kb_auth->acl_group_raw_data($group_id, $auth_option . '%', ($scope == 'global') ? 0 : false) : $kb_auth->$acl_user_function($user_id, $auth_option . '%', ($scope == 'global') ? 0 : false);
 			}
 		}
 
@@ -1298,8 +1305,9 @@ class acp_kb_permissions
 		if ($view_user_mask)
 		{
 			$auth2 = null;
+			$kb_auth2 = null;
 
-			$sql = 'SELECT user_id, user_permissions, user_type
+			$sql = 'SELECT user_id, user_kb_permissions, user_type
 				FROM ' . USERS_TABLE . '
 				WHERE ' . $db->sql_in_set('user_id', $ug_id);
 			$result = $db->sql_query($sql);
@@ -1309,7 +1317,9 @@ class acp_kb_permissions
 				if ($user->data['user_id'] != $userdata['user_id'])
 				{
 					$auth2 = new auth();
+					$kb_auth2 = new kb_auth();
 					$auth2->acl($userdata);
+					$kb_auth2->acl($userdata, $auth2);
 				}
 				else
 				{
@@ -1332,6 +1342,7 @@ class acp_kb_permissions
 
 			unset($userdata);
 			unset($auth2);
+			unset($kb_auth2);
 		}
 
 		foreach ($ug_id as $_id)
@@ -1447,7 +1458,7 @@ class acp_kb_permissions
 
 		// Not ideal, due to the filesort, non-use of indexes, etc.
 		$sql = 'SELECT DISTINCT u.user_id, u.username, u.username_clean, u.user_regdate
-			FROM ' . USERS_TABLE . ' u, ' . ACL_USERS_TABLE . " a
+			FROM ' . USERS_TABLE . ' u, ' . KB_ACL_USERS_TABLE . " a
 			WHERE u.user_id = a.user_id
 				$sql_forum_id
 				$sql_where
@@ -1464,7 +1475,7 @@ class acp_kb_permissions
 		$db->sql_freeresult($result);
 
 		$sql = 'SELECT DISTINCT g.group_type, g.group_name, g.group_id
-			FROM ' . GROUPS_TABLE . ' g, ' . ACL_GROUPS_TABLE . " a
+			FROM ' . GROUPS_TABLE . ' g, ' . KB_ACL_GROUPS_TABLE . " a
 			WHERE g.group_id = a.group_id
 				$sql_forum_id
 				$sql_where

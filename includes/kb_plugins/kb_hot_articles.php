@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_hot_articles.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: kb_hot_articles.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -25,9 +25,9 @@ if (defined('IN_KB_PLUGIN'))
 	$acp_options['kb_hot_articles_limit']		= array('lang' => 'HOT_ARTICLES_LIMIT',				'validate' => 'int',	'type' => 'text:5:2',			'explain'	=> false);
 	
 	$details = array(
-		'PLUGIN_NAME'			=> 'Most Popular Articles',
-		'PLUGIN_DESC'			=> 'Adds a popular articles list to your knowledge base',
-		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
+		'PLUGIN_NAME'			=> 'PLUGIN_HOT',
+		'PLUGIN_DESC'			=> 'PLUGIN_HOT_DESC',
+		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.0',
 		'PLUGIN_MENU'			=> RIGHT_MENU,
 		'PLUGIN_PAGES'			=> array('all'),
@@ -56,7 +56,7 @@ function hot_articles($cat_id)
 	{
 		$template->assign_block_vars('hotrow', array(
 			'ARTICLE_TITLE'		=> censor_text($row['article_title']),
-			'U_VIEW_ARTICLE'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $row['article_id']),
+			'U_VIEW_ARTICLE'	=> kb_append_sid('article', array('id' => $row['article_id'], 'title' => censor_text($row['article_title']))),
 			'ARTICLE_VIEWS'		=> $row['article_views'],
 		));
 	}

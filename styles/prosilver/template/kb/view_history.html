@@ -1,13 +1,4 @@
-<!-- INCLUDE overall_header.html -->
-
-<table style="width: 100%">
-	<tr>
-		<!-- IF .left_menu -->
-		<td id="left_menu" style="width: {LEFT_MENU_WIDTH}; vertical-align: top;">
-			<!-- INCLUDE kb/left_menu.html -->
-		</td>
-		<!-- ENDIF -->
-		<td style="vertical-align: top;<!-- IF .left_menu --> padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu --> padding-right: 20px;<!-- ENDIF -->">
+<!-- INCLUDE kb/kb_header.html -->
 			<!-- IF S_VIEW_EDIT -->
 			<div id="a" class="post bg1">
 				<div class="inner"><span class="corners-top"><span></span></span>
@@ -246,8 +237,8 @@
 						<dl>
 							<dt style="width: 30%"><a href="{editrow.U_EDIT}">{editrow.ARTICLE_TITLE}</a> {editrow.EDIT_BY} <!-- IF editrow.S_NEWEST -->&nbsp;<strong>({L_NEWEST})</strong><!-- ELSEIF editrow.S_ORG -->&nbsp;<strong>({L_ORIGINAL})</strong><!-- ENDIF --><br />
 								[ <a href="{editrow.U_EDIT}">{L_VIEW_REV_INFO}</a> ]</dt>
-							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_F --><input type="radio" id="df-{editrow.NUM}" onclick="" name="df" value="{editrow.EDIT_ID}"><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
-							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_T --><input type="radio" id="dt-{editrow.NUM}" onclick="" name="dt" value="{editrow.EDIT_ID}"><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
+							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_F --><input type="radio" id="df-{editrow.NUM}" onclick="" name="df" value="{editrow.EDIT_ID}" /><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
+							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_T --><input type="radio" id="dt-{editrow.NUM}" onclick="" name="dt" value="{editrow.EDIT_ID}" /><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
 							
 							<dd class="time" style="width: 30%"><span>{editrow.EDIT_TIME}</span></dd>
 							<dd class="extra">{editrow.EDIT_STATUS}</dd>
@@ -256,26 +247,13 @@
 				<!-- END editrow -->
 				</ul>
 				<fieldset class="display-options">
-						<input name="submit" value="{L_VIEW_DIFF}" class="button1" type="submit">
-						<input name="i" value="history" type="hidden">
-						<input name="a" value="{ARTICLE_ID}" type="hidden">
+						<input name="submit" value="{L_VIEW_DIFF}" class="button1" type="submit" />
+						<input name="i" value="history" type="hidden" />
+						<input name="a" value="{ARTICLE_ID}" type="hidden" />
 				</fieldset>
 				
 				<span class="corners-bottom"><span></span></span></div>
 			</div>
 			</form>
-		<!-- ENDIF --> 
-		</td>
-		<!-- IF .right_menu -->
-		<td id="right_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
-			<!-- INCLUDE kb/right_menu.html -->
-		</td>
-		<!-- ENDIF -->
-	</tr>
-</table>
-<!-- IF S_DISPLAY_ONLINE_LIST -->
-	<h3><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a></h3>
-	<p>{LOGGED_IN_USER_LIST}</p>
-<!-- ENDIF -->
-
-<!-- INCLUDE overall_footer.html -->
+		<!-- ENDIF --> 		
+<!-- INCLUDE kb/kb_footer.html -->

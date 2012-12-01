@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: info_acp_kb_permissions.php 356 2009-11-08 10:40:10Z tom.martin60@btinternet.com $
+* @version $Id: info_acp_kb_permissions.php 427 2010-01-20 15:32:24Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -42,7 +42,6 @@ $lang = array_merge($lang, array(
 	'ACP_KB_PERMISSIONS_EXPLAIN'	=> 'You can alter localized permissions here for your knowledge base mod.',
 	'ACP_KB_ROLES'					=> 'Knowledge Base Roles',
 	'ACP_KB_ROLES_EXPLAIN'			=> 'You can manage permission roles for your knowledge base mod here.',
-	
 ));
 
 ?>

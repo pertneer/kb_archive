@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_contributors.php 344 2009-10-30 18:45:40Z tom.martin60@btinternet.com $
+* @version $Id: kb_contributors.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -23,9 +23,9 @@ if (defined('IN_KB_PLUGIN'))
 	$acp_options['kb_show_contrib']		= array('lang' => 'KB_SHOW_CONTRIB',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true);
 	$acp_options['kb_contributors_menu']		= array('lang' => 'WHICH_MENU',			'validate' => 'int',	'type' => 'custom', 		'function' 	=> 'select_menu_check', 	'explain' 	=> false);
 	$details = array(
-		'PLUGIN_NAME'			=> 'Contributors on view article page',
-		'PLUGIN_DESC'			=> 'Contributors box on view article page',
-		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
+		'PLUGIN_NAME'			=> 'PLUGIN_CONTRIB',
+		'PLUGIN_DESC'			=> 'PLUGIN_CONTRIB_DESC',
+		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.1',
 		'PLUGIN_MENU'			=> LEFT_MENU,
 		'PLUGIN_PERM'			=> true,

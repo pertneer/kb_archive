@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_random_article.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: kb_random_article.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -24,9 +24,9 @@ if (defined('IN_KB_PLUGIN'))
 	$acp_options['kb_random_article_menu']		= array('lang' => 'WHICH_MENU',					'validate' => 'int',	'type' => 'custom', 		'function' 	=> 'select_menu_check', 	'explain' 	=> false);
 		
 	$details = array(
-		'PLUGIN_NAME'			=> 'Random Article',
-		'PLUGIN_DESC'			=> 'Adds a random selected article to a menu',
-		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
+		'PLUGIN_NAME'			=> 'PLUGIN_RAND',
+		'PLUGIN_DESC'			=> 'PLUGIN_RAND_DESC',
+		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.0',
 		'PLUGIN_MENU'			=> RIGHT_MENU,
 		'PLUGIN_PAGES'			=> array('all'),
@@ -46,7 +46,7 @@ function random_article($cat_id = false, $second_pass = false)
 		return;
 	}
 	
-	$random_where = ($cat_id == 0) ? ' WHERE ' . $db->sql_in_set('cat_id', get_readable_cats()) . ' AND article_status = ' . STATUS_APPROVED : " WHERE cat_id = '" . $db->sql_escape($cat_id) . "'  AND article_status = " . STATUS_APPROVED;
+	$random_where = ($cat_id == 0) ? ' WHERE ' . $db->sql_in_set('cat_id', get_readable_cats()) . ' AND article_status = ' . STATUS_APPROVED : ' WHERE cat_id = ' . $cat_id . ' AND article_status = ' . STATUS_APPROVED;
 	
 	$all_ids = array();
 	
@@ -105,7 +105,7 @@ function random_article($cat_id = false, $second_pass = false)
 		'RAN_ARTICLE_COMMENTS'	=> $row['article_comments'],
 		'RAN_ARTICLE_VIEWS'		=> $row['article_views'],
 		
-		'U_RAN_ARTICLE'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $article_id),
+		'U_RAN_ARTICLE'			=> kb_append_sid('article', array('id' => $article_id, 'title' => censor_text($row['article_title']))),
 	));
 	
 	$content = kb_parse_template('random_article', 'random_article.html');

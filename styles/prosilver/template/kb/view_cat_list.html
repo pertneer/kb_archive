@@ -1,14 +1,5 @@
-<!-- INCLUDE overall_header.html -->
-<table style="width: 100%">
-	<tr>
-		<!-- IF .left_menu -->
-			<td id="left_menu" style="width: {LEFT_MENU_WIDTH}; vertical-align: top;">
-				<!-- INCLUDE kb/left_menu.html -->
-			</td>
-		<!-- ENDIF -->
-		<td style="vertical-align: top; <!-- IF .left_menu -->padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu --> padding-right: 20px;<!-- ENDIF -->">			
+<!-- INCLUDE kb/kb_header.html -->
 			<!-- IF .catrow -->
-				<!-- IF U_MODCP -->&nbsp;<!-- ENDIF -->
 				<!-- IF S_CAT_STYLE -->
 					<!-- INCLUDE kb/cat_list_modern.html -->
 				<!-- ELSE -->
@@ -53,7 +44,7 @@
 					<!-- BEGIN articlerow -->
 					<li class="row<!-- IF articlerow.S_ROW_COUNT is even --> bg1<!-- ELSE --> bg2<!-- ENDIF -->">
 						<dl class="icon" style="background-image: url({articlerow.ARTICLE_FOLDER_IMG_SRC}); background-repeat: no-repeat;">
-							<dt><!-- IF articlerow.ARTICLE_TYPE_IMG --><span class="forum-image"><img src="{articlerow.ARTICLE_TYPE_IMG}" width="{articlerow.ARTICLE_TYPE_IMG_WIDTH}" height="{articlerow.ARTICLE_TYPE_IMG_HEIGHT}" alt="" /></span>&nbsp;<!-- ENDIF --><a href="{articlerow.U_VIEW_ARTICLE}" class="topictitle">{articlerow.ARTICLE_TITLE}</a>
+							<dt><!-- IF articlerow.ARTICLE_TYPE_IMG --><span class="forum-image"><img src="{articlerow.ARTICLE_TYPE_IMG}" width="{articlerow.ARTICLE_TYPE_IMG_WIDTH}" height="{articlerow.ARTICLE_TYPE_IMG_HEIGHT}" alt="" /></span><!-- ENDIF --><a href="{articlerow.U_VIEW_ARTICLE}" class="topictitle">{articlerow.ARTICLE_TITLE}</a>
 							<!-- IF articlerow.ARTICLE_UNAPPROVED --><a href="{articlerow.U_MCP_QUEUE}">{UNAPPROVED_IMG}</a> <!-- ENDIF -->
 								<br /><!-- IF articlerow.ARTICLE_DESC -->{articlerow.ARTICLE_DESC}<!-- ENDIF -->
 							</dt>
@@ -123,22 +114,4 @@
 			</table>
 			<!-- ENDIF -->
 			<!-- ENDIF -->
-		</td>				
-		<!-- IF .right_menu -->
-		<td id="right_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
-			<!-- INCLUDE kb/right_menu.html -->
-		</td>
-		<!-- ENDIF -->
-	</tr>
-</table>
-		
-<!-- IF S_DISPLAY_ONLINE_LIST -->
-	<h3><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a></h3>
-	<p>{LOGGED_IN_USER_LIST}</p>
-<!-- ENDIF -->
-
-<!-- IF .articlerow -->
-<h3>{L_KB_PERMISSIONS}</h3>
-<p><!-- BEGIN rules -->{rules.RULE}<br /><!-- END rules --></p>
-<!-- ENDIF -->
-<!-- INCLUDE overall_footer.html -->
+<!-- INCLUDE kb/kb_footer.html -->

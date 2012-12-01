@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: functions_kb.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: functions_kb.php 422 2010-01-20 14:15:50Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -92,7 +92,7 @@ function kb_generate_smilies($mode)
 	{
 		$template->assign_vars(array(
 			'S_SHOW_SMILEY_LINK' 	=> true,
-			'U_MORE_SMILIES' 		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=smilies')
+			'U_MORE_SMILIES' 		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=smilies')
 		));
 	}
 
@@ -140,8 +140,11 @@ function kb_upload_attachment($form_name, $cat_id, $local = false, $local_storag
 	$filedata = array(
 		'error'	=> array()
 	);
-
-	include_once($phpbb_root_path . 'includes/functions_upload.' . $phpEx);
+	
+	if(!class_exists('filespec'))
+	{
+		include($phpbb_root_path . 'includes/functions_upload.' . $phpEx);
+	}
 	$upload = new fileupload();
 
 	if ($config['check_attachment_content'])
@@ -323,7 +326,10 @@ function kb_delete_attachments($mode, $ids, $resync = true)
 	}
 
 	$article_ids = $comment_ids = $physical = array();
-	include_once($phpbb_root_path . 'includes/functions_admin.' . $phpEx);
+	if(!function_exists('phpbb_unlink'))
+	{
+		include($phpbb_root_path . 'includes/functions_admin.' . $phpEx);
+	}
 
 	// Collect post and topic ids for later use if we need to touch remaining entries (if resync is enabled)
 	$sql = 'SELECT article_id, comment_id, physical_filename, thumbnail, filesize, is_orphan
@@ -340,7 +346,7 @@ function kb_delete_attachments($mode, $ids, $resync = true)
 			{
 				$article_ids[] = $row['article_id'];
 			}
-			elseif($mode == 'comment')
+			else if($mode == 'comment')
 			{
 				$comment_ids[] = $row['comment_id'];
 			}
@@ -594,7 +600,7 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 			on_posting('article', 'add', $data);
 		}
 	}
-	elseif($mode == 'edit')
+	else if($mode == 'edit')
 	{
 		$sql = 'UPDATE ' . KB_TABLE . ' 
 				SET ' . $db->sql_build_array('UPDATE', $sql_data[KB_TABLE]['sql']) . '
@@ -612,14 +618,14 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 	// Synchronize tables when moving category
 	if($mode == 'edit' && $data['article_status'] == STATUS_APPROVED && $old_data['article_status'] == STATUS_APPROVED && $data['cat_id'] != $old_data['cat_id'])
 	{
-		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+		$sql = 'UPDATE ' . KB_CATS_TABLE . '
 				SET cat_articles = cat_articles + 1
-				WHERE cat_id = '" . $db->sql_escape($data['cat_id']) . "'";
+				WHERE cat_id = ' . (int) $data['cat_id'];
 		$db->sql_query($sql);
 		
-		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+		$sql = 'UPDATE ' . KB_CATS_TABLE . '
 				SET cat_articles = cat_articles - 1
-				WHERE cat_id = '" . $db->sql_escape($old_data['cat_id']) . "'";
+				WHERE cat_id = ' . (int) $old_data['cat_id'];
 		$db->sql_query($sql);
 	}
 	
@@ -822,7 +828,7 @@ function comment_submit($mode, &$data, $update_message = true)
 		}
 	}
 	// Else edit it
-	elseif($mode == 'edit')
+	else if($mode == 'edit')
 	{
 		$sql = 'UPDATE ' . KB_COMMENTS_TABLE . ' 
 				SET ' . $db->sql_build_array('UPDATE', $sql_data[KB_COMMENTS_TABLE]['sql']) . '
@@ -968,7 +974,7 @@ function request_submit($mode, &$data, $update_message = true)
 		$db->sql_query($sql);
 		$data['request_id'] = $db->sql_nextid();
 	}
-	elseif($mode == 'edit')
+	else if($mode == 'edit')
 	{
 		$sql = 'UPDATE ' . KB_REQ_TABLE . ' 
 				SET ' . $db->sql_build_array('UPDATE', $sql_data[KB_REQ_TABLE]['sql']) . '
@@ -982,7 +988,7 @@ function request_submit($mode, &$data, $update_message = true)
 /**
 * Generate inline attachment entry
 */
-function kb_posting_gen_attachment_entry($attachment_data, &$filename_data, $show_attach_box = true, $cat_id)
+function kb_posting_gen_attachment_entry($attachment_data, &$filename_data, $show_attach_box = true)
 {
 	global $template, $config, $phpbb_root_path, $phpEx, $user, $auth;
 
@@ -1009,7 +1015,7 @@ function kb_posting_gen_attachment_entry($attachment_data, &$filename_data, $sho
 				$hidden .= '<input type="hidden" name="attachment_data[' . $count . '][' . $key . ']" value="' . $value . '" />';
 			}
 
-			$download_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'mode=view&amp;c=' . $cat_id . '&amp;id=' . (int) $attach_row['attach_id'], true, ($attach_row['is_orphan']) ? $user->session_id : false);
+			$download_link = append_sid("{$phpbb_root_path}download/file.$phpEx", 'mode=view&amp;kb=1&amp;id=' . (int) $attach_row['attach_id'], true, ($attach_row['is_orphan']) ? $user->session_id : false);
 
 			$template->assign_block_vars('attach_row', array(
 				'FILENAME'			=> utf8_basename($attach_row['real_filename']),
@@ -1058,8 +1064,17 @@ function kb_handle_notification($article_id, $article_title, $notify_on)
 	$update_ids = array();
 	$pm_list = array();
 	$lang_ary = array(); // Supporting multiple languages
-	include_once($phpbb_root_path . 'includes/functions_messenger.' . $phpEx);
-	include_once($phpbb_root_path . 'includes/functions_privmsgs.' . $phpEx);
+	
+	if(!class_exists('messenger'))
+	{
+		include($phpbb_root_path . 'includes/functions_messenger.' . $phpEx);
+	}
+	
+	if(!function_exists('submit_pm'))
+	{
+		include($phpbb_root_path . 'includes/functions_privmsgs.' . $phpEx);
+	}
+	
 	while($row = $db->sql_fetchrow($result))
 	{
 		switch($row['notify_by'])
@@ -1184,6 +1199,7 @@ function kb_generate_popups()
 	{
 		return array('generate' => false);
 	}
+	$db->sql_freeresult($result);
 	
 	return array('generate' => true, 'article_id' => $article_data['article_id']);
 }
@@ -1286,7 +1302,7 @@ function article_delete($article_id, $cat_id, $article_data)
 		// Delete from latest articles list
 		handle_latest_articles('delete', $cat_id, array('article_id' => $article_id), $config['kb_latest_articles_c']);
 		
-		$meta_info = kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id");
+		$meta_info = append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id");
 		$message = $user->lang['ARTICLE_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB_CAT'], '<a href="' . $meta_info . '">', '</a>');
 		meta_refresh(5, $meta_info);
 		trigger_error($message);
@@ -1296,7 +1312,7 @@ function article_delete($article_id, $cat_id, $article_data)
 		confirm_box(false, 'DELETE_ARTICLE', $s_hidden_fields);
 	}
 	
-	redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"));
+	redirect(append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"));
 }
 
 /*
@@ -1334,7 +1350,7 @@ function comment_delete($comment_id, $article_id, $type = COMMENT_GLOBAL)
 			set_config('kb_total_comments', $config['kb_total_comments'] - 1, true);
 		}
 		
-		$meta_info = kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id");
+		$meta_info = append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id");
 		$message = $user->lang['COMMENT_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB_ARTICLE'], '<a href="' . $meta_info . '">', '</a>');
 		meta_refresh(5, $meta_info);
 		trigger_error($message);
@@ -1344,7 +1360,7 @@ function comment_delete($comment_id, $article_id, $type = COMMENT_GLOBAL)
 		confirm_box(false, 'DELETE_COMMENT', $s_hidden_fields);
 	}
 	
-	redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"));
+	redirect(append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"));
 }
 
 /*
@@ -1365,8 +1381,8 @@ function request_delete($request_id)
 				WHERE request_id = '. $request_id;
 		$db->sql_query($sql);
 		
-		$meta_info = kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list');
-		$message = $user->lang['REQUEST_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx") . '">', '</a>');
+		$meta_info = append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list');
+		$message = $user->lang['REQUEST_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx") . '">', '</a>');
 		meta_refresh(5, $meta_info);
 		trigger_error($message);
 	}
@@ -1375,7 +1391,7 @@ function request_delete($request_id)
 		confirm_box(false, 'DELETE_REQUEST', $s_hidden_fields);
 	}
 	
-	redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=view&amp;r=$request_id"));
+	redirect(append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=view&amp;r=$request_id"));
 }
 
 /*
@@ -1418,7 +1434,7 @@ function show_request_list($in_menu, $num, $start = 0)
 	{
 		// Walk on by, walk on through and replace naugthy words
 		$row['request_title'] = censor_text($row['request_title']);
-			
+					
 		// Check status and acceptance
 		switch($row['request_status'])
 		{
@@ -1442,15 +1458,15 @@ function show_request_list($in_menu, $num, $start = 0)
 			'REQ_TITLE'			=> $title,
 			'REQ_DATE'			=> ($in_menu) ? '' : $user->format_date($row['request_time']),
 			'REQ_AUTHOR_FULL'	=> ($in_menu) ? '' : get_username_string('full', $row['request_user_id'], $row['request_user_name'], $row['request_user_color'], $row['request_user_name']),
-			'U_VIEW_REQ'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=view&amp;r=' . $row['request_id']),
+			'U_VIEW_REQ'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=view&amp;r=' . $row['request_id']),
 		));	
 	}
 	$db->sql_freeresult($result);
 	
 	$template->assign_vars(array(
-		'U_ADD_REQ'			=> ($auth->acl_get('u_kb_request')) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=add') : '',
-		'U_VIEW_ALL'		=> ($in_menu) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list') : '',
-		'PAGINATION'		=> ($in_menu) ? '' : generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=list"), $requests_count, $num, $start),
+		'U_ADD_REQ'			=> ($auth->acl_get('u_kb_request')) ? append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=add') : '',
+		'U_VIEW_ALL'		=> ($in_menu) ? append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list') : '',
+		'PAGINATION'		=> ($in_menu) ? '' : generate_pagination(append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=list"), $requests_count, $num, $start),
 		'PAGE_NUMBER'		=> ($in_menu) ? '' : on_page($requests_count, $num, $start),
 		'TOTAL_REQUESTS' 	=> ($in_menu) ? '' : $requests_count,
 		'S_SHOW_REQ_LIST'	=> ($in_menu) ? true : false,
@@ -1470,7 +1486,7 @@ function generate_kb_nav($page_title = '', $data = array())
 		'S_IS_CAT'		=> true,
 		'FORUM_NAME'	=> $config['kb_link_name'],
 		'FORUM_ID'		=> 0,
-		'U_VIEW_FORUM'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx"))
+		'U_VIEW_FORUM'	=> append_sid("{$phpbb_root_path}kb.$phpEx"))
 	);
 	
 	// Parent Categories
@@ -1483,7 +1499,7 @@ function generate_kb_nav($page_title = '', $data = array())
 				'S_IS_CAT'		=> true,
 				'FORUM_NAME'	=> $parent_name,
 				'FORUM_ID'		=> $parent_cat_id,
-				'U_VIEW_FORUM'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $parent_cat_id))
+				'U_VIEW_FORUM'	=> kb_append_sid('cat', array('id' => $parent_cat_id, 'title' => $parent_name)))
 			);
 		}
 	}
@@ -1495,7 +1511,7 @@ function generate_kb_nav($page_title = '', $data = array())
 			'S_IS_CAT'		=> true,
 			'FORUM_NAME'	=> $data['cat_name'],
 			'FORUM_ID'		=> $data['cat_id'],
-			'U_VIEW_FORUM'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $data['cat_id']))
+			'U_VIEW_FORUM'	=> kb_append_sid('cat', array('id' => $data['cat_id'], 'title' => $data['cat_name'])))
 		);
 	}
 	
@@ -1585,7 +1601,7 @@ function kb_get_cat_children($cat_id)
 * @param array &$update_count The attachment counts to be updated - will be filled
 * @param bool $preview If set to true the attachments are parsed for preview. Within preview mode the comments are fetched from the given $attachments array and not fetched from the database.
 */
-function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview = false, $cat_id)
+function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview = false)
 {
 	if (!sizeof($attachments))
 	{
@@ -1769,14 +1785,14 @@ function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview
 				$display_cat = ATTACHMENT_CATEGORY_NONE;
 			}
 
-			$download_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;c=' . $cat_id);
+			$download_link = append_sid("{$phpbb_root_path}download/file.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;kb=1');
 
 			switch ($display_cat)
 			{
 				// Images
 				case ATTACHMENT_CATEGORY_IMAGE:
 					$l_downloaded_viewed = 'VIEWED_COUNT';
-					$inline_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;c=' . $cat_id);
+					$inline_link = append_sid("{$phpbb_root_path}download/file.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;kb=1');
 					$download_link .= '&amp;mode=view';
 
 					$block_array += array(
@@ -1790,7 +1806,7 @@ function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview
 				// Images, but display Thumbnail
 				case ATTACHMENT_CATEGORY_THUMB:
 					$l_downloaded_viewed = 'VIEWED_COUNT';
-					$thumbnail_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;t=1' . '&amp;c=' . $cat_id);
+					$thumbnail_link = append_sid("{$phpbb_root_path}download/file.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;t=1&amp;kb=1');
 					$download_link .= '&amp;mode=view';
 
 					$block_array += array(
@@ -1915,7 +1931,7 @@ function handle_related_articles($article_id, $article_title, $article_title_cle
 {
 	global $phpbb_root_path, $phpEx, $db, $template, $user;
 	
-	$ra = request_var('ra', 0);
+	$ra_start = request_var('ra', 0);
 	
 	if(!$show_num)
 	{
@@ -1928,7 +1944,7 @@ function handle_related_articles($article_id, $article_title, $article_title_cle
 		'FROM'		=> array(
 			KB_TAGS_TABLE => 't'),
 
-		'WHERE'		=> "t.article_id = '" . $db->sql_escape($article_id) . "'",
+		'WHERE'		=> 't.article_id = ' . $article_id,
 	));
 	$result = $db->sql_query($sql);
 	
@@ -1946,7 +1962,7 @@ function handle_related_articles($article_id, $article_title, $article_title_cle
 	{
 		$tag = 't.tag_name_lc = ' . $tags[0];
 	}
-	elseif($num_tags > 0)
+	else if($num_tags > 0)
 	{
 		foreach($tags as $value)
 		{
@@ -1999,58 +2015,37 @@ function handle_related_articles($article_id, $article_title, $article_title_cle
 			AND a.article_status = ' . STATUS_APPROVED . '
 			AND (' . $tag . ')',	
 	));
-	
-	$result = $db->sql_query_limit($sql, $show_num, $ra);
-	
-	$related_articles = array();	
-	while($row = $db->sql_fetchrow($result))
-	{
-		$related_articles[$row['article_id']] = $row['article_title'];
-	}
-	$db->sql_freeresult($result);
-	
-	$articles = array_unique($related_articles);
-	
-	// Need to do it without limit to get the count :S
-	$sql = $db->sql_build_query('SELECT', array(
-		'SELECT'	=> 'a.article_id, a.article_title',
-		'FROM'		=> array(
-			KB_TABLE => 'a'),
-		'LEFT_JOIN'	=> array(
-			array(
-				'FROM' => array(KB_TAGS_TABLE => 't'),
-				'ON' => 'a.article_id = t.article_id',
-			),
-		),
-		'WHERE'		=> 'a.article_id <> ' . $article_id . '
-			AND a.article_status = ' . STATUS_APPROVED . '
-			AND (' . $tag . ')',	
-	));
 	$result = $db->sql_query($sql);
 	
-	$articles_count = array();	
-	while($count = $db->sql_fetchrow($result))
+	$related_articles = $articles_found = array();
+	$shown = $article_count = 0;
+	while($row = $db->sql_fetchrow($result))
 	{
-		$articles_count[] = $count['article_id'];
+		if($shown < $show_num && $shown >= ra_start)
+		{
+			$related_articles[$row['article_id']] = $row['article_title'];
+			$shown++;
+		}
+		$articles_found[] = $row['article_id'];
 	}
-	$db->sql_freeresult($result);		
-	$articles_count = array_unique($articles_count);		
-	$articles_found = sizeof($articles_count);
+	$db->sql_freeresult($result);
+	$articles = array_unique($related_articles);
+	$article_count = count(array_unique($articles_found));
 	
 	foreach ($articles as $article_id_ra => $article_title_ra)
 	{
 		$template->assign_block_vars('related_articles', array(
-			'U_VIEW_ARTICLE'	=> append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id_ra"),
+			'U_VIEW_ARTICLE'	=> kb_append_sid('article', array('id' => $article_id_ra, 'title' => $article_title_ra)),
 			'TITLE'				=> $article_title_ra,
 		));
 	}
 	
 	// Generate Pagination
 	$template->assign_vars(array(
-		'KB_PAGINATION'		=> kb_generate_pagination(append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"), $articles_found, $show_num, $ra, 'ra', true),
-		'KB_PAGE_NUMBER'	=> on_page($articles_found, $show_num, $ra),
-		'KB_TOTAL_RA' 		=> $articles_found,
-		'KB_S_TOTAL_RA'		=> ($articles_found == 1) ? $user->lang['MATCH_FOUND'] : $user->lang['MATCHS_FOUND'],
+		'KB_PAGINATION'		=> kb_generate_pagination(kb_append_sid('article', array('id' => $article_id, 'title' => $article_title)), $article_count, $show_num, $ra_start, 'ra', true),
+		'KB_PAGE_NUMBER'	=> on_page($article_count, $show_num, $ra),
+		'KB_TOTAL_RA' 		=> $article_count,
+		'KB_S_TOTAL_RA'		=> ($article_count == 1) ? $user->lang['MATCH_FOUND'] : $user->lang['MATCHS_FOUND'],
 	));
 }
 
@@ -2082,7 +2077,13 @@ function handle_latest_articles($mode, $cat_id, $data, $show)
 				for($i = 0; $i < $show; $i++)
 				{
 					$article = $latest_articles[$i];
-					$article_links[] = '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $article['article_id']) . '">' . $article['article_title'] . '</a>';
+					
+					$info = array(
+						'id'	=> $article['article_id'],
+						'title'	=> $article['article_title'],
+					);
+					
+					$article_links[] = '<a href="' . kb_append_sid('article', $info) . '">' . $article['article_title'] . '</a>';
 				}
 			}	
 			
@@ -2152,8 +2153,8 @@ function handle_latest_articles($mode, $cat_id, $data, $show)
 			);
 			
 			$sql_ary = array('latest_ids' => serialize($latest_articles));
-			$sql = 'UPDATE ' . KB_CATS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
-					WHERE cat_id = '" . $db->sql_escape($cat_id) . "'";
+			$sql = 'UPDATE ' . KB_CATS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . '
+					WHERE cat_id = ' . $cat_id;
 			$db->sql_query($sql);
 		break;
 		
@@ -2181,8 +2182,8 @@ function handle_latest_articles($mode, $cat_id, $data, $show)
 			}
 			
 			$sql_ary = array('latest_ids' => serialize($latest_articles));
-			$sql = 'UPDATE ' . KB_CATS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
-					WHERE cat_id = '" . $db->sql_escape($cat_id) . "'";
+			$sql = 'UPDATE ' . KB_CATS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . '
+					WHERE cat_id = ' . $cat_id;
 			$db->sql_query($sql);
 		break;
 	}
@@ -2246,6 +2247,7 @@ function feed_output($feed, $feed_type, $feed_data = false)
 			'DATE_3339'			=> ($feed_type == 'ATOM') ? date3339($row['article_time']) : '',
 		));
 	}
+	$db->sql_freeresult($result);
 
 	$template->assign_vars(array(
 		'FEED'				=> $feed,
@@ -2450,9 +2452,9 @@ function kb_display_cats($root_data = '')
 					$visible_subcats[$cat_id]++;
 					$subcats_list[] = array(
 						'name' => $subcat['name'],
-						'link' => kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$subcat_id"),
+						'link' => kb_append_sid('cat', array('id' => $subcat_id, 'title' => $subcat['name'])),
 					);
-					$s_subcats_list[] = '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$subcat_id") . '">' . $subcat['name'] . '</a>';
+					$s_subcats_list[] = '<a href="' . kb_append_sid('cat', array('id' => $subcat_id, 'title' => $subcat['name'])) . '">' . $subcat['name'] . '</a>';
 				}
 				$s_subcats_list = implode(', ', $s_subcats_list);
 			}
@@ -2475,8 +2477,8 @@ function kb_display_cats($root_data = '')
 				'LATEST_ARTICLE'		=> $latest_articles,
 
 				'L_SUBCAT'				=> ($visible_subcats[$cat_id] == 1) ? $user->lang['SUBCAT'] : $user->lang['SUBCATS'],
-				'U_VIEWCAT'				=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id"),
-				'U_RSS_CAT'				=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=cat&amp;feed_cat_id=' . $cats[$cat_id]['cat_id'] . '&amp;feed_cat_name=' . $cats[$cat_id]['cat_name']),
+				'U_VIEWCAT'				=> kb_append_sid('cat', array('id' => $cats[$cat_id]['cat_id'], 'title' => $cats[$cat_id]['cat_name'])),
+				'U_RSS_CAT'				=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=cat&amp;feed_cat_id=' . $cats[$cat_id]['cat_id'] . '&amp;feed_cat_name=' . $cats[$cat_id]['cat_name']),
 			));		
 		}
 	}	
@@ -2497,7 +2499,7 @@ function gen_kb_edit_string($article_id, $last_edit_id, $article_time, $edit_tim
 		$edit_data = $db->sql_fetchrow($result);
 		$db->sql_freeresult($result);
 		
-		$l_edit = sprintf($user->lang['KB_EDITED_BY'], '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;e=$article_id") . '">', '</a>', get_username_string('full', $edit_data['edit_user_id'], $edit_data['edit_user_name'], $edit_data['edit_user_color']), $user->format_date($edit_time, false, true));
+		$l_edit = sprintf($user->lang['KB_EDITED_BY'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;e=$article_id") . '">', '</a>', get_username_string('full', $edit_data['edit_user_id'], $edit_data['edit_user_name'], $edit_data['edit_user_color']), $user->format_date($edit_time, false, true));
 		
 		if($reason != '' && $reason_global)
 		{
@@ -2646,21 +2648,21 @@ function make_time_selects($current_time)
 	for($i = 1; $i <= 12; $i++)
 	{
 		$selected = ($date[1] == $i) ? ' selected="selected"' : '';
-		$month_options .= "<option value='" . $i . "'" . $selected . ">" . $user->lang['datetime'][$month_names[$i]] . "</option>\n";
+		$month_options .= '<option value="' . $i . '"' . $selected . '>' . $user->lang['datetime'][$month_names[$i]] . '</option>\n';
 	}
 	
 	$day_options = "";
 	for($i = 1; $i <= 31; $i++)
 	{
 		$selected = ($date[0] == $i) ? ' selected="selected"' : '';
-		$day_options .= "<option value='" . $i . "'" . $selected . ">" . $i . "</option>\n";
+		$day_options .= '<option value="' . $i . '"' . $selected . '">' . $i . '</option>\n';
 	}
 	
 	$year_options = "";
 	for($i = $date[2] - 10; $i < ($date[2] + 10); $i++)
 	{
 		$selected = ($date[2] == $i) ? ' selected="selected"' : '';
-		$year_options .= "<option value='" . $i . "'" . $selected . ">" . $i . "</option>\n";
+		$year_options .= '<option value="' . $i . '"' . $selected . '>' . $i . '</option>\n';
 	}
 	
 	$hour_options = "";
@@ -2672,7 +2674,7 @@ function make_time_selects($current_time)
 			$o = "0";
 		}
 		$selected = ($date[3] == $i) ? ' selected="selected"' : '';
-		$hour_options .= "<option value='" . $i . "'" . $selected . ">" . $o . $i . "</option>\n";
+		$hour_options .= '<option value="' . $i . '"' . $selected . '>' . $o . $i . '</option>\n';
 	}
 	
 	$min_options = "";
@@ -2685,7 +2687,7 @@ function make_time_selects($current_time)
 		}
 		$minute = $o . $i;
 		$selected = ($date[4] == $minute) ? ' selected="selected"' : '';
-		$min_options .= "<option value='" . $i . "'" . $selected . ">" . $minute . "</option>\n";
+		$min_options .= '<option value="' . $i . '"' . $selected . '>' . $minute . '</option>\n';
 	}
 	
 	return array(
@@ -2713,14 +2715,14 @@ function gen_article_type($article_type, $article_title, $types, $icons)
 		),
 	);
 	
-	if($article_type == 0 || !isset($types[$article_type]))
+	if($article_type == STATUS_UNREVIEW || !isset($types[$article_type]))
 	{
 		return $type_info;
 	}
 	
 	$type_data = $types[$article_type];
-	$prefix = (!isset($type_data['prefix'])) ? '' : $type_data['prefix'] . ' ';
-	$suffix = (!isset($type_data['suffix'])) ? '' : ' ' . $type_data['suffix'];
+	$prefix = ($type_data['prefix'] == '') ? '' : $type_data['prefix'] . ' ';
+	$suffix = ($type_data['suffix'] == '') ? '' : ' ' . $type_data['suffix'];
 	$article_title = $prefix . $article_title . $suffix;
 
 	$article_image = array(
@@ -2859,12 +2861,13 @@ function export_data($type = 'word', $article_id)
 		'FROM'		=> array(
 			KB_TABLE => 'a'
 		),
-		'WHERE'		=> "a.article_id = '" . $db->sql_escape($article_id) . "'",
+		'WHERE'		=> 'a.article_id = ' . $article_id,
 	));
 	
 	$result = $db->sql_query($sql);
 	$article_data = $db->sql_fetchrow($result);
-			
+	$db->sql_freeresult($result);
+		
 	if(!$article_data)
 	{
 		trigger_error('KB_NO_ARTICLE');
@@ -2911,6 +2914,7 @@ function export_data($type = 'word', $article_id)
 		break;
 		
 		// not working need to find a new way of doing this or just leave it as word?
+		/*
 		case 'pdf':
 			$output .= "<html>";
 			$output .= "<head>
@@ -2937,6 +2941,7 @@ function export_data($type = 'word', $article_id)
 			//Set some formal stuff
 			$extension = '.pdf';
 		break;
+		*/
 	}
 	
 	$save_as = str_replace(' ', '_', $article_data['article_title']);
@@ -2974,7 +2979,7 @@ function make_sort_select($mode, $default)
 			'rating'	=> $user->lang['KB_SORT_RATING'],
 		);
 	}
-	elseif($mode == 'comments')
+	else if($mode == 'comments')
 	{
 		$s_sort_options = array(
 			'etime'		=> $user->lang['KB_SORT_ETIME'],
@@ -3017,4 +3022,25 @@ function make_direction_select($direction)
 	return $select;
 }
 
+/*
+KB Fetch All Function
+Description: This function is meant to be a help for developers to easily retrieve info from the KB. It is dependant that the file already
+has included and initialized normal phpbb files. 
+More information on how to do this can be found here: http://www.phpbb.com/kb/article/add-a-new-custom-page-to-phpbb/
+The function syntax is:
+kb_fetch_all($mode, $submode, $data = array())
+The $data & $submode are dependant on the $mode, which can be specified as one of the following
+- article
+	- Available submodes:
+		list - Retrieves a list of articles
+			data - 
+- cat or category
+- tag
+- request
+
+function kb_fetch_all($mode, $data = array())
+{
+	
+}
+*/
 ?>

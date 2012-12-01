@@ -1,20 +1,5 @@
-<!-- IF S_IS_MCP -->
-<!-- INCLUDE mcp_header.html -->
-<!-- ELSEIF S_IS_UCP -->
-<!-- INCLUDE ucp_header.html -->
-<!-- ELSE -->
-<!-- INCLUDE overall_header.html -->
-<h2><a href="{U_VIEW_FORUM}">{CAT_NAME}</a></h2>
-<!-- ENDIF -->
-
-<table style="width: 100%">
-	<tr>
-		<!-- IF .left_menu -->
-			<td id="left_menu" style="width: {LEFT_MENU_WIDTH}; vertical-align: top;">
-				<!-- INCLUDE kb/left_menu.html -->
-			</td>
-		<!-- ENDIF -->
-		<td style="vertical-align: top; <!-- IF .left_menu -->padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu --> padding-right: 20px;<!-- ENDIF -->">	
+<!-- INCLUDE kb/kb_header.html -->
+			<h2><a href="{U_VIEW_FORUM}">{CAT_NAME}</a></h2>
 			<form id="postform" method="post" action="{S_POST_ACTION}"{S_FORM_ENCTYPE}>
 			<!-- IF not S_IS_UCP && not S_IS_MCP -->
 			<!-- IF S_DISPLAY_PREVIEW --><!-- INCLUDE posting_preview.html --><!-- ENDIF -->
@@ -270,18 +255,4 @@
 				<span class="corners-bottom"><span></span></span></div>
 			</div>
 			<!-- ENDIF -->
-		</td>				
-		<!-- IF .right_menu -->
-		<td id="right_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
-			<!-- INCLUDE kb/right_menu.html -->
-		</td>
-		<!-- ENDIF -->
-	</tr>
-</table>
-<!-- IF S_IS_MCP -->
-<!-- INCLUDE mcp_footer.html -->
-<!-- ELSEIF S_IS_UCP -->
-<!-- INCLUDE ucp_footer.html -->
-<!-- ELSE -->
-<!-- INCLUDE overall_footer.html -->
-<!-- ENDIF -->
+<!-- INCLUDE kb/kb_footer.html -->

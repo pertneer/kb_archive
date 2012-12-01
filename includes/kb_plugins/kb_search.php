@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_search.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: kb_search.php 420 2010-01-13 14:36:10Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -24,9 +24,9 @@ if (defined('IN_KB_PLUGIN'))
 	$acp_options['kb_search_menu']		= array('lang' => 'WHICH_MENU',			'validate' => 'int',	'type' => 'custom', 		'function' 	=> 'select_menu_check', 	'explain' 	=> false);
 		
 	$details = array(
-		'PLUGIN_NAME'			=> 'Search',
-		'PLUGIN_DESC'			=> 'Adds the ability for you search the knowledge base',
-		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
+		'PLUGIN_NAME'			=> 'PLUGIN_SEARCH',
+		'PLUGIN_DESC'			=> 'PLUGIN_SEARCH_DESC',
+		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.0',
 		'PLUGIN_MENU'			=> LEFT_MENU,
 		'PLUGIN_PERM'			=> true,
@@ -49,8 +49,8 @@ function search($cat_id = 0)
 
 	// Some default template variables
 	$template->assign_vars(array(
-		'U_KB_SEARCH'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search' . $cat_search),
-		'U_KB_SEARCH_ADV'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search'),
+		'U_KB_SEARCH'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search' . $cat_search),
+		'U_KB_SEARCH_ADV'	=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search'),
 	));
 	
 	$content = kb_parse_template('search', 'search.html');

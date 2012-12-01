@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: acp_kb_types.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: acp_kb_types.php 416 2010-01-12 21:02:01Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -18,7 +18,7 @@ class acp_kb_types_info
 		return array(
 			'filename'	=> 'acp_kb_types',
 			'title'		=> 'ACP_KB_ARTICLE_TYPES',
-			'version'	=> '0.0.1',
+			'version'	=> '1.0.1',
 			'modes'		=> array(
 				'manage'	=> array('title' => 'ACP_MANAGE_KB_TYPES', 'auth' => 'acl_a_board', 'cat' => array('ACP_KB')),
 			),

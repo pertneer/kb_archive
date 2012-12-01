@@ -1,13 +1,4 @@
-<!-- INCLUDE overall_header.html -->
-
-<table style="width: 100%">
-	<tr>
-		<!-- IF .left_menu -->
-		<td id="left_menu" style="width: {LEFT_MENU_WIDTH}; vertical-align: top;">
-			<!-- INCLUDE kb/left_menu.html -->
-		</td>
-		<!-- ENDIF -->
-		<td style="vertical-align: top; <!-- IF .left_menu --> padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu --> padding-right: 20px;<!-- ENDIF -->">
+<!-- INCLUDE kb/kb_header.html -->
 			<div id="a" class="post bg1">
 			<div class="inner">
 				<span class="corners-top"><span></span></span>
@@ -27,20 +18,4 @@
 					</div>
 				<span class="corners-bottom"><span></span></span></div>
 			</div>
-		</td>
-		<!-- IF .right_menu -->
-		<td id="right_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
-			<!-- INCLUDE kb/right_menu.html -->
-		</td>
-		<!-- ENDIF -->
-	</tr>
-</table>
-<!-- IF S_DISPLAY_ONLINE_LIST -->
-	<h3><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a></h3>
-	<p>{LOGGED_IN_USER_LIST}</p>
-<!-- ENDIF -->
-
-<h3>{L_KB_PERMISSIONS}</h3>
-<p><!-- BEGIN rules -->{rules.RULE}<br /><!-- END rules --></p>
-
-<!-- INCLUDE overall_footer.html -->
+<!-- INCLUDE kb/kb_footer.html -->

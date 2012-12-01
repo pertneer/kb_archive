@@ -1,54 +1,65 @@
-<!-- INCLUDE overall_header.html -->
+<!-- INCLUDE kb/kb_header.html -->
+<div class="topic-actions">
+	<div class="pagination">
+		{TOTAL_REQUESTS} {L_REQUESTS}
+		<!-- IF PAGE_NUMBER -->
+		<!-- IF PAGINATION --> &bull; <a href="#" onclick="jumpto(); return false;" title="{L_JUMP_TO_PAGE}">{PAGE_NUMBER}</a> &bull; <span>{PAGINATION}</span><!-- ELSE --> &bull; {PAGE_NUMBER}<!-- ENDIF -->
+		<!-- ENDIF -->
+	</div>
+</div>
 
-<table style="width: 100%">
-	<tr>
-		<!-- IF .left_menu -->
-		<td id="left_menu" style="width: {LEFT_MENU_WIDTH}; vertical-align: top;">
-			<!-- INCLUDE kb/left_menu.html -->
-		</td>
-		<!-- ENDIF -->
-		<td style="vertical-align: top;<!-- IF .left_menu --> padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu --> padding-right: 20px;<!-- ENDIF -->">
-			<div class="topic-actions">
-				<div class="pagination">
-					{TOTAL_REQUESTS} {L_REQUESTS}
-					<!-- IF PAGE_NUMBER -->
-						<!-- IF PAGINATION --> &bull; <a href="#" onclick="jumpto(); return false;" title="{L_JUMP_TO_PAGE}">{PAGE_NUMBER}</a> &bull; <span>{PAGINATION}</span><!-- ELSE --> &bull; {PAGE_NUMBER}<!-- ENDIF -->
-					<!-- ENDIF -->
-				</div>
-			</div>
-			<div class="post bg1">
-				<div class="inner">
-					<span class="corners-top"><span></span></span>
-					<div class="left_menu_title">{L_KB_REQS}</div>
-					
-					<!-- IF .req_list -->
-						<hr />
-						<!-- BEGIN req_list -->
-							<a href="{req_list.U_VIEW_REQ}">{req_list.REQ_TITLE}</a> <br />{L_POST_BY_AUTHOR} <strong>{req_list.REQ_AUTHOR_FULL}</strong> {L_POSTED_ON_DATE} {req_list.REQ_DATE}<br />
-						<!-- END req_list -->
-					<!-- ELSE -->
-					<strong>{L_KB_NO_REQS}</strong>
-					<!-- ENDIF -->
-					<!-- IF U_ADD_REQ -->
-						<hr /><!-- IF U_ADD_REQ --><a href="{U_ADD_REQ}" title="{L_KB_ADD_REQUEST}">{L_KB_ADD_REQUEST}</a><!-- ENDIF -->
-					<!-- ENDIF -->
-					<span class="corners-bottom"><span></span></span>
-				</div>
-			</div>
-			<div class="topic-actions">
-				<div class="pagination">
-					{TOTAL_REQUESTS} {L_REQUESTS}
-					<!-- IF PAGE_NUMBER -->
-						<!-- IF PAGINATION --> &bull; <a href="#" onclick="jumpto(); return false;" title="{L_JUMP_TO_PAGE}">{PAGE_NUMBER}</a> &bull; <span>{PAGINATION}</span><!-- ELSE --> &bull; {PAGE_NUMBER}<!-- ENDIF -->
-					<!-- ENDIF -->
-				</div>
-			</div>
-		</td>
-		<!-- IF .right_menu -->
-		<td id="right_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
-			<!-- INCLUDE kb/right_menu.html -->
-		</td>
-		<!-- ENDIF -->
-	</tr>
-</table>
-<!-- INCLUDE overall_footer.html -->		
+<!-- BEGIN req_list -->
+	<!-- IF req_list.S_FIRST_ROW -->
+	<div class="forabg">
+		<div class="inner"><span class="corners-top"><span></span></span>
+			<ul class="topiclist">
+				<li class="header">
+					<dl>
+						<dt>{L_KB_REQS}</dt>
+						<dd class="lastpost"><span>&nbsp;</span></dd>
+					</dl>
+				</li>
+			</ul>
+			<ul class="topiclist forums">
+	<!-- ENDIF -->
+				<li class="row">
+					<dl>
+						<dt>
+							<a href="{req_list.U_VIEW_REQ}">{req_list.REQ_TITLE}</a>
+						</dt>
+						<dd class="lastpost">
+							<span><dfn>{L_LAST_POST} </dfn>{L_POST_BY_AUTHOR} {req_list.REQ_AUTHOR_FULL}<br />{req_list.REQ_DATE}</span>
+						</dd>
+					</dl>
+				</li>
+	<!-- IF req_list.S_LAST_ROW -->
+			</ul>
+		<span class="corners-bottom"><span></span></span></div>
+	</div>
+	<!-- ENDIF -->
+<!-- BEGINELSE -->
+	<div class="panel">
+		<div class="inner"><span class="corners-top"><span></span></span>
+		<strong>{L_KB_NO_REQS}</strong>
+		<span class="corners-bottom"><span></span></span></div>
+	</div>
+<!-- END req_list -->
+
+<!-- IF U_ADD_REQ -->
+<hr /><!-- IF U_ADD_REQ --><a href="{U_ADD_REQ}" title="{L_KB_ADD_REQUEST}">{L_KB_ADD_REQUEST}</a><!-- ENDIF -->
+<!-- ENDIF -->
+	
+<div class="topic-actions">
+	<div class="pagination">
+	{TOTAL_REQUESTS} {L_REQUESTS}
+	<!-- IF PAGE_NUMBER -->
+	<!-- IF PAGINATION --> &bull; <a href="#" onclick="jumpto(); return false;" title="{L_JUMP_TO_PAGE}">{PAGE_NUMBER}</a> &bull; <span>{PAGINATION}</span><!-- ELSE --> &bull; {PAGE_NUMBER}<!-- ENDIF -->
+	<!-- ENDIF -->
+	</div>
+</div>
+
+
+
+
+
+<!-- INCLUDE kb/kb_footer.html -->		

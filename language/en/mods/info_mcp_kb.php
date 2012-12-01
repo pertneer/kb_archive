@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: info_mcp_kb.php 356 2009-11-08 10:40:10Z tom.martin60@btinternet.com $
+* @version $Id: info_mcp_kb.php 429 2010-01-20 15:32:50Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -43,7 +43,6 @@ $lang = array_merge($lang, array(
 	'MCP_KB_ARTICLES_EXPLAIN'	=> 'Here is a list of articles which have been approved, all old chat with the authors is logged here.',
 	'MCP_KB_QUEUE'				=> 'Articles awaiting approval',
 	'MCP_KB_QUEUE_EXPLAIN'		=> 'Here is a list of articles that needs approval to be shown publicly. You can communicate with the article author here and edit the articles at your will.',
-	
 ));
 
 ?>
