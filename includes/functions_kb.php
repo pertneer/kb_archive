@@ -486,6 +486,7 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 	$sql_data[KB_TABLE]['sql'] = array(
 		'cat_id'						=> 	$data['cat_id'],
 		'article_title'					=>	$data['article_title'],
+		'article_title_clean'			=>  utf8_clean_string($data['article_title']),
 		'article_desc'					=>	$data['article_desc'],
 		'article_desc_bitfield'			=>	$data['article_desc_bitfield'],
 		'article_desc_options'			=>	$data['article_desc_options'],
@@ -1150,7 +1151,6 @@ function article_delete($article_id, $cat_id, $article_data)
 				WHERE article_id = $article_id";
 		$db->sql_query($sql);
 		
-		// Delete from comments table - no need to store these
 		$comment_ids = array();
 		$sql = 'SELECT comment_id
 				FROM ' . KB_COMMENTS_TABLE . "
@@ -1158,16 +1158,20 @@ function article_delete($article_id, $cat_id, $article_data)
 		$result = $db->sql_query($sql);
 		while($row = $db->sql_fetchrow($result))
 		{
+			// Don't loop this: comment_delete($row['comment_id'], $article_id, false);
 			$comment_ids[] = $row['comment_id'];
 		}
 		$db->sql_freeresult($result);
 		
-		$sql = 'DELETE FROM ' . KB_COMMENTS_TABLE . "
-				WHERE " . $db->sql_in_set('comment_id', $comment_ids);
-		$db->sql_query($sql);
-		
-		// Delete from attachments table, and delete attachment files
-		kb_delete_attachments('comment', $comment_ids);
+		if(sizeof($comment_ids))
+		{
+			$sql = 'DELETE FROM ' . KB_COMMENTS_TABLE . "
+					WHERE " . $db->sql_in_set('comment_id', $comment_ids);
+			$db->sql_query($sql);
+			
+			// Delete from attachments table, and delete attachment files
+			kb_delete_attachments('comment', $comment_ids);
+		}
 		
 		// Delete from edits table
 		$sql = 'DELETE FROM ' . KB_EDITS_TABLE . "

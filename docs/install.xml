@@ -254,7 +254,7 @@
 						<open src="/includes/functions.php">
 											<edit>
 							<find><![CDATA[		'U_RESTORE_PERMISSIONS'	=> ($user->data['user_perm_from'] && $auth->acl_get('a_switchperm')) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'mode=restore_perm') : '',]]></find>
-															<action type="after-add"><![CDATA[		'U_KB'					=> append_sid("kb.php"),
+															<action type="after-add"><![CDATA[		'U_KB'					=> append_sid("{$phpbb_root_path}kb.$phpEx"),
 		'L_KB_EXPLAIN'			=> $user->lang['KB_EXPLAIN'],
 		'L_KB'					=> $user->lang['KNOWLEDGE_BASE'],]]></action>
 													</edit>

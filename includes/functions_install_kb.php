@@ -525,6 +525,19 @@ function get_kb_versions()
 		'0.3.0' => array(
 			// New release ;)
 		),
+		
+		'0.3.1' => array(
+			// Code change ;)
+			'custom'	=> 'kb_delete_permission_roles',
+		),
+		
+		'0.3.2' => array(
+			// making search better, I hope
+			'table_column_add' => array(
+				array(KB_TABLE, 'article_title_clean', array('VCHAR', '')),
+			),
+			'custom' => 'kb_update_031_to_032',
+		),
 	);
 
 	return $versions;
@@ -534,6 +547,22 @@ function get_kb_versions()
 // ALL FUNCTIONS BELOW THIS LINE ARE CUSTOM UPDATE FUNCTIONS
 // (expect long and annoying function names)
 //
+function kb_delete_permission_roles($action , $version)
+{
+	global $phpbb_root_path, $db;
+
+	if ($action == 'uninstall')
+	{
+		$sql = 'DELETE FROM ' . ACL_ROLES_TABLE . " 
+			WHERE role_type = 'u_kb_'";
+		$db->sql_query($sql);
+	}
+	else
+	{
+		return;
+	}
+}
+
 function kb_install_perm_plugins($action , $version)
 {
 	global $phpbb_root_path;
@@ -618,5 +647,39 @@ function kb_update_0_0_11_to_0_0_12($action, $version)
 		$db->sql_query($sql);
 	}
 	$db->sql_freeresult($result);
+}
+
+/*
+Write article titles into the new clean tag
+*/
+function kb_update_031_to_032($action, $version)
+{
+	global $db, $table_prefix;
+	
+	// Only run function when updating
+	if($action != 'update')
+	{
+		return;
+	}
+	
+	$sql = "SELECT article_id, article_title
+			FROM " . $table_prefix . "articles";
+	$result = $db->sql_query($sql);
+	
+	$articles = array();
+	while($row = $db->sql_fetchrow($result))
+	{
+		$articles[$row['article_id']] = utf8_clean_string($row['article_title']);
+	}
+	$db->sql_freeresult($result);
+	
+	foreach($articles as $article_id => $clean_title)
+	{
+		$sql = 'UPDATE ' . $table_prefix . 'articles  
+				SET article_title_clean = ' . $clean_title . '
+				WHERE article_id = ' . $article_id;
+		$db->sql_query($sql);
+	}
+
 }
 ?>

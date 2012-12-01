@@ -54,7 +54,7 @@ class ucp_kb
 		{
 			case 'front':
 				// Generate a bit of user stats and link for the user
-				$articles = $wait_articles = 0;
+				$articles = $wait_articles = $mod_comments = $comments = 0;
 				$article_ids = array(); // used for last query
 				
 				$sql = 'SELECT article_id, article_status
@@ -86,15 +86,18 @@ class ucp_kb
 				$db->sql_freeresult($result);
 				
 				// mod comments not read
-				$sql = 'SELECT COUNT(comment_id) as mod_comments
-						FROM ' . KB_COMMENTS_TABLE . '
-						WHERE comment_type = ' . COMMENT_MOD . ' 
-						AND comment_time > ' . $user->data['user_lastvisit'] . '
-						AND ' . $db->sql_in_set('article_id', $article_ids) . '
-						AND NOT comment_user_id = ' . $user->data['user_id']; // Don't include own comments just in case
-				$result = $db->sql_query($sql);
-				$mod_comments = $db->sql_fetchfield('mod_comments', $result);
-				$db->sql_freeresult($result);
+				if(sizeof($article_ids))
+				{
+					$sql = 'SELECT COUNT(comment_id) as mod_comments
+							FROM ' . KB_COMMENTS_TABLE . '
+							WHERE comment_type = ' . COMMENT_MOD . ' 
+							AND comment_time > ' . $user->data['user_lastvisit'] . '
+							AND ' . $db->sql_in_set('article_id', $article_ids) . '
+							AND NOT comment_user_id = ' . $user->data['user_id']; // Don't include own comments just in case
+					$result = $db->sql_query($sql);
+					$mod_comments = $db->sql_fetchfield('mod_comments', $result);
+					$db->sql_freeresult($result);
+				}
 				
 				// Assign template vars
 				$template->assign_vars(array(
@@ -117,8 +120,6 @@ class ucp_kb
 					'U_SEARCH_ARTICLES'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search&amp;author_id=' . $user->data['user_id']),
 					'U_UCP_ARTICLES'			=> append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=kb&amp;mode=articles'),
 				));
-				
-				gen_kb_auth_level();
 			break;
 			
 			// handles add, delete, edit and list of subscriptions

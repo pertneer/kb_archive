@@ -53,6 +53,7 @@ class acp_kb_permissions
 				$action = (isset($_POST['add'])) ? 'add' : $action;
 
 				$permission_type = 'u_kb_';
+				$dummy_type = 'u_'; // Create dummy so we don't get stupid weird rows
 				$this->page_title = 'ACP_KB_ROLES';
 
 				$template->assign_vars(array(
@@ -192,7 +193,7 @@ class acp_kb_permissions
 
 								$role_id = $db->sql_nextid();
 							}
-
+							
 							// Now add the auth settings
 							$auth_admin->acl_set_role($role_id, $auth_settings);
 
@@ -240,6 +241,7 @@ class acp_kb_permissions
 								FROM ' . ACL_OPTIONS_TABLE . "
 								WHERE auth_option " . $db->sql_like_expression($permission_type . $db->any_char) . "
 									AND auth_option <> '{$permission_type}'
+									AND auth_option <> '{$dummy_type}'
 								ORDER BY auth_option_id";
 							$result = $db->sql_query($sql);
 
@@ -271,8 +273,9 @@ class acp_kb_permissions
 							$sql = 'SELECT p.auth_option_id, p.auth_setting, o.auth_option
 								FROM ' . ACL_ROLES_DATA_TABLE . ' p, ' . ACL_OPTIONS_TABLE . ' o
 								WHERE o.auth_option_id = p.auth_option_id
-									AND p.role_id = ' . $role_id . '
-								ORDER BY p.auth_option_id';
+									AND p.role_id = ' . $role_id . "
+									AND o.auth_option <> '{$dummy_type}'
+								ORDER BY p.auth_option_id";
 							$result = $db->sql_query($sql);
 
 							$auth_options = array();
@@ -281,6 +284,7 @@ class acp_kb_permissions
 								$auth_options[$row['auth_option']] = $row['auth_setting'];
 							}
 							$db->sql_freeresult($result);
+							
 						}
 
 						if (!$role_row)
@@ -305,6 +309,7 @@ class acp_kb_permissions
 							FROM ' . ACL_OPTIONS_TABLE . "
 							WHERE auth_option " . $db->sql_like_expression($permission_type . $db->any_char) . "
 								AND auth_option <> '{$permission_type}'
+								AND auth_option <> '{$dummy_type}'
 							ORDER BY auth_option_id";
 						$result = $db->sql_query($sql);
 
@@ -337,7 +342,7 @@ class acp_kb_permissions
 									'L_ROLE_ASSIGNED_TO'	=> sprintf($user->lang['ROLE_ASSIGNED_TO'], $role_name))
 								);
 
-								$auth_admin->display_role_mask($hold_ary);
+								$this->display_role_mask($hold_ary);
 							}
 						}
 
@@ -429,7 +434,7 @@ class acp_kb_permissions
 					);
 
 					$hold_ary = $auth_admin->get_role_mask($display_item);
-					$auth_admin->display_role_mask($hold_ary);
+					$this->display_role_mask($hold_ary);
 				}
 			break;
 			
@@ -804,6 +809,82 @@ class acp_kb_permissions
 		$this->acl_set($ug_type, $forum_id, $ug_id, $auth_settings, $assigned_role);
 
 		trigger_error($user->lang['AUTH_UPDATED'] . adm_back_link($this->u_action));
+	}
+
+	/**
+	* Display permission mask for roles
+	*/
+	function display_role_mask(&$hold_ary)
+	{
+		global $db, $template, $user, $phpbb_root_path, $phpbb_admin_path, $phpEx;
+
+		if (!sizeof($hold_ary))
+		{
+			return;
+		}
+
+		// Get forum names
+		$sql = 'SELECT cat_id, cat_name
+			FROM ' . KB_CATS_TABLE . '
+			WHERE ' . $db->sql_in_set('cat_id', array_keys($hold_ary)) . '
+			ORDER BY left_id';
+		$result = $db->sql_query($sql);
+
+		// If the role is used globally, then reflect that
+		$cat_names = (isset($hold_ary[0])) ? array(0 => '') : array();
+		while ($row = $db->sql_fetchrow($result))
+		{
+			$cat_names[$row['cat_id']] = $row['cat_name'];
+		}
+		$db->sql_freeresult($result);
+
+		foreach ($cat_names as $cat_id => $cat_name)
+		{
+			$auth_ary = $hold_ary[$cat_id];
+
+			$template->assign_block_vars('role_mask', array(
+				'NAME'				=> ($cat_id == 0) ? $user->lang['GLOBAL_MASK'] : $cat_name,
+				'FORUM_ID'			=> $cat_id)
+			);
+
+			if (isset($auth_ary['users']) && sizeof($auth_ary['users']))
+			{
+				$sql = 'SELECT user_id, username
+					FROM ' . USERS_TABLE . '
+					WHERE ' . $db->sql_in_set('user_id', $auth_ary['users']) . '
+					ORDER BY username_clean ASC';
+				$result = $db->sql_query($sql);
+
+				while ($row = $db->sql_fetchrow($result))
+				{
+					$template->assign_block_vars('role_mask.users', array(
+						'USER_ID'		=> $row['user_id'],
+						'USERNAME'		=> $row['username'],
+						'U_PROFILE'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=viewprofile&amp;u={$row['user_id']}"))
+					);
+				}
+				$db->sql_freeresult($result);
+			}
+
+			if (isset($auth_ary['groups']) && sizeof($auth_ary['groups']))
+			{
+				$sql = 'SELECT group_id, group_name, group_type
+					FROM ' . GROUPS_TABLE . '
+					WHERE ' . $db->sql_in_set('group_id', $auth_ary['groups']) . '
+					ORDER BY group_type ASC, group_name';
+				$result = $db->sql_query($sql);
+
+				while ($row = $db->sql_fetchrow($result))
+				{
+					$template->assign_block_vars('role_mask.groups', array(
+						'GROUP_ID'		=> $row['group_id'],
+						'GROUP_NAME'	=> ($row['group_type'] == GROUP_SPECIAL) ? $user->lang['G_' . $row['group_name']] : $row['group_name'],
+						'U_PROFILE'		=> append_sid("{$phpbb_root_path}memberlist.$phpEx", "mode=group&amp;g={$row['group_id']}"))
+					);
+				}
+				$db->sql_freeresult($result);
+			}
+		}
 	}
 
 	/**

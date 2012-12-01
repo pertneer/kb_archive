@@ -51,6 +51,7 @@ $lang = array_merge($lang, array(
 	'ARTICLE_AUTHOR'					=> 'Article author',
 	'ARTICLE_CONTENT'					=> 'Article content',
 	'ARTICLE_CAT'						=> 'Article category',
+	'ARTICLE_DELETED'					=> 'Your article has been deleted',
 	'ARTICLE_DESC'						=> 'Article description',
 	'ARTICLE_DESC_EXPLAIN'				=> 'If you wish to write a description for your article please do so. The character limit is 300 and BBCodes are enabled.',
 	'ARTICLE_HISTORY'					=> 'View article history',

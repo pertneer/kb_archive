@@ -708,6 +708,7 @@ function make_page_list($filename, $page_list = false)
 	$page_options = array(
 		'index'			=> $user->lang['KB_INDEX'],
 		'view_cat'		=> $user->lang['VIEW_CAT'],
+		'view_tag'		=> $user->lang['VIEW_TAG'],
 		'request'		=> $user->lang['REQUEST'],
 		'view_article'	=> $user->lang['VIEW_ARTICLE'],		
 		'search'		=> $user->lang['SEARCH'],

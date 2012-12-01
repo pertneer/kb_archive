@@ -84,13 +84,11 @@ class knowledge_base
 			{
 				// Article viewing
 				case 'view_article':
-					show_request_list(true, 5);
 					$this->generate_article_page();
 				break;
 					
 				// View a cat or sort articles by tag or both
 				case 'view_cat':
-					show_request_list(true, 5);
 					$this->generate_article_list();
 				break;
 					
@@ -115,7 +113,6 @@ class knowledge_base
 				
 				// Search articles via query or tag
 				case 'search':
-					show_request_list(true, 5);
 					$this->search_articles();
 				break;
 				
@@ -153,8 +150,7 @@ class knowledge_base
 				// View the kb index screen
 				case '':
 				case 'index':
-				default:					
-					show_request_list(true, 5);
+				default:
 					$this->generate_index_page();					
 				break;
 			}
@@ -835,9 +831,12 @@ class knowledge_base
 		// Get article types
 		$article_type = gen_article_type($article_data['article_type'], $article_data['article_title'], $types, $icons);
 		
+		$article_desc_re = generate_text_for_display($article_data['article_desc'], $article_data['article_desc_uid'], $article_data['article_desc_bitfield'], $article_data['article_desc_options']);
+		
 		// Send vars to template
 		$template->assign_vars(array(
-			'ARTICLE_DESC'			=> generate_text_for_display($article_data['article_desc'], $article_data['article_desc_uid'], $article_data['article_desc_bitfield'], $article_data['article_desc_options']),
+			'ARTICLE_DESC_CLEAN'	=> strip_tags($article_desc_re),
+			'ARTICLE_DESC'			=> $article_desc_re,
 			'ARTICLE_ID' 			=> $this->article_id,
 			'ARTICLE_TITLE' 		=> $article_type['article_title'],
 			'ARTICLE_POSTER'		=> $article_data['article_user_id'],
@@ -2038,7 +2037,7 @@ class knowledge_base
 		posting_gen_inline_attachments($attachment_data);
 		
 		$s_article_types = '';
-		if ($auth->acl_get('u_kb_types')) // this permission variable now applies to article types
+		if ($auth->acl_get('u_kb_types', $this->cat_id)) // this permission variable now applies to article types
 		{
 			$s_article_types = make_article_type_select($article_data['article_type']);
 		}
@@ -2200,9 +2199,10 @@ class knowledge_base
 				{
 					trigger_error('KB_NO_ARTICLE');
 				}
-				$sql = "SELECT *
-						FROM " . KB_TABLE . "
-						WHERE article_id = '" . $db->sql_escape($this->article_id) . "'";
+				$sql = "SELECT a.*, c.cat_name, c.parent_id
+						FROM " . KB_TABLE . " a, " . KB_CATS_TABLE . " c
+						WHERE article_id = '" . $db->sql_escape($this->article_id) . "'
+						AND a.cat_id = c.cat_id";
 				break;
 				
 			case 'edit':
@@ -2212,10 +2212,11 @@ class knowledge_base
 					trigger_error('KB_NO_COMMENT');
 				}
 				
-				$sql = 'SELECT c.*, a.article_id, a.article_title, a.article_user_id, a.article_status, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_colour
-						FROM ' . KB_COMMENTS_TABLE . ' c, ' . KB_TABLE . ' a, ' . USERS_TABLE . " u
+				$sql = 'SELECT c.*, ca.cat_name, ca.parent_id, a.cat_id, a.article_id, a.article_title, a.article_user_id, a.article_status, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_colour
+						FROM ' . KB_COMMENTS_TABLE . ' c, ' . KB_TABLE . ' a, ' . USERS_TABLE . " u, " . KB_CATS_TABLE . " ca
 						WHERE a.article_id = c.article_id
 						AND u.user_id = c.comment_user_id
+						AND ca.cat_id = a.cat_id
 						AND c.comment_id = '" . $db->sql_escape($comment_id) . "'";
 				break;
 			
@@ -2703,6 +2704,8 @@ class knowledge_base
 		// Attachment entry
 		kb_posting_gen_attachment_entry($attachment_data, $filename_data, $allowed);
 		
+		generate_kb_nav($page_title, $comment_data);
+		
 		// Output page ...
 		if($module == '')
 		{
@@ -2735,7 +2738,7 @@ class knowledge_base
 		// Check if the user has rights, as well as if the user has voted before
 		$sql = 'SELECT cat_id 
 				FROM ' . KB_TABLE . '
-				WHERE article_id = ' . $article_id;
+				WHERE article_id = ' . $this->article_id;
 		$result = $db->sql_query($sql);
 		$article_data = $db->sql_fetchrow($result);
 		
@@ -2753,8 +2756,6 @@ class knowledge_base
 		$result = $db->sql_query($sql);	
 		$has_rated = ($db->sql_affectedrows()) ? true : false;	
 		$db->sql_freeresult($result);
-		
-		
 		
 		if($has_rated)
 		{
@@ -2920,11 +2921,11 @@ class knowledge_base
 				switch($search_in)
 				{
 					case SEARCH_TITLE_TEXT_DESC:
-						$where_tpl = "(a.article_title " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . " OR a.article_text " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . " OR a.article_desc " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . ") ";
+						$where_tpl = "(a.article_title " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . "  OR a.article_title_clean " . $db->sql_like_expression($db->anychar . 'SEARCHED' . $db->anychar) . " OR a.article_text " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . " OR a.article_desc " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . ") ";
 					break;
 					
 					case SEARCH_TITLE:
-						$where_tpl = "(a.article_title " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . ") ";
+						$where_tpl = "(a.article_title " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . " OR a.article_title_clean " . $db->sql_like_expression($db->anychar . 'SEARCHED' . $db->anychar) . ")";
 					break;
 					
 					case SEARCH_DESC:
@@ -3343,7 +3344,7 @@ class knowledge_base
 		));
 		
 		// Build Navigation Links
-		generate_kb_nav('', array());
+		generate_kb_nav($user->lang['VIEW_TAG']);
 		
 		// Output the page
 		$this->page_header($user->lang['VIEW_TAG'] . ' - ' . $tag_name);
@@ -3370,7 +3371,7 @@ class knowledge_base
 		$diff_from = request_var('df', 0);
 		$diff_to = request_var('dt', '');
 		
-		if(!$auth->acl_get('u_kb_viewhistory'))
+		if(!$auth->acl_get('u_kb_viewhistory', $this->cat_id))
 		{
 			trigger_error('KB_NO_PERM_HISTORY');
 		}
@@ -3988,6 +3989,8 @@ class knowledge_base
 			}
 		}
 		
+		generate_kb_nav($user->lang['KB_VIEW_HISTORY']);
+		
 		$this->page_header($user->lang['KB_VIEW_HISTORY']);
 		
 		$template->set_filenames(array(
@@ -4115,7 +4118,7 @@ class knowledge_base
 		}
 		
 		// Build Navigation Links
-		generate_kb_nav($user->lang['KB_REQUEST_' . strtoupper($this->action)], array());
+		generate_kb_nav($user->lang['KB_REQUEST_' . strtoupper($this->action)]);
 		
 		// Output page ...
 		$this->page_header($user->lang['KB_REQUEST_' . strtoupper($this->action)]);
