@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: ucp_kb.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: ucp_kb.php 366 2009-11-14 11:51:09Z softphp $
 * @copyright (c) 2009 Andreas Nexmann
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -39,6 +39,7 @@ class ucp_kb
 		$user->add_lang('mods/kb');
 		include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
 		include($phpbb_root_path . 'includes/functions_kb.' . $phpEx);
+		include($phpbb_root_path . 'includes/functions_plugins_kb.' . $phpEx);
 
 		$action	= request_var('action', '');
 		$submit = (isset($_POST['submit'])) ? true : false;

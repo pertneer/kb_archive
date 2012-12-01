@@ -171,3 +171,10 @@ textarea.desc {
 .comment-icon span		{ background: transparent none 0 0 no-repeat; }
 .buttons div.comment-icon		{ width: {IMG_BUTTON_COMMENT_NEW_WIDTH}px; height: {IMG_BUTTON_COMMENT_NEW_HEIGHT}px; }
 .comment-icon span		{ background-image: url("{IMG_BUTTON_COMMENT_NEW_SRC}"); }
+
+.icon-kb {
+	background-image: url("{T_THEME_PATH}/images/icon_kb.gif");
+	background-position: 0 50%;
+	background-repeat: no-repeat;
+	padding: 1px 0 0 23px;
+}

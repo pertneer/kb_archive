@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: mcp_kb.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: mcp_kb.php 366 2009-11-14 11:51:09Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -109,7 +109,7 @@ class mcp_kb
 							'article_id'		=> $article_id,
 							'article_title'		=> $article_data['article_title'],
 						);
-						handle_latest_articles('add', $article_data['cat_id'], $late_articles);
+						handle_latest_articles('add', $article_data['cat_id'], $late_articles, $config['kb_latest_articles_c']);
 					
 						set_config('kb_last_article', $article_id, true);
 						set_config('kb_last_updated', time(), true);
@@ -126,6 +126,13 @@ class mcp_kb
 								SET user_articles = user_articles - 1
 								WHERE user_id = ' . $article_data['article_user_id'];
 						$db->sql_query($sql);
+						
+						// Remove from latest article when deactivating
+						$late_articles = array(
+							'article_id'		=> $article_id,
+							'article_title'		=> $article_data['article_title'],
+						);
+						handle_latest_articles('delete', $article_data['cat_id'], $late_articles, $config['kb_latest_articles_c']);
 					}
 					
 					// Generate an entry into the edit table, only for the status change

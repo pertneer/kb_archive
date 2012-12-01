@@ -33,17 +33,33 @@
 				<username>thecharmed01</username>
 				<homepage></homepage>
 				<contributions-group>
-      		  		<contributions status="current" from="2009-08-01" position="Developer"/>
+      		  		<contributions status="past" from="2009-08-01" to="2009-11-16" position="Stylist"/>
       			</contributions-group>
 			</author>
 		</author-group>
-		<mod-version>1.0.0RC2</mod-version>
+		<mod-version>1.0.0RC3</mod-version>
 		<installation>
 			<level>intermediate</level>
 			<time>2200</time>
 			<target-version>3.0.6</target-version>
 		</installation>
 		<history>
+			<entry>
+				<date>2009-11-16</date>
+				<rev-version>1.0.0RC3</rev-version>
+				<changelog lang="en">
+					<change>Issues fixed:</change>
+					<change>Latest articles bug when moving article</change>
+					<change>No link for the MCP in KB</change>
+					<change>New KB icon on navbar</change>
+					<change>Headers in normal permission missing</change>
+					<change>Jumping to top in IE7</change>
+					<change>Adding user based cat permissions doesn't work</change>
+					<change>Notice error when approving article</change>
+					<change>Not included plugins file in ucp</change>
+					<change>Several smaller bugs in Post Bot Plugin</change>
+				</changelog>
+			</entry>
 			<entry>
 				<date>2009-11-10</date>
 				<rev-version>1.0.0RC2</rev-version>
@@ -225,6 +241,7 @@
 									<file from="root/styles/prosilver/theme/kb.css" to="/styles/prosilver/theme/kb.css" />
 									<file from="root/styles/prosilver/theme/images/rate_star.gif" to="/styles/prosilver/theme/images/rate_star.gif" />
 									<file from="root/styles/prosilver/theme/images/word.jpg" to="/styles/prosilver/theme/images/word.jpg" />
+									<file from="root/styles/prosilver/theme/images/icon_kb.gif" to="/styles/prosilver/theme/images/icon_kb.gif" />
 									<file from="root/styles/prosilver/theme/images/social_bookmarking/*.*" to="/styles/prosilver/theme/images/social_bookmarking/*.*" />
 									<file from="root/umil/umil.php" to="/umil/umil.php" />
 							</copy>
@@ -526,7 +543,7 @@ img_button_comment_new = button_comment_new.gif*25*96]]></action>
 							<open src="/styles/prosilver/template/overall_header.html">
 											<edit>
 							<find><![CDATA[<li class="icon-faq"><a href="{U_FAQ}" title="{L_FAQ_EXPLAIN}">{L_FAQ}</a></li>]]></find>
-															<action type="before-add"><![CDATA[<li class="icon-faq"><a href="{U_KB}" title="{L_KB_EXPLAIN}">{L_KB}</a></li>]]></action>
+															<action type="before-add"><![CDATA[<li class="icon-kb"><a href="{U_KB}" title="{L_KB_EXPLAIN}">{L_KB}</a></li>]]></action>
 													</edit>
 									</open>
 							<open src="/styles/prosilver/theme/stylesheet.css">

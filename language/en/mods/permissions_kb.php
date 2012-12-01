@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: permissions_kb.php 356 2009-11-08 10:40:10Z tom.martin60@btinternet.com $
+* @version $Id: permissions_kb.php 364 2009-11-12 20:31:03Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -192,18 +192,6 @@ $lang = array_merge($lang, array(
 		'lang'				=> 'Can view the history of an article',
 		'cat'				=> 'read',
 	),
-
-
-	'permission_cat'		=> array(
-		'kb'				=> 'Knowledge Base',
-		'read'				=> 'Read permissions',
-		'write'				=> 'Write permissions',
-	),
-
-	'permission_type'		=> array(
-		'kb_'				=> 'Knowledge Base',
-	),
-
 ));
 
 ?>

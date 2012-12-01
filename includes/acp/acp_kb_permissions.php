@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: acp_kb_permissions.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: acp_kb_permissions.php 365 2009-11-13 14:51:38Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -461,6 +461,24 @@ class acp_kb_permissions
 			$group_id = request_var('group_id', array(0));
 			$select_all_groups = request_var('select_all_groups', 0);
 			
+			// Map usernames to ids and vice versa
+			if ($usernames)
+			{
+				$username = explode("\n", $usernames);
+			}
+			unset($usernames);
+	
+			if (sizeof($username) && !sizeof($user_id))
+			{
+				user_get_id_name($user_id, $username);
+	
+				if (!sizeof($user_id))
+				{
+					trigger_error($user->lang['SELECTED_USER_NOT_EXIST'] . adm_back_link($this->u_action), E_USER_WARNING);
+				}
+			}
+			unset($username);
+			
 			// Build forum ids (of all forums are checked or subforum listing used)
 			if ($all_forums)
 			{
@@ -492,6 +510,7 @@ class acp_kb_permissions
 				'forum_id'		=> $forum_id,
 				)
 			);
+			
 			switch($action)
 			{
 				case 'apply_all_permissions':
@@ -536,10 +555,10 @@ class acp_kb_permissions
 				break;
 			}
 
-			if($usernames or $username or sizeof($user_id) or sizeof($group_id))
+			if(sizeof($user_id) || sizeof($group_id))
 			{
 				$cat_data = array();
-				
+
 				// Get me some categories
 				$sql = 'SELECT cat_id, cat_name, parent_id, left_id, right_id
 					FROM ' . KB_CATS_TABLE . '
@@ -556,12 +575,13 @@ class acp_kb_permissions
 					);
 				}
 
-
 				$hold_ary = $this->get_mask('set', (sizeof($user_id)) ? $user_id : false, (sizeof($group_id)) ? $group_id : false, (sizeof($forum_id)) ? $forum_id : false, $permission_type, 'local', ACL_NO);
 				$auth_admin->display_mask('set', $permission_type, $hold_ary, ((sizeof($user_id)) ? 'user' : 'group'), true , true, $cat_data);
 
 				$template->assign_vars(array(
 					'S_SETTING_PERMISSIONS'	=> true,
+					'U_ACTION'				=> $this->u_action,
+					'S_HIDDEN_FIELDS'		=> $s_hidden_fields,
 				));
 			}
 			elseif($all_forums or sizeof($forum_id) or $subforum_id)
@@ -750,11 +770,9 @@ class acp_kb_permissions
 		global $user, $auth;
 
 		$psubmit = request_var('psubmit', array(0 => array(0 => 0)));
-
+		
 		// User or group to be set?
 		$ug_type = (sizeof($user_id)) ? 'user' : 'group';
-
-
 		$ug_id = $forum_id = 0;
 
 		// We loop through the auth settings defined in our submit
@@ -808,7 +826,7 @@ class acp_kb_permissions
 
 		// Update the permission set...
 		$this->acl_set($ug_type, $forum_id, $ug_id, $auth_settings, $assigned_role);
-
+		
 		trigger_error($user->lang['AUTH_UPDATED'] . adm_back_link($this->u_action));
 	}
 

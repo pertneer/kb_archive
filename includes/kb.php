@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 350 2009-11-01 16:36:15Z tom.martin60@btinternet.com $
+* @version $Id: kb.php 361 2009-11-11 13:33:42Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -1617,9 +1617,10 @@ class knowledge_base
 		$submit		= (isset($_POST['post'])) ? true : false;
 		$preview	= (isset($_POST['preview'])) ? true : false;
 		$refresh	= (isset($_POST['add_file']) || isset($_POST['delete_file'])) ? true : false;
-																 
+		$old_cat	= request_var('old_cat', 0);
+		
 		$error = $article_data = array();
-		$current_time = time();
+		$current_time = time();	
 		
 		// We need to obtain basic category and post info
 		switch($this->mode)
@@ -1637,12 +1638,21 @@ class knowledge_base
 					trigger_error('KB_NO_ARTICLE');
 				}
 				
+				if($submit && !$preview && $old_cat != $this->cat_id)
+				{
+					// New category alter sql slightly
+					$where_sql = "AND c.cat_id = '" . $db->sql_escape($this->cat_id) . "'"; 
+				}
+				else
+				{
+					$where_sql = "AND c.cat_id = a.cat_id";
+				}
+				
 				$sql = 'SELECT c.*, a.*, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_colour
 						FROM ' . KB_CATS_TABLE . ' c, ' . KB_TABLE . ' a, ' . USERS_TABLE . " u
 						WHERE a.article_id = $this->article_id
 							AND u.user_id = a.article_user_id
-							AND (c.cat_id = a.cat_id
-								OR c.cat_id = '" . $db->sql_escape($this->cat_id) . "')";
+							$where_sql";
 				break;
 			
 			case 'smilies':
@@ -2196,6 +2206,10 @@ class knowledge_base
 						);
 						handle_latest_articles('edit', $data['cat_id'], $late_articles, $config['kb_latest_articles_c']);
 					
+						if($this->cat_id != $old_cat) // Update latest articles when moving article
+						{
+							handle_latest_articles('delete', $old_cat, $late_articles, $config['kb_latest_articles_c']);
+						}
 						set_config('kb_last_updated', time(), true);
 					}
 				}
@@ -2324,7 +2338,10 @@ class knowledge_base
 		// Build Navigation Links
 		generate_kb_nav($page_title, $article_data);
 		
-		$s_hidden_fields = '';
+		$s_hidden_fields = build_hidden_fields(array(
+			'old_cat'	=> $article_data['cat_id'], // Use this rather than $this->cat_id to get the real db value
+		));
+		
 		$form_enctype = (@ini_get('file_uploads') == '0' || strtolower(@ini_get('file_uploads')) == 'off' || !$config['kb_allow_attachments'] || !$auth->acl_get('u_kb_attach', $this->cat_id)) ? '' : ' enctype="multipart/form-data"';
 		add_form_key('posting');
 		
@@ -2333,7 +2350,7 @@ class knowledge_base
 		$reason_global = request_var('reason_global', false);
 		
 		// Make cat select
-		$cat_select = make_cat_select($article_data['cat_id']);
+		$cat_select = make_cat_select($this->cat_id);
 		$time_select = make_time_selects($article_data['article_time']);
 	
 		// Boxes for open and contributions
