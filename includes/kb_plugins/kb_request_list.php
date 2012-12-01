@@ -30,6 +30,7 @@ if (defined('IN_KB_PLUGIN'))
 		'PLUGIN_VERSION'		=> '1.0.0',
 		'PLUGIN_MENU'			=> RIGHT_MENU,
 		'PLUGIN_PERM'			=> true,
+		'PLUGIN_PAGES'			=> array('all'),
 	);
 }
 

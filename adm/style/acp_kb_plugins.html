@@ -45,6 +45,7 @@
 	</fieldset>
 	
 	<fieldset>
+		<!-- IF S_SHOW_PAGE -->
 		<legend>{L_DISPLAY_ON_PAGE}</legend>
 		<p>{L_DISPLAY_ON_PAGE_EXPLAIN}</p>		
 		<dl>
@@ -60,7 +61,7 @@
 				<label><input type="checkbox" class="radio" name="all_pages" value="1" /> {L_ALL_PAGES}</label>
 			</dd>		
 		</dl>
-
+		<!-- ENDIF -->
 	<!-- IF S_AUTH -->
 		<!-- BEGIN auth_tpl -->
 			{auth_tpl.TPL}
@@ -72,6 +73,7 @@
 		</p>
 		{S_FORM_TOKEN}
 	</fieldset>
+	{APPEND_MESSAGE}
 	</form>
 <!-- ELSEIF S_PLUGIN_MENU -->
 	<table cellspacing="1">
@@ -158,6 +160,31 @@
 					</td>
 				</tr>
 			<!-- END right_menu -->
+			<!-- IF .no_menu -->
+				<tr>
+					<td class="row3" colspan="5"><strong>{L_NO_MENU}</strong></td>
+				</tr>
+				<!-- IF not .no_menu -->
+					<tr>
+						<td class="row1" colspan="5" style="text-align: center;">{L_NO_MENU_PLUGINS}</td>
+					</tr>
+				<!-- ENDIF -->
+				<!-- BEGIN no_menu -->
+					<tr>
+						<td><strong>{no_menu.PLUGIN_NAME}</strong><br /><span>{no_menu.PLUGIN_DESC}</span></td>
+						<td style="text-align: left;">{no_menu.PLUGIN_COPY}</td>
+						<td style="text-align: center;">{no_menu.PLUGIN_VERSION}</td>
+						<td style="text-align: center;"><a href="{no_menu.U_SETTINGS}">{L_SETTINGS}</a></td>
+						<td style="vertical-align: middle; width: 100px; text-align: right; white-space: nowrap;">
+							<!-- IF no_menu.PLUGIN_PERM eq 1 -->
+								{ICON_DELETE_DISABLED}
+							<!-- ELSE -->
+								<a href="{no_menu.U_UNINSTALL}">{ICON_DELETE}</a>
+							<!-- ENDIF -->
+						</td>
+					</tr>
+				<!-- END no_menu -->
+			<!-- ENDIF -->
 			<tr>
 				<td class="row3" colspan="5"><strong>{L_UNINSTALLED_PLUGINS}</strong></td>
 			</tr>

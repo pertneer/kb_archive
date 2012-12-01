@@ -36,6 +36,9 @@ if (!defined('IN_PHPBB'))
 * ACP OPTIONS
 * At the top of the plugin file you must have the following
 * 
+// Language file?
+//$user->add_lang('mods/latest_article');
+
 // Only add these options if in acp
 if (defined('IN_KB_PLUGIN'))
 {
@@ -98,7 +101,7 @@ function latest_article_versions()
 */
 function generate_menu($page = 'index', $cat_id = 0)
 {
-	global $template, $phpbb_root_path, $phpEx, $config;
+	global $template, $phpbb_root_path, $phpEx, $config, $user;
 	
 	// Article injection variables
 	global $on_article_post, $on_article_del, $on_article_edit;
@@ -120,12 +123,14 @@ function generate_menu($page = 'index', $cat_id = 0)
 		$page = 'add';
 	}
 	
+	$template->assign_var('T_THEME_PATH', "{$phpbb_root_path}styles/" . $user->theme['theme_path'] . '/theme');
+	
 	if(!$config['kb_disable_left_menu'])
 	{
 		$left_menu = cached_plugins('left');
 		foreach ($left_menu as $plugin)
 		{
-			if (!$config['kb_' . $plugin['FILE'] . '_enable'])
+			if (isset($config['kb_' . $plugin['FILE'] . '_enable']) ? !$config['kb_' . $plugin['FILE'] . '_enable'] && !$plugin['PERMANENT'] === true : !$plugin['PERMANENT'] === true) // Permanent plugins doesn't nescesarily need to be enabled via usual vars
 			{
 				continue;
 			}
@@ -147,7 +152,7 @@ function generate_menu($page = 'index', $cat_id = 0)
 		$right_menu = cached_plugins('right');
 		foreach ($right_menu as $plugin)
 		{
-			if (!$config['kb_' . $plugin['FILE'] . '_enable'])
+			if (isset($config['kb_' . $plugin['FILE'] . '_enable']) ? !$config['kb_' . $plugin['FILE'] . '_enable'] && !$plugin['PERMANENT'] === true : !$plugin['PERMANENT'] === true)
 			{
 				continue;
 			}
@@ -161,6 +166,21 @@ function generate_menu($page = 'index', $cat_id = 0)
 					'CONTENT'		=> $plugin['FILE']($cat_id),
 				));
 			}
+		}
+	}
+	
+	$no_menu = cached_plugins('no');
+	foreach ($no_menu as $plugin)
+	{
+		if (isset($config['kb_' . $plugin['FILE'] . '_enable']) ? !$config['kb_' . $plugin['FILE'] . '_enable'] && !$plugin['PERMANENT'] === true : !$plugin['PERMANENT'] === true)
+		{
+			continue;
+		}
+	
+		$show_pages = unserialize($plugin['PERM']);
+		if (in_array($page, $show_pages))
+		{	
+			include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
 		}
 	}
 }
@@ -195,6 +215,17 @@ function cached_plugins($mode)
 				return $right_menu;
 			}
 		break;
+		
+		case 'no':
+			if (($no_menu = $cache->get('_kb_plugin_no_menu')) === false)
+			{
+				$recache = true;
+			}
+			else
+			{
+				return $no_menu;
+			}
+		break;
 	}
 	
 	// Cache them all as they will all need doing within seconds anyway
@@ -204,13 +235,14 @@ function cached_plugins($mode)
 		// Must destroy them all as it will just add them otherwise
 		$cache->destroy('_kb_plugin_left_menu');
 		$cache->destroy('_kb_plugin_right_menu');
+		$cache->destroy('_kb_plugin_no_menu');
 	
 		if (!defined('KB_PLUGIN_TABLE'))
 		{
 			include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
 		}
 		
-		$sql = 'SELECT plugin_pages, plugin_filename, plugin_menu, plugin_order, plugin_pages_perm
+		$sql = 'SELECT plugin_pages, plugin_filename, plugin_menu, plugin_order, plugin_pages_perm, plugin_perm
 			FROM ' . KB_PLUGIN_TABLE . ' 
 			ORDER BY plugin_order ASC';
 		$result = $db->sql_query($sql);		
@@ -218,6 +250,7 @@ function cached_plugins($mode)
 		
 		$kb_left_plugins = array();
 		$kb_right_plugins = array();
+		$kb_no_menu_plugins = array();
 		
 		foreach($rows as $row)
 		{
@@ -239,22 +272,34 @@ function cached_plugins($mode)
 			if ($row['plugin_menu'] == LEFT_MENU)
 			{
 				$kb_left_plugins[] = array(
-					'FILE'	=> $file,
-					'PERM'	=> $result,
+					'FILE'		=> $file,
+					'PERM'		=> $result,
+					'PERMANENT' => $row['plugin_perm'],
 				);
 			}
 			
 			if ($row['plugin_menu'] == RIGHT_MENU)
 			{
 				$kb_right_plugins[] = array(
-					'FILE'	=> $file,
-					'PERM'	=> $result,
+					'FILE'		=> $file,
+					'PERM'		=> $result,
+					'PERMANENT' => $row['plugin_perm'],
+				);
+			}
+			
+			if ($row['plugin_menu'] == NO_MENU)
+			{
+				$kb_no_menu_plugins[] = array(
+					'FILE'		=> $file,
+					'PERM'		=> $result,
+					'PERMANENT' => $row['plugin_perm'],
 				);
 			}
 		}
 		
 		$cache->put('_kb_plugin_left_menu', $kb_left_plugins);
 		$cache->put('_kb_plugin_right_menu', $kb_right_plugins);
+		$cache->put('_kb_plugin_no_menu', $kb_no_menu_plugins);
 		
 		switch ($mode)
 		{
@@ -264,6 +309,10 @@ function cached_plugins($mode)
 			
 			case 'right':
 				return $kb_right_plugins;
+			break;
+			
+			case 'no':
+				return $kb_no_menu_plugins;
 			break;
 		}
 	}
@@ -656,10 +705,11 @@ function kb_append_sid($page, $params = '')
 }
 
 // Makes a list of pages for acp select
-function make_page_list($filename, $page_list = false)
+function make_page_list($filename, $details, $page_list = false)
 {
 	global $user, $db;
 	
+	// Introduce ability for plugin authors to limit use of plugin to certain pages
 	$page_options = array(
 		'index'			=> $user->lang['KB_INDEX'],
 		'view_cat'		=> $user->lang['VIEW_CAT'],
@@ -670,6 +720,14 @@ function make_page_list($filename, $page_list = false)
 		'history'		=> $user->lang['HISTORY'],
 		'add'			=> $user->lang['POSTING'],
 	);
+	
+	foreach($page_options as $page => $lang)
+	{
+		if(!in_array($page, $details['PLUGIN_PAGES']) && !in_array('all', $details['PLUGIN_PAGES']))
+		{
+			unset($page_options[$page]);
+		}
+	}
 	
 	if (!$page_list)
 	{

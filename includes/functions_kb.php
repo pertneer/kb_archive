@@ -1209,7 +1209,8 @@ function article_delete($article_id, $cat_id, $article_data)
 		$db->sql_query($sql);
 		
 		$comment_ids = array();
-		$sql = 'SELECT comment_id
+		$global_comments = 0;
+		$sql = 'SELECT comment_id, comment_type
 				FROM ' . KB_COMMENTS_TABLE . "
 				WHERE article_id = $article_id";
 		$result = $db->sql_query($sql);
@@ -1217,6 +1218,10 @@ function article_delete($article_id, $cat_id, $article_data)
 		{
 			// Don't loop this: comment_delete($row['comment_id'], $article_id, false);
 			$comment_ids[] = $row['comment_id'];
+			if($row['comment_type'] == COMMENT_GLOBAL)
+			{
+				$global_comments++;
+			}
 		}
 		$db->sql_freeresult($result);
 		
@@ -1228,6 +1233,8 @@ function article_delete($article_id, $cat_id, $article_data)
 			
 			// Delete from attachments table, and delete attachment files
 			kb_delete_attachments('comment', $comment_ids);
+			
+			set_config('kb_total_comments', $config['kb_total_comments'] - $global_comments, true);
 		}
 		
 		// Delete from edits table
@@ -1903,11 +1910,16 @@ function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview
 * Maybe includes tags in function as should really show in article page
 * Functioned instead so can use anywhere
 */
-function handle_related_articles($article_id, $show_num = 5)
+function handle_related_articles($article_id, $article_title, $article_title_clean, $show_num = 5)
 {
 	global $phpbb_root_path, $phpEx, $db, $template, $user;
 	
 	$ra = request_var('ra', 0);
+	
+	if(!$show_num)
+	{
+		return;
+	}
 	
 	// Get the tags first
 	$sql = $db->sql_build_query('SELECT', array(
@@ -1927,87 +1939,118 @@ function handle_related_articles($article_id, $show_num = 5)
 	$db->sql_freeresult($result);
 	
 	// Check what prefix we need
-	if (!empty($tags))
+	$tag = '';
+	$num_tags = sizeof($tags);
+	if ($num_tags == 1)
 	{
-		$num_tags = sizeof($tags);
-		if ($num_tags == 1)
-		{
-			$tag = $tags[0];
-		}
-		else
-		{
-			$tag = implode(' OR ', $tags);
-		}
-		
-		// Get the titles
-		$sql = $db->sql_build_query('SELECT', array(
-			'SELECT'	=> 't.article_id, a.article_title',
-			'FROM'		=> array(
-				KB_TAGS_TABLE => 't'),
-			'LEFT_JOIN'	=> array(
-				array(
-					'FROM' => array(KB_TABLE => 'a'),
-					'ON' => 't.article_id = a.article_id',
-				),
-			),
-			'WHERE'		=> 't.article_id <> ' . $article_id . '
-				AND a.article_status = ' . STATUS_APPROVED . '
-				AND t.tag_name_lc = ' . $tag,	
-		));
-		$result = $db->sql_query_limit($sql, $show_num, $ra);
-		
-		$related_articles = array();	
-		while($row = $db->sql_fetchrow($result))
-		{
-			$related_articles[$row['article_id']] = $row['article_title'];
-		}
-		$db->sql_freeresult($result);
-		
-		$articles = array_unique($related_articles);
-		
-		// Need to do it without limit to get the count :S
-		$sql = $db->sql_build_query('SELECT', array(
-			'SELECT'	=> 't.article_id, a.article_title',
-			'FROM'		=> array(
-				KB_TAGS_TABLE => 't'),
-			'LEFT_JOIN'	=> array(
-				array(
-					'FROM' => array(KB_TABLE => 'a'),
-					'ON' => 't.article_id = a.article_id',
-				),
-			),
-			'WHERE'		=> 't.article_id <> ' . $article_id . '
-				AND a.article_status = ' . STATUS_APPROVED . '
-				AND t.tag_name_lc = ' . $tag,			
-		));
-		$result = $db->sql_query($sql);
-		
-		$articles_count = array();	
-		while($count = $db->sql_fetchrow($result))
-		{
-			$articles_count[] = $count['article_id'];
-		}
-		$db->sql_freeresult($result);		
-		$articles_count = array_unique($articles_count);		
-		$articles_found = sizeof($articles_count);
-		
-		foreach ($articles as $article_id_ra => $article_title_ra)
-		{
-			$template->assign_block_vars('related_articles', array(
-				'U_VIEW_ARTICLE'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id_ra"),
-				'TITLE'				=> $article_title_ra,
-			));
-		}
-		
-		// Generate Pagination
-		$template->assign_vars(array(
-			'KB_PAGINATION'	=> kb_generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"), $articles_found, $show_num, $ra, 'ra', true),
-			'KB_PAGE_NUMBER'	=> on_page($articles_found, $show_num, $ra),
-			'KB_TOTAL_RA' 		=> $articles_found,
-			'KB_S_TOTAL_RA'	=> ($articles_found == 1) ? $user->lang['MATCH_FOUND'] : $user->lang['MATCHS_FOUND'],
-		));
-		
+		$tag = 't.tag_name_lc = ' . $tags[0];
 	}
+	elseif($num_tags > 0)
+	{
+		foreach($tags as $value)
+		{
+			if($tag == '')
+			{
+				$tag .= 't.tag_name_lc = ' . $value;
+			}
+			else
+			{
+				$tag .= ' OR t.tag_name_lc = ' . $value;
+			}
+		}
+	}
+	
+	// Check for title relations
+	$split_title = explode(' ', $article_title);
+	//$split_title = array_merge($split_title, explode(' ', $article_title_clean));
+	
+	$words = array();
+	//Remove standard words
+	if (file_exists($phpbb_root_path . "{$user->lang_path}{$user->lang_name}/search_ignore_words.$phpEx"))
+	{
+		// include the file containing ignore words
+		include($phpbb_root_path . "{$user->lang_path}{$user->lang_name}/search_ignore_words.$phpEx");
+	}
+	
+	foreach($split_title as $term)
+	{
+		if (in_array($term, $words))
+		{
+			continue;
+		}
+	
+		$tag .= ($tag == '') ? '' : ' OR ';
+		$tag .= "(a.article_title " . $db->sql_like_expression($db->any_char . utf8_clean_string($term) . $db->any_char) . " OR a.article_title_clean " . $db->sql_like_expression($db->any_char . utf8_clean_string($term) . $db->any_char) . ")";
+	}
+	
+	// Get the titles
+	$sql = $db->sql_build_query('SELECT', array(
+		'SELECT'	=> 'a.article_id, a.article_title',
+		'FROM'		=> array(
+			KB_TABLE => 'a'),
+		'LEFT_JOIN'	=> array(
+			array(
+				'FROM' => array(KB_TAGS_TABLE => 't'),
+				'ON' => 'a.article_id = t.article_id',
+			),
+		),
+		'WHERE'		=> 'a.article_id <> ' . $article_id . '
+			AND a.article_status = ' . STATUS_APPROVED . '
+			AND (' . $tag . ')',	
+	));
+	
+	$result = $db->sql_query_limit($sql, $show_num, $ra);
+	
+	$related_articles = array();	
+	while($row = $db->sql_fetchrow($result))
+	{
+		$related_articles[$row['article_id']] = $row['article_title'];
+	}
+	$db->sql_freeresult($result);
+	
+	$articles = array_unique($related_articles);
+	
+	// Need to do it without limit to get the count :S
+	$sql = $db->sql_build_query('SELECT', array(
+		'SELECT'	=> 'a.article_id, a.article_title',
+		'FROM'		=> array(
+			KB_TABLE => 'a'),
+		'LEFT_JOIN'	=> array(
+			array(
+				'FROM' => array(KB_TAGS_TABLE => 't'),
+				'ON' => 'a.article_id = t.article_id',
+			),
+		),
+		'WHERE'		=> 'a.article_id <> ' . $article_id . '
+			AND a.article_status = ' . STATUS_APPROVED . '
+			AND (' . $tag . ')',	
+	));
+	$result = $db->sql_query($sql);
+	
+	$articles_count = array();	
+	while($count = $db->sql_fetchrow($result))
+	{
+		$articles_count[] = $count['article_id'];
+	}
+	$db->sql_freeresult($result);		
+	$articles_count = array_unique($articles_count);		
+	$articles_found = sizeof($articles_count);
+	
+	foreach ($articles as $article_id_ra => $article_title_ra)
+	{
+		$template->assign_block_vars('related_articles', array(
+			'U_VIEW_ARTICLE'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id_ra"),
+			'TITLE'				=> $article_title_ra,
+		));
+	}
+	
+	// Generate Pagination
+	$template->assign_vars(array(
+		'KB_PAGINATION'		=> kb_generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"), $articles_found, $show_num, $ra, 'ra', true),
+		'KB_PAGE_NUMBER'	=> on_page($articles_found, $show_num, $ra),
+		'KB_TOTAL_RA' 		=> $articles_found,
+		'KB_S_TOTAL_RA'		=> ($articles_found == 1) ? $user->lang['MATCH_FOUND'] : $user->lang['MATCHS_FOUND'],
+	));
 }
 
 /**
@@ -2418,8 +2461,6 @@ function kb_display_cats($root_data = '')
 			$latest_articles = handle_latest_articles('get', $cat_id, $cats[$cat_id]['latest_ids'], $config['kb_latest_articles_c']);
 			
 			$template->assign_block_vars('catrow.cat', array(
-				'S_SUBFORUMS'			=> (sizeof($subcats_list)) ? true : false,
-			
 				'CAT_ID'				=> $cats[$cat_id]['cat_id'],
 				'CAT_NAME'				=> $cats[$cat_id]['cat_name'],
 				'CAT_DESC'				=> generate_text_for_display($cats[$cat_id]['cat_desc'], $cats[$cat_id]['cat_desc_uid'], $cats[$cat_id]['cat_desc_bitfield'], $cats[$cat_id]['cat_desc_options']),

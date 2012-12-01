@@ -7,7 +7,7 @@
 		<license>http://opensource.org/licenses/gpl-license.php GNU General Public License v2</license>
 		<title lang="en">PhpBB3 Knowledge Base Mod</title>
 		<description lang="en">This mod adds a Knowledge Base to your forum, which is fully integrated with phpBB's core system. It is fully manageable through a ACP system found under the .MODS tab.</description>
-		<author-notes lang="en">This is a BETA version, so we do not recommend using in a live envoirenment, as it is not properly tested for bugs yet.</author-notes>
+		<author-notes lang="en">This is a Release Candidate and therefore not 100% bugfree, we do not recommend using it on a live forum yet.</author-notes>
 		<author-group>
 			<author>
 				<realname>Andreas Nexmann</realname>
@@ -37,13 +37,40 @@
       			</contributions-group>
 			</author>
 		</author-group>
-		<mod-version>0.4.5</mod-version>
+		<mod-version>1.0.0RC1</mod-version>
 		<installation>
 			<level>intermediate</level>
-			<time>1800</time>
-			<target-version>3.0.5</target-version>
+			<time>2200</time>
+			<target-version>3.0.6</target-version>
 		</installation>
 		<history>
+			<entry>
+				<date>2009-10-22</date>
+				<rev-version>1.0.0RC1</rev-version>
+				<changelog lang="en">
+					<change>Bugfixes:</change>
+					<change>Email article field doesn't resize</change>
+					<change>Redo a bit of style when disabling menus</change>
+					<change>The no categories bar removed for subcats</change>
+					<change>Not rate own article</change>
+					<change>Reduce comments count on article delete</change>
+					<change>Related articles not working</change> 
+					<change>Special characters bug on search</change>
+					<change>Fix related articles show count</change>
+					<change>Add page specific plugins</change>
+					<change>Case sensitive search</change>
+					<change>Fix redirection when rating without ajax</change>
+					<change>Fix MPV bugs</change>
+				</changelog>
+			</entry>
+			<entry>
+				<date>2009-10-20</date>
+				<rev-version>0.4.6</rev-version>
+				<changelog lang="en">
+					<change>Bugfixes:</change>
+					<change>Fixing some styling issues</change>
+				</changelog>
+			</entry>
 			<entry>
 				<date>2009-10-17</date>
 				<rev-version>0.4.5</rev-version>
@@ -128,7 +155,7 @@
 			<entry>
 				<date>2009-06-04</date>
 				<rev-version>0.0.10</rev-version>
-				<changelog lang="lang">
+				<changelog lang="en">
 					<change>Added feature: MCP KB module</change>
 					<change>Added feature: Latest articles</change>
 					<change>Added feature: KB extension support</change>
@@ -184,7 +211,6 @@
 									<file from="root/styles/prosilver/template/kb/*.*" to="/styles/prosilver/template/kb/*.*" />
 									<file from="root/styles/prosilver/theme/kb.css" to="/styles/prosilver/theme/kb.css" />
 									<file from="root/styles/prosilver/theme/images/rate_star.gif" to="/styles/prosilver/theme/images/rate_star.gif" />
-									<file from="root/styles/prosilver/theme/images/feed.gif" to="/styles/prosilver/theme/images/feed.gif" />
 									<file from="root/styles/prosilver/theme/images/word.jpg" to="/styles/prosilver/theme/images/word.jpg" />
 									<file from="root/styles/prosilver/theme/images/social_bookmarking/*.*" to="/styles/prosilver/theme/images/social_bookmarking/*.*" />
 									<file from="root/umil/umil.php" to="/umil/umil.php" />

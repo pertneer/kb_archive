@@ -675,7 +675,7 @@ function get_kb_versions()
 			// Even more config options.... yay
 			'config_add' => array(
 				array('kb_show_contrib', 1),
-				array('kb_related_articles', 1),
+				array('kb_related_articles', 5),
 				array('kb_email_article', 1),
 				array('kb_ext_article_header', 1),
 				array('kb_soc_bookmarks', 1),
@@ -693,6 +693,14 @@ function get_kb_versions()
 				array('kb_list_subcats', 1),
 				array('kb_latest_articles_c', 5),
 			),
+		),
+		
+		'0.4.6' => array(
+			'custom'	=> 'kb_install_perm_plugins',
+		),
+		
+		'1.0.0RC1'	=> array(
+			// Tagging RC1
 		),
 	);
 
@@ -745,6 +753,10 @@ function kb_install_perm_plugins($action , $version)
 		
 		case '0.2.6':
 			$plugins = array('request_list');
+		break;
+		
+		case '0.4.6':
+			$plugins = array('author', 'bookmark', 'contributors', 'email_article', 'export_article', 'rating', 'related_articles');
 		break;
 	}
 	
@@ -923,14 +935,19 @@ function kb_update_401_to_402($action, $version)
 	
 	// Fix article count for users
 	$sql = 'SELECT article_user_id
-			FROM' . $table_prefix . 'articles
-			GROUP BY article_user_id';
+			FROM ' . $table_prefix . 'articles
+			ORDER BY article_user_id';
 	$result = $db->sql_query($sql);
 	
+	$done = array();
 	$users = array();
 	while($row = $db->sql_fetchrow($result))
 	{
-		$users[] = $row['article_user_id'];
+		if(!isset($done[$row['article_user_id']]))
+		{
+			$done[$row['article_user_id']] = true;
+			$users[] = $row['article_user_id'];
+		}
 	}
 	$db->sql_freeresult($result);
 	
@@ -940,7 +957,7 @@ function kb_update_401_to_402($action, $version)
 				FROM ' . $table_prefix . 'articles
 				WHERE article_user_id = ' . $user_id;
 		$result = $db->sql_query($sql);
-		$article_count = (int) $db->sql_fetchfield('num_articles', $result);
+		$articles_count = (int) $db->sql_fetchfield('num_articles', $result);
 		
 		$sql = 'UPDATE ' . $table_prefix . 'users
 				SET user_articles = ' . $articles_count . '

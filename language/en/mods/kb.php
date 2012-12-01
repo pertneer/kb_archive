@@ -54,16 +54,32 @@ $lang = array_merge($lang, array(
 	'ARTICLE_CONTRIBUTE'				=> 'Mark this as a contribution to the open article',
 	'ARTICLE_DELETED'					=> 'Your article has been deleted',
 	'ARTICLE_DESC'						=> 'Article description',
+	'ARTICLE_DESC_EX'					=> 'This article will teach you how to use phpmyadmin',
 	'ARTICLE_DESC_EXPLAIN'				=> 'If you wish to write a description for your article please do so. The character limit is 300 and BBCodes are enabled.',
 	'ARTICLE_HISTORY'					=> 'View article history',
 	'ARTICLE_OPEN'						=> 'Open this article for others contribution',
+	'ARTICLE_POST_BOT'					=> 'Article post bot',
+	'ARTICLE_POST_BOT_USER'				=> 'Article post bot user id',
+	'ARTICLE_POST_BOT_SUB'				=> 'Article post bot subject',
+	'ARTICLE_POST_BOT_SUB_EX'			=> 'New Article - {TITLE}',
+	'ARTICLE_POST_BOT_MSG'				=> 'Article post bot message',
+	'ARTICLE_POST_BOT_MSG_EX'			=> 'Hello Everyone,
+
+{AUTHOR} has written a new article called \'{TITLE}\'
+
+[b]It is about:[/b]
+{DESC}
+
+Here is a link to the article - {LINK}',
 	'ARTICLE_STATUS'					=> 'Article status',
 	'ARTICLE_STATUS_PAGE'				=> 'View the article status page',
 	'ARTICLE_TIME'						=> 'Article creation time',
 	'ARTICLE_TIME_EXPLAIN'				=> 'Here you can modify the article creation time from the original one.',
 	'ARTICLE_TITLE'						=> 'Article title',
+	'ARTICLE_TITLE_EX'					=> 'How to use phpmyadmin',
 	'ARTICLE_TYPE'						=> 'Article type',
 	'ARTICLE_UNAPPROVED'				=> 'This article has not been approved by a moderator yet.',
+	'AVAILABLE'							=> 'Available',
 
 	'BLOGGER'							=> 'Blogger',
 	'BOOKMARK_ARTICLE'					=> 'Bookmark article',
@@ -128,6 +144,7 @@ $lang = array_merge($lang, array(
 	'EDIT_REASON'						=> 'Reason for making these changes',
 	'EMAIL_ARTICLE'						=> 'Email Article',
 	'ENABLE_CATS'						=> 'Enable categories',
+	'ENABLE_FORUM_BOT'					=> 'Enable article post bot',
 	'ENABLE_HIGHEST_RATED_ARTICLES'		=> 'Enable highest rated articles',
 	'ENABLE_LATEST_ARTICLES'			=> 'Enable latest article',
 	'ENABLE_MOST_VIEWED_ARTICLES'		=> 'Enable most viewed articles',
@@ -135,10 +152,12 @@ $lang = array_merge($lang, array(
 	'ENABLE_REQUEST_ARTICLES'			=> 'Enable request articles',
 	'ENABLE_SEARCH'						=> 'Enable search',
 	'ENABLE_STATS'						=> 'Enable statistics',
+	'EXAMPLE'							=> 'Example',
 	'EXPORT_ARTICLE'					=> 'Export Article',
 
 	'FACEBOOK'							=> 'Facebook',
 	'FEED'								=> 'feeds',
+	'FORUM_ID'							=> 'Forum ID where you want the message to go',
 	'FRIEND_FEED'						=> 'Friend Feed',
 
 	'GOOGLE'							=> 'Google',
@@ -349,6 +368,7 @@ $lang = array_merge($lang, array(
 	'MOVE_ARTICLES_TO'					=> 'Move articles to',
 	'MYSPACE'							=> 'MySpace',
 
+	'NAME'								=> 'Name',
 	'N_A'								=> 'N/A',
 	'NETVIBES'							=> 'Netvibes',
 	'NEWEST'							=> 'Newest',
@@ -363,6 +383,8 @@ $lang = array_merge($lang, array(
 	'NO_INSTALLED_PLUGINS'				=> 'No installed plugins',
 	'NO_LEFT_MENU_PLUGINS'				=> 'No left menu plugins',
 	'NO_MCP_PERM'						=> 'You don\'t have permission to access the MCP for the Knowledge Base',
+	'NO_MENU'							=> 'No Menu',
+	'NO_MENU_PLUGINS'					=> 'No Menu plugins installed',
 	'NO_PLUGIN_FILE'					=> 'No plugin file found',
 	'NO_RELATED_ARTICLES'				=> 'No related articles have been found.',
 	'NO_RIGHT_MENU_PLUGINS'				=> 'No right menu plugins',
@@ -499,6 +521,7 @@ $lang = array_merge($lang, array(
 	'USE_ORIGINAL_TIME'					=> 'Use original article time',
 	'USE_THIS_AUTHOR'					=> 'Use yourself as author',
 
+	'VARIABLE'							=> 'Variable',
 	'VERSION'							=> 'Version',
 	'VERSION_CHECK'						=> 'Version check',
 	'VERSION_CHECK_EXPLAIN'				=> 'Checks to see if the version of Knowledge Base you are currently running is up to date.',

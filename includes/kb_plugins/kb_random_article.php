@@ -28,6 +28,7 @@ if (defined('IN_KB_PLUGIN'))
 		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
 		'PLUGIN_VERSION'		=> '1.0.0',
 		'PLUGIN_MENU'			=> RIGHT_MENU,
+		'PLUGIN_PAGES'			=> array('all'),
 	);
 }
 

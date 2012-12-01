@@ -79,16 +79,9 @@ class acp_kb
 						'legend1'				=> 'ACP_KB_SETTINGS',
 						'kb_enable'				=> array('lang' => 'KB_ENABLE',			'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),						
 						'kb_link_name'			=> array('lang' => 'KB_LINK_NAME',		'validate' => 'string',	'type' => 'text:40:50', 	'explain' => true),						
-						'kb_allow_subscribe'	=> array('lang' => 'KB_ALLOW_SUB',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
-						'kb_allow_bookmarks'	=> array('lang' => 'KB_ALLOW_BOOK',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
-						'kb_soc_bookmarks'		=> array('lang' => 'KB_ALLOW_SOCBOOK',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_articles_per_page'	=> array('lang' => 'KB_ART_PER_PAGE',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => false),
 						'kb_comments_per_page'	=> array('lang' => 'KB_COM_PER_PAGE',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => false),
 						'kb_ajax_rating'		=> array('lang' => 'KB_AJAX_RATING',	'validate' => 'bool',	'type' => 'radio:yes_no',	'explain' => true),
-						'kb_show_contrib'		=> array('lang' => 'KB_SHOW_CONTRIB',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
-						'kb_related_articles'	=> array('lang' => 'KB_SHOW_RELART',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
-						'kb_email_article'		=> array('lang' => 'KB_EMAIL_ARTICLE',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
-						'kb_export_article'		=> array('lang' => 'KB_EXP_ARTICLE',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_ext_article_header' => array('lang' => 'KB_EXT_HEADER',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => true),
 						'kb_show_desc_cat'		=> array('lang' => 'KB_DESC_CAT',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_show_desc_article'	=> array('lang' => 'KB_DESC_ART',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
@@ -96,7 +89,6 @@ class acp_kb
 						'kb_layout_style'		=> array('lang' => 'KB_LAYOUT_STYLE',	'validate' => 'int',	'type' => 'select',	'method' => 'select_style_layout', 'explain' => true),
 						'kb_list_subcats'		=> array('lang' => 'KB_LIST_SUBCATS',	'validate' => 'int',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_latest_articles_c'	=> array('lang' => 'KB_ACP_LATEST_ART',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => true),
-						
 						
 						'legend2'				=> 'ACP_KB_MENU_SETTINGS',
 						'kb_disable_left_menu'	=> array('lang' => 'DISABLE_LEFT_MENU',		'validate' => 'bool',	'type' => 'radio:yes_no',	'explain' => true),
@@ -211,10 +203,12 @@ class acp_kb
 							'ERROR_MSG'			=> implode('<br />', $error),
 							
 							'S_SETTINGS'		=> true,
+							'S_SHOW_PAGE'		=> ($details['PLUGIN_MENU'] == NO_MENU) ? false : true,
+							'APPEND_MESSAGE'	=> (function_exists('append_to_kb_options')) ? append_to_kb_options() : false,
 							
 							'U_BACK_LINK'		=> adm_back_link($this->u_action),
 							'U_ACTION_PLUG'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $filename,
-							'PAGE_OPTIONS'		=> make_page_list($filename),
+							'PAGE_OPTIONS'		=> make_page_list($filename, $details),
 						));
 					break;
 					
@@ -266,6 +260,19 @@ class acp_kb
 									'PLUGIN_PERM'		=> $row['plugin_perm'],
 									'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
 									'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
+									'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
+									'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
+								));
+							}
+							
+							if ($row['plugin_menu'] == NO_MENU)
+							{
+								$template->assign_block_vars('no_menu', array(
+									'PLUGIN_NAME'		=> $row['plugin_name'],
+									'PLUGIN_DESC'		=> $row['plugin_desc'],
+									'PLUGIN_COPY'		=> $row['plugin_copy'],
+									'PLUGIN_VERSION'	=> $row['plugin_version'],
+									'PLUGIN_PERM'		=> $row['plugin_perm'],
 									'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
 									'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
 								));

@@ -78,7 +78,10 @@ class knowledge_base
 			// Check for popups
 			$this->popup = kb_generate_popups();
 			
-			generate_menu($this->mode, $this->cat_id);
+			if ($this->mode != 'view_article')
+			{
+				generate_menu($this->mode, $this->cat_id);
+			}
 			
 			switch($this->mode)
 			{
@@ -554,10 +557,7 @@ class knowledge_base
 			break;
 		}
 		
-		if($config['kb_related_articles'])
-		{
-			handle_related_articles($this->article_id);
-		}
+		handle_related_articles($this->article_id, $article_data['article_title'], $article_data['article_title_clean'], $config['kb_related_articles']);
 		
 		if($this->cat_id == 0)
 		{
@@ -837,13 +837,21 @@ class knowledge_base
 		}
 		
 		// Any way to exclude this query?
-		$sql = "SELECT rating
-				FROM " . KB_RATE_TABLE . "
-				WHERE article_id = '" . $db->sql_escape($this->article_id) . "'
-				AND user_id = {$user->data['user_id']}";
-		$result = $db->sql_query($sql);	
-		$has_rated = ($db->sql_affectedrows()) ? true : false;	
-		$db->sql_freeresult($result);
+		if(!$user->data['user_id'] == $article_data['article_user_id'])
+		{
+			$sql = "SELECT rating
+					FROM " . KB_RATE_TABLE . "
+					WHERE article_id = '" . $db->sql_escape($this->article_id) . "'
+					AND user_id = {$user->data['user_id']}";
+			$result = $db->sql_query($sql);	
+			$has_rated = ($db->sql_affectedrows()) ? true : false;
+			$db->sql_freeresult($result);
+		}
+		else
+		{
+			// Can't rate own articles
+			$has_rated = true;
+		}
 		$article_data['article_rating'] = round($article_data['article_rating'], 1);
 		
 		// Get article types
@@ -1538,6 +1546,8 @@ class knowledge_base
 			'S_SORT_DIRECTION'	=> $sort_direction,
 		));
 		
+		generate_menu($this->mode, $this->cat_id);
+		
 		if($module == '')
 		{
 			// Build Navigation Links
@@ -1576,6 +1586,7 @@ class knowledge_base
 		$template->assign_vars(array(
 			'S_IN_MAIN'		=> true,
 			'S_NO_TOPIC'	=> true,
+			'S_ON_INDEX'	=> true,
 			'S_CAT_STYLE'	=> ($config['kb_layout_style']) ? true : false, // IF 1 then set to true bc. style = special
 			'S_COL_WIDTH'	=> ($config['kb_layout_style']) ? (100 / $config['kb_cats_per_row']) : 0,
 		));
@@ -1744,7 +1755,7 @@ class knowledge_base
 			return;
 		}
 		
-		if ($this->mode == 'edit' && !$auth->acl_get('m_kb_edit') && !$auth->acl_get('u_kb_add_co'))
+		if ($this->mode == 'edit' && !$auth->acl_get('m_kb_edit') && !$auth->acl_get('u_kb_add_co', $this->cat_id))
 		{
 			if ($user->data['user_id'] != $article_data['article_user_id'])
 			{
@@ -3002,7 +3013,7 @@ class knowledge_base
 		}
 		
 		// Check if the user has rights, as well as if the user has voted before
-		$sql = 'SELECT cat_id 
+		$sql = 'SELECT cat_id , article_user_id
 				FROM ' . KB_TABLE . '
 				WHERE article_id = ' . $this->article_id;
 		$result = $db->sql_query($sql);
@@ -3015,13 +3026,21 @@ class knowledge_base
 		$db->sql_freeresult($result);
 		
 		// Any other way to structure this query?
-		$sql = "SELECT rating
-				FROM " . KB_RATE_TABLE . "
-				WHERE article_id = '" . $db->sql_escape($this->article_id) ."'
-				AND user_id = {$user->data['user_id']}";
-		$result = $db->sql_query($sql);	
-		$has_rated = ($db->sql_affectedrows()) ? true : false;	
-		$db->sql_freeresult($result);
+		if($article_data['article_user_id'] == $user->data['user_id'])
+		{
+			// No rating on own article
+			$has_rated = true;
+		}
+		else
+		{
+			$sql = "SELECT rating
+					FROM " . KB_RATE_TABLE . "
+					WHERE article_id = '" . $db->sql_escape($this->article_id) ."'
+					AND user_id = {$user->data['user_id']}";
+			$result = $db->sql_query($sql);	
+			$has_rated = ($db->sql_affectedrows()) ? true : false;	
+			$db->sql_freeresult($result);
+		}
 		
 		if($has_rated)
 		{
@@ -3048,7 +3067,10 @@ class knowledge_base
 		
 		if(!$config['kb_ajax_rating'])
 		{
-			trigger_error('RATED_THANKS');
+			$redirect_url = kb_append_sid("{$phpbb_root_path}kb.{$phpEx}", 'a=' . $this->article_id);
+			$message = $user->lang['RATED_THANKS'] . '<br /><br />' . sprintf($user->lang['RETURN_KB_ARTICLE'], '<a href="' . kb_append_sid($phpbb_root_path . 'kb.' . $phpEx, 'a=' . $this->article_id) . '">', '</a>') . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . kb_append_sid($phpbb_root_path . 'kb.' . $phpEx) . '">', '</a>');
+			meta_refresh(5, $redirect_url);
+			trigger_error($message);
 		}
 	}
 	
@@ -3214,7 +3236,7 @@ class knowledge_base
 				$split_query = explode(' ', $keywords);
 				foreach ($split_query as $search_term)
 				{
-					$search_where .= $term . str_replace('SEARCHED', $search_term, $where_tpl);
+					$search_where .= $term . str_replace('SEARCHED', utf8_clean_string($search_term), $where_tpl);
 					$term = ($search_terms == 'all') ? 'AND ' : 'OR ';
 				}
 			
@@ -3295,12 +3317,24 @@ class knowledge_base
 				'S_SEARCH_ACTION'		=> $u_search,
 			));
 			
+			if ($hilit)
+			{
+				// Remove bad highlights
+				$hilit_array = array_filter(explode('|', $hilit), 'strlen');
+				foreach ($hilit_array as $key => $value)
+				{
+					$hilit_array[$key] = str_replace('\*', '\w*?', preg_quote($value, '#'));
+					$hilit_array[$key] = preg_replace('#(^|\s)\\\\w\*\?(\s|$)#', '$1\w+?$2', $hilit_array[$key]);
+				}
+				$hilit = implode('|', $hilit_array);
+			}
+			
 			while($row = $db->sql_fetchrow($result))
 			{
 				// Show results
 				// Get article types
 				$article_type = gen_article_type($row['article_type'], $row['article_title'], $types, $icons);
-				$article_type['article_title'] = preg_replace('#(?!<.*)(?<!\w)(' . $hilit . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">$1</span>', $article_type['article_title']);
+				$article_type['article_title'] = (strlen($hilit) ? preg_replace('#(?!<.*)(?<!\w)(' . $hilit . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">$1</span>', $article_type['article_title']) : $article_type['article_title']);
 				
 				// Send vars to template
 				$template->assign_block_vars('articlerow', array(
@@ -3311,7 +3345,7 @@ class knowledge_base
 					'COMMENTS'					=> $row['article_comments'],
 					'VIEWS'						=> $row['article_views'],
 					'ARTICLE_TITLE'				=> censor_text($article_type['article_title']),
-					'ARTICLE_DESC'				=> (!$config['kb_disable_desc']) ? preg_replace('#(?!<.*)(?<!\w)(' . $hilit . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">$1</span>', generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options'])) : '',
+					'ARTICLE_DESC'				=> ((!$config['kb_disable_desc']) ? ((strlen($hilit) ? preg_replace('#(?!<.*)(?<!\w)(' . $hilit . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">$1</span>', generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options'])) : generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options']))) : ''),
 					'ARTICLE_FOLDER_IMG'		=> $user->img('topic_read', censor_text($row['article_title'])),
 					'ARTICLE_FOLDER_IMG_SRC'	=> $user->img('topic_read', censor_text($row['article_title']), false, '', 'src'),
 					'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
