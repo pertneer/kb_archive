@@ -1,0 +1,35 @@
+<!-- IF S_IN_MAIN -->	
+	<div class="post bg3">
+		<div class="inner">
+			<span class="corners-top"><span></span></span>
+			<div class="left_menu_title">{L_KB_LATEST}</div>
+				<div style="padding-bottom: 3px;" class="user_menu">
+				<!-- IF not NO_LAST_ARTICLE -->
+				<div><a href="{U_LAST_ARTICLE}"><strong><h4>{LAST_ARTICLE_TITLE}</h4></strong></a></div>
+				<div>&nbsp;&nbsp;&nbsp;&nbsp;{LAST_ARTICLE_DESC}<br /><br /></div>
+				<div><strong>{L_COMMENTS}: </strong>{LAST_ARTICLE_COMMENTS} | <strong>{L_VIEWS}: </strong>{LAST_ARTICLE_VIEWS}</div>
+				<!-- ELSE -->
+				<div>{L_NO_ARTICLES_CREATED}<br /><br /></div>
+				<!-- ENDIF -->
+			</div>			
+			<span class="corners-bottom"><span></span></span>
+		</div>
+	</div>
+	
+	<div class="post bg3">
+		<div class="inner">
+			<span class="corners-top"><span></span></span>
+			<div class="left_menu_title">{L_KB_RAN_ART}</div>
+			<div style="padding-bottom: 3px;" class="user_menu">
+				<!-- IF not NO_ARTICLE -->
+				<div><a href="{U_RAN_ARTICLE}"><strong><h4>{RAN_ARTICLE_TITLE}</h4></strong></a></div>
+				<div>&nbsp;&nbsp;&nbsp;&nbsp;{RAN_ARTICLE_DESC}<br /><br /></div>
+				<div><strong>{L_COMMENTS}: </strong>{RAN_ARTICLE_COMMENTS} | <strong>{L_VIEWS}: </strong>{RAN_ARTICLE_VIEWS}</div>
+				<!-- ELSE -->
+				<div>{L_NO_ARTICLES_CREATED}<br /><br /></div>
+				<!-- ENDIF -->
+			</div>
+			<span class="corners-bottom"><span></span></span>
+		</div>
+	</div>
+<!-- ENDIF -->

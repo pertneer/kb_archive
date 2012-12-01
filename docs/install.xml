@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml-stylesheet type="text/xsl" href="modx.prosilver.en.xsl"?>
+<!--For security purposes, please check: http
+://www.phpbb.com/mods/ for the latest version of this MOD. Although MODs are checked before being allowed in the MODs Database there is no guarantee that there are no security problems within the MOD. No support will be given for MODs not found within the MODs Database which can be found at http://www.phpbb.com/mods/-->
+<mod xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.phpbb.com/mods/xml/modx-1.2.1.xsd">
+	<header>
+		<license>http://opensource.org/licenses/gpl-license.php GNU General Public License v2</license>
+		<title lang="en">PhpBB3 Knowledge Base Mod</title>
+		<description lang="en">This mod adds a Knowledge Base to your forum, which is fully integrated with phpBB's core system. It is fully manageable through a ACP system found under the .MODS tab.</description>
+		<author-notes lang="en"><![CDATA[THIS VERSION IS NOT USEABLE ON LIVE FORUMS AS IT IS STILL IN DEVELOPMENT, I cannot stress this enough.]]></author-notes>
+		<author-group>
+			<author>
+				<realname>Andreas Nexmann</realname>
+				<email>softphp@gmail.com</email>
+				<username>Imladris</username>
+				<homepage>http://kb.softphp.dk</homepage>
+				<contributions-group>
+      		 		<contributions status="current" from="2009-05-01" position="Developer"/>
+      			</contributions-group>
+			</author>
+			<author>
+				<realname>Tom</realname>
+				<email>tom.martin60@btinternet.com</email>
+				<username>Poppertom69</username>
+				<homepage></homepage>
+				<contributions-group>
+      		  		<contributions status="current" from="2009-05-01" position="Developer"/>
+      			</contributions-group>
+			</author>
+		</author-group>
+		<mod-version>0.0.7</mod-version>
+		<installation>
+			<level>easy</level>
+			<time>600</time>
+			<target-version>3.0.4</target-version>
+		</installation>
+		<history>
+			<entry>
+				<date>2009-05-31</date>
+				<rev-version>
+					<major>0</major>
+					<minor>0</minor>
+					<revision>7</revision>
+					<release></release>
+				</rev-version>
+			</entry>
+		</history>
+	</header>
+	<action-group>
+					<copy>
+									<file from="/kb.php" to="/kb.php" />
+									<file from="/adm/style/acp_kb_cat.html" to="/adm/style/acp_kb_cat.html" />
+									<file from="/adm/style/acp_kb_health.html" to="/adm/style/acp_kb_health.html" />
+									<file from="/adm/style/acp_kb.html" to="/adm/style/acp_kb.html" />
+									<file from="/download/kb.php" to="/download/kb.php" />
+									<file from="/includes/acp/acp_kb_cats.php" to="/includes/acp/acp_kb_cats.php" />
+									<file from="/includes/acp/acp_kb.php" to="/includes/acp/acp_kb.php" />
+									<file from="/includes/acp/info/acp_kb_cats.php" to="/includes/acp/info/acp_kb_cats.php" />
+									<file from="/includes/acp/info/acp_kb.php" to="/includes/acp/info/acp_kb.php" />
+									<file from="/includes/constants_kb.php" to="/includes/constants_kb.php" />
+									<file from="/includes/functions_kb.php" to="/includes/functions_kb.php" />
+									<file from="/includes/kb.php" to="/includes/kb.php" />
+									<file from="/includes/ucp/ucp_kb.php" to="/includes/ucp/ucp_kb.php" />
+									<file from="/includes/ucp/info/ucp_kb.php" to="/includes/ucp/info/ucp_kb.php" />
+									<file from="/language/en/mods/info_acp_kb.php" to="/language/en/mods/info_acp_kb.php" />
+									<file from="/language/en/mods/info_ucp_kb.php" to="/language/en/mods/info_ucp_kb.php" />
+									<file from="/language/en/mods/kb.php" to="/language/en/mods/kb.php" />
+									<file from="/language/en/mods/permissions_kb.php" to="/language/en/mods/permissions_kb.php" />
+									<file from="/styles/prosilver/template/kb/index_body.html" to="/styles/prosilver/template/kb/index_body.html" />
+									<file from="/styles/prosilver/template/kb/left_menu.html" to="/styles/prosilver/template/kb/left_menu.html" />
+									<file from="/styles/prosilver/template/kb/posting_body.html" to="/styles/prosilver/template/kb/posting_body.html" />
+									<file from="/styles/prosilver/template/kb/posting_buttons.html" to="/styles/prosilver/template/kb/posting_buttons.html" />
+									<file from="/styles/prosilver/template/kb/rate_article.html" to="/styles/prosilver/template/kb/rate_article.html" />
+									<file from="/styles/prosilver/template/kb/right_menu.html" to="/styles/prosilver/template/kb/right_menu.html" />
+									<file from="/styles/prosilver/template/kb/ucp_kb_bookmarks.html" to="/styles/prosilver/template/kb/ucp_kb_bookmarks.html" />
+									<file from="/styles/prosilver/template/kb/ucp_kb_subscribed.html" to="/styles/prosilver/template/kb/ucp_kb_subscribed.html" />
+									<file from="/styles/prosilver/template/kb/view_article.html" to="/styles/prosilver/template/kb/view_article.html" />
+									<file from="/styles/prosilver/template/kb/view_cat_list.html" to="/styles/prosilver/template/kb/view_cat_list.html" />
+									<file from="/styles/prosilver/template/kb/viewcat_body.html" to="/styles/prosilver/template/kb/viewcat_body.html" />
+									<file from="/styles/prosilver/theme/kb.css" to="/styles/prosilver/theme/kb.css" />
+									<file from="/styles/prosilver/theme/images/rate_star.gif" to="/styles/prosilver/theme/images/rate_star.gif" />
+									<file from="/umil/umil.php" to="/umil/umil.php" />
+							</copy>
+						<open src="/includes/functions.php">
+											<edit>
+							<find><![CDATA[		'U_RESTORE_PERMISSIONS'	=> ($user->data['user_perm_from'] && $auth->acl_get('a_switchperm')) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'mode=restore_perm') : '',]]></find>
+															<action type="after-add"><![CDATA[		'U_KB'					=> append_sid("kb.php"),
+		'L_KB_EXPLAIN'			=> $user->lang['KB_EXPLAIN'],
+		'L_KB'					=> $user->lang['KNOWLEDGE_BASE'],]]></action>
+													</edit>
+									</open>
+							<open src="/language/en/common.php">
+											<edit>
+							<find><![CDATA[	'KIB'					=> 'KiB',]]></find>
+															<action type="after-add"><![CDATA[	'KNOWLEDGE_BASE'		=> 'Knowledge Base',
+	'KB_EXPLAIN'			=> 'Knowledge Base',]]></action>
+													</edit>
+									</open>
+							<open src="/styles/prosilver/template/overall_header.html">
+											<edit>
+							<find><![CDATA[<li class="icon-faq"><a href="{U_FAQ}" title="{L_FAQ_EXPLAIN}">{L_FAQ}</a></li>]]></find>
+															<action type="before-add"><![CDATA[<li class="icon-faq"><a href="{U_KB}" title="{L_KB_EXPLAIN}">{L_KB}</a></li>]]></action>
+													</edit>
+									</open>
+							<open src="/styles/prosilver/theme/stylesheet.css">
+											<edit>
+							<find><![CDATA[@import url("colours.css");]]></find>
+															<action type="after-add"><![CDATA[@import url("kb.css");]]></action>
+													</edit>
+									</open>
+							<diy-instructions lang="en"><![CDATA[After saving all files, please login as admin. Then direct your browser to kb.php and follow the install steps there. Afterwards go to the ACP, then clear your cache, refresh your theme and go to the permissions screen. Here you will be able to set permissions for your new Knowledge Base, you have to do so for ALL groups before they are able to visit the KB.]]></diy-instructions>
+				</action-group>
+</mod>
