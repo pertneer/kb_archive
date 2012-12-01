@@ -2,22 +2,20 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
+* @version $Id: info_ucp_kb.php 356 2009-11-08 10:40:10Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
 
 /**
- * @ignore
- */
+* DO NOT CHANGE
+*/
 if (!defined('IN_PHPBB'))
 {
 	exit;
 }
 
-/**
-* DO NOT CHANGE
-*/
 if (empty($lang) || !is_array($lang))
 {
 	$lang = array();
@@ -34,6 +32,10 @@ if (empty($lang) || !is_array($lang))
 // You do not need this where single placeholders are used, e.g. 'Message %d' is fine
 // equally where a string contains only two placeholders which are used to wrap text
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
+//
+// Some characters you may want to copy&paste:
+// ’ » “ ” …
+//
 
 $lang = array_merge($lang, array(
 	'UCP_KB'					=> 'Knowledge Base',
@@ -45,6 +47,7 @@ $lang = array_merge($lang, array(
 	'UCP_KB_FRONT_EXPLAIN'		=> 'Welcome to the Knowledge Base part of the User Control Panel. From here you can manage your bookmarked and subscribed articles. You can also keep track of your article status, and look at moderator comments.',
 	'UCP_KB_SUBSCRIBED'			=> 'Article Subscriptions',
 	'UCP_KB_SUBSCRIBED_EXPLAIN'	=> 'On this page you can view, remove and update your subscription to articles. You can also alter the notification settings.',
+	
 ));
 
 ?>

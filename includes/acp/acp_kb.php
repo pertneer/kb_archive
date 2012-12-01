@@ -2,6 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
+* @version $Id: acp_kb.php 352 2009-11-02 13:27:46Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -235,47 +236,47 @@ class acp_kb
 						{
 							$installed_plugins[] = $row['plugin_filename'];
 						
-							if ($row['plugin_menu'] == LEFT_MENU)
+							switch ($row['plugin_menu'])
 							{
-								$template->assign_block_vars('left_menu', array(
-									'PLUGIN_NAME'		=> $row['plugin_name'],
-									'PLUGIN_DESC'		=> $row['plugin_desc'],
-									'PLUGIN_COPY'		=> $row['plugin_copy'],
-									'PLUGIN_VERSION'	=> $row['plugin_version'],
-									'PLUGIN_PERM'		=> $row['plugin_perm'],
-									'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
-									'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
-									'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
-									'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
-								));
-							}
-							
-							if ($row['plugin_menu'] == RIGHT_MENU)
-							{
-								$template->assign_block_vars('right_menu', array(
-									'PLUGIN_NAME'		=> $row['plugin_name'],
-									'PLUGIN_DESC'		=> $row['plugin_desc'],
-									'PLUGIN_COPY'		=> $row['plugin_copy'],
-									'PLUGIN_VERSION'	=> $row['plugin_version'],
-									'PLUGIN_PERM'		=> $row['plugin_perm'],
-									'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
-									'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
-									'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
-									'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
-								));
-							}
-							
-							if ($row['plugin_menu'] == NO_MENU)
-							{
-								$template->assign_block_vars('no_menu', array(
-									'PLUGIN_NAME'		=> $row['plugin_name'],
-									'PLUGIN_DESC'		=> $row['plugin_desc'],
-									'PLUGIN_COPY'		=> $row['plugin_copy'],
-									'PLUGIN_VERSION'	=> $row['plugin_version'],
-									'PLUGIN_PERM'		=> $row['plugin_perm'],
-									'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
-									'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
-								));
+								case LEFT_MENU:
+									$template->assign_block_vars('left_menu', array(
+										'PLUGIN_NAME'		=> $row['plugin_name'],
+										'PLUGIN_DESC'		=> $row['plugin_desc'],
+										'PLUGIN_COPY'		=> $row['plugin_copy'],
+										'PLUGIN_VERSION'	=> $row['plugin_version'],
+										'PLUGIN_PERM'		=> $row['plugin_perm'],
+										'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
+										'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
+										'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
+										'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
+									));
+								break;
+								
+								case RIGHT_MENU:
+									$template->assign_block_vars('right_menu', array(
+										'PLUGIN_NAME'		=> $row['plugin_name'],
+										'PLUGIN_DESC'		=> $row['plugin_desc'],
+										'PLUGIN_COPY'		=> $row['plugin_copy'],
+										'PLUGIN_VERSION'	=> $row['plugin_version'],
+										'PLUGIN_PERM'		=> $row['plugin_perm'],
+										'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
+										'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
+										'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
+										'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
+									));
+								break;
+								
+								case NO_MENU:
+									$template->assign_block_vars('no_menu', array(
+										'PLUGIN_NAME'		=> $row['plugin_name'],
+										'PLUGIN_DESC'		=> $row['plugin_desc'],
+										'PLUGIN_COPY'		=> $row['plugin_copy'],
+										'PLUGIN_VERSION'	=> $row['plugin_version'],
+										'PLUGIN_PERM'		=> $row['plugin_perm'],
+										'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
+										'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
+									));
+								break;
 							}
 						}
 						
@@ -405,7 +406,7 @@ class acp_kb
 			{
 				if (request_var('all_pages', 0))
 				{
-					$pages = make_page_list('', true);
+					$pages = make_page_list('', array(), true);
 				}
 				else
 				{
@@ -436,7 +437,7 @@ class acp_kb
 					
 					if ($mode == 'plugins')
 					{
-						if ($config_name == 'kb_' . $filename . '_menu')
+						if (($config_name == 'kb_' . $filename . '_menu') || (strpos($config_name, '_menu')))
 						{
 							update_plugin_menu($filename, $config_value);
 						}

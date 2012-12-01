@@ -2,6 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
+* @version $Id: kb.php 350 2009-11-01 16:36:15Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -480,7 +481,7 @@ class knowledge_base
 		$this->page_header($user->lang['VIEW_CAT'] . ' - ' . $cat_data['cat_name']);
 		
 		$template->set_filenames(array(
-			'body' => 'kb/viewcat_body.html')
+			'body' => 'kb/view_cat_list.html')
 		);
 		
 		page_footer();
@@ -837,7 +838,7 @@ class knowledge_base
 		}
 		
 		// Any way to exclude this query?
-		if(!$user->data['user_id'] == $article_data['article_user_id'])
+		if ($user->data['user_id'] != $article_data['article_user_id'])
 		{
 			$sql = "SELECT rating
 					FROM " . KB_RATE_TABLE . "
@@ -1595,7 +1596,7 @@ class knowledge_base
 		$this->page_header($user->lang['KB_INDEX']);
 		
 		$template->set_filenames(array(
-			'body' => 'kb/index_body.html')
+			'body' => 'kb/view_cat_list.html')
 		);
 		
 		page_footer();
@@ -3004,7 +3005,7 @@ class knowledge_base
 	*/
 	function article_rate()
 	{
-		global $db, $auth, $user, $config;
+		global $db, $auth, $user, $config, $phpbb_root_path, $phpEx;
 		$rating = request_var('rating', 1);
 		
 		if(!$this->article_id)
@@ -3656,7 +3657,7 @@ class knowledge_base
 		$this->page_header($user->lang['VIEW_TAG'] . ' - ' . $tag_name);
 		
 		$template->set_filenames(array(
-			'body' => 'kb/viewcat_body.html')
+			'body' => 'kb/view_cat_list.html')
 		);
 		
 		page_footer();
@@ -3881,7 +3882,7 @@ class knowledge_base
 						'ON' => 'a.article_id = t.article_id AND u.user_id = t.user_id',
 					),
 				),
-				'WHERE'		=> "a.article_id = $this->article_id" . $mod_where,
+				'WHERE'		=> "a.article_id = $this->article_id",
 				'GROUP_BY'	=> 'a.article_id',
 			));
 			$result = $db->sql_query($sql);

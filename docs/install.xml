@@ -37,13 +37,26 @@
       			</contributions-group>
 			</author>
 		</author-group>
-		<mod-version>1.0.0RC1</mod-version>
+		<mod-version>1.0.0RC2</mod-version>
 		<installation>
 			<level>intermediate</level>
 			<time>2200</time>
 			<target-version>3.0.6</target-version>
 		</installation>
 		<history>
+			<entry>
+				<date>2009-11-10</date>
+				<rev-version>1.0.0RC2</rev-version>
+				<changelog lang="en">
+					<change>Issues fixed:</change>
+					<change>Notice errors in functions_plugins_kb.php</change>
+					<change>Export word doesn't show</change>
+					<change>Rating stars not working anymore</change>
+					<change>Fatal Error when writing article as user</change>
+					<change>A/N on being logged out when clicking forum bot link:</change>
+					<change>This is unfortunately a "flaw" in the phpBB system and not in the mod itself. We just use a simple [url] bbcode to create the link and as the phpBB system doesn't use append_sid on it, some users will experience being logged out when the link is clicked.</change>
+				</changelog>
+			</entry>
 			<entry>
 				<date>2009-10-22</date>
 				<rev-version>1.0.0RC1</rev-version>

@@ -2,6 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
+* @version $Id: kb.php 357 2009-11-10 15:49:48Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -25,6 +26,12 @@ $user->session_begin();
 $auth->acl($user->data);
 $user->setup('mods/kb');
 
+// Bug in update function, this will correct it
+if($config['kb_version'] == '1.0.1RC1')
+{
+	set_config('kb_version', '1.0.0RC2');
+}
+
 // Lets start the install/update of the kb
 // Automatically install or update if required
 if ((!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION) && $auth->acl_get('a_') && !empty($user->data['is_registered']))
@@ -43,14 +50,7 @@ if ((!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION) && $a
 	
 			include($umil_file);
 		}
-	
-		$umil = new umil(true);
-		
-		include($phpbb_root_path . 'includes/functions_install_kb.' . $phpEx);
-		$versions = get_kb_versions();
-	
-		$umil->run_actions('update', $versions, 'kb_version');
-		
+			
 		// Log the action
 		$install_mode = request_var('install_mode', 'install');
 		if($install_mode == 'install')
@@ -63,6 +63,14 @@ if ((!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION) && $a
 			$message = sprintf($user->lang['KB_UPDATED'], KB_VERSION);
 			add_log('admin', 'LOG_KB_UPDATED', KB_VERSION, $old_version);
 		}
+		
+		$umil = new umil(true);
+		
+		include($phpbb_root_path . 'includes/functions_install_kb.' . $phpEx);
+		$versions = get_kb_versions();
+	
+		$umil->run_actions($install_mode, $versions, 'kb_version');
+		
 		unset($versions);
 		trigger_error($message);
 	}

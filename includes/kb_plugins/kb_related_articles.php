@@ -2,6 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
+* @version $Id: kb_related_articles.php 344 2009-10-30 18:45:40Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -20,13 +21,13 @@ if (defined('IN_KB_PLUGIN'))
 {
 	$acp_options['legend1'] 			= 'RELATED_ARTICLES';
 	$acp_options['kb_related_articles'] = array('lang' => 'KB_SHOW_RELART',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => true);
-	$acp_options['kb_related_menu']		= array('lang' => 'WHICH_MENU',			'validate' => 'int',	'type' => 'custom', 		'function' 	=> 'select_menu_check', 	'explain' 	=> false);
+	$acp_options['kb_related_articles_menu']		= array('lang' => 'WHICH_MENU',			'validate' => 'int',	'type' => 'custom', 		'function' 	=> 'select_menu_check', 	'explain' 	=> false);
 		
 	$details = array(
 		'PLUGIN_NAME'			=> 'Related articles on view article page',
 		'PLUGIN_DESC'			=> 'Shows the related articles box on view article page',
 		'PLUGIN_COPY'			=> '&copy; 2009 Andreas Nexmann, Tom Martin',
-		'PLUGIN_VERSION'		=> '1.0.0',
+		'PLUGIN_VERSION'		=> '1.0.1',
 		'PLUGIN_MENU'			=> RIGHT_MENU,
 		'PLUGIN_PERM'			=> true,
 		'PLUGIN_PAGES'			=> array('view_article'),
@@ -51,6 +52,16 @@ function related_articles_versions()
 			'config_add'	=> array(
 				//array('kb_related_articles', 5),
 				array('kb_related_menu', RIGHT_MENU),
+			),
+		),
+		
+		'1.0.1'	=> array(			
+			'config_remove'	=> array(
+				array('kb_related_menu'),
+			),
+			
+			'config_add'	=> array(
+				array('kb_related_articles_menu', RIGHT_MENU),
 			),
 		),
 	);

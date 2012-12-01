@@ -2,6 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
+* @version $Id: kb_forum_bot.php 350 2009-11-01 16:36:15Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -15,15 +16,20 @@ if (!defined('IN_PHPBB'))
 	exit;
 }
 
+if (!function_exists('make_forum_select'))
+{
+	include($phpbb_root_path . 'includes/functions_admin.' . $phpEx);
+}
+
 // Only add these options if in acp
 if (defined('IN_KB_PLUGIN'))
 {
 	$acp_options['legend1'] 					= 'ARTICLE_POST_BOT';
 	$acp_options['kb_forum_bot_enable'] 		= array('lang' => 'ENABLE_FORUM_BOT',			'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' 	=> false);
-	$acp_options['kb_forum_bot_user'] 			= array('lang' => 'ARTICLE_POST_BOT_USER',		'validate' => 'int',	'type' => 'text:3:5', 		'explain' 	=> false);
-	$acp_options['kb_forum_bot_forum_id'] 		= array('lang' => 'FORUM_ID',					'validate' => 'int',	'type' => 'text:3:5', 		'explain' 	=> false);
-	$acp_options['kb_forum_bot_subject'] 		= array('lang' => 'ARTICLE_POST_BOT_SUB',		'validate' => 'string',	'type' => 'text:30:50', 	'explain' 	=> false);
-	$acp_options['kb_forum_bot_message'] 		= array('lang' => 'ARTICLE_POST_BOT_MSG',		'validate' => 'string',	'type' => 'textarea:5:9', 	'explain' 	=> false);
+	$acp_options['kb_forum_bot_user'] 			= array('lang' => 'ARTICLE_POST_BOT_USER',		'validate' => 'int',	'type' => 'text:3:5', 		'explain' 	=> true);
+	$acp_options['kb_forum_bot_forum_id'] 		= array('lang' => 'FORUM_ID',					'validate' => 'int',	'type' => 'select',			'function'	=> 'make_forum_select',		'params'	=> array(isset($config['kb_forum_bot_forum_id']) ? $config['kb_forum_bot_forum_id'] : false, false, true),	'explain' 	=> true);
+	$acp_options['kb_forum_bot_subject'] 		= array('lang' => 'ARTICLE_POST_BOT_SUB',		'validate' => 'string',	'type' => 'text:30:50', 	'explain' 	=> true);
+	$acp_options['kb_forum_bot_message'] 		= array('lang' => 'ARTICLE_POST_BOT_MSG',		'validate' => 'string',	'type' => 'textarea:10:12', 'explain' 	=> true);
 		
 	$details = array(
 		'PLUGIN_NAME'			=> 'Knowledge Base Forum Bot',
@@ -198,7 +204,7 @@ function post_new_article($data)
 		'{TITLE}'		=> $data['article_title'],
 		'{DESC}'		=> $data['article_desc'],
 		'{TIME}'		=> $user->format_date($data['article_time']),
-		'{LINK}'		=> '[url]' . generate_board_url() . "/kb.php?a=" . $data['article_id'] . '[/url]',
+		'{LINK}'		=> generate_board_url() . "/kb.php?a=" . $data['article_id'],
 	);
 	
 	//Get post bots permissions

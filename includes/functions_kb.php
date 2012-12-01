@@ -2,6 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
+* @version $Id: functions_kb.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -2039,14 +2040,14 @@ function handle_related_articles($article_id, $article_title, $article_title_cle
 	foreach ($articles as $article_id_ra => $article_title_ra)
 	{
 		$template->assign_block_vars('related_articles', array(
-			'U_VIEW_ARTICLE'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id_ra"),
+			'U_VIEW_ARTICLE'	=> append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id_ra"),
 			'TITLE'				=> $article_title_ra,
 		));
 	}
 	
 	// Generate Pagination
 	$template->assign_vars(array(
-		'KB_PAGINATION'		=> kb_generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"), $articles_found, $show_num, $ra, 'ra', true),
+		'KB_PAGINATION'		=> kb_generate_pagination(append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"), $articles_found, $show_num, $ra, 'ra', true),
 		'KB_PAGE_NUMBER'	=> on_page($articles_found, $show_num, $ra),
 		'KB_TOTAL_RA' 		=> $articles_found,
 		'KB_S_TOTAL_RA'		=> ($articles_found == 1) ? $user->lang['MATCH_FOUND'] : $user->lang['MATCHS_FOUND'],

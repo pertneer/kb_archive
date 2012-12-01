@@ -2,6 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
+* @version $Id: functions_install_kb.php 351 2009-11-01 18:20:12Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -702,6 +703,10 @@ function get_kb_versions()
 		'1.0.0RC1'	=> array(
 			// Tagging RC1
 		),
+		
+		'1.0.0RC2'	=> array(
+			'custom'	=> 'kb_update_plugins',
+		),
 	);
 
 	return $versions;
@@ -721,10 +726,8 @@ function kb_delete_permission_roles($action , $version)
 				WHERE role_type = 'u_kb_'";
 		$db->sql_query($sql);
 	}
-	else
-	{
-		return;
-	}
+	
+	return;
 }
 
 function kb_install_perm_plugins($action , $version)
@@ -768,6 +771,38 @@ function kb_install_perm_plugins($action , $version)
 	foreach ($plugins as $plugin)
 	{
 		install_plugin($plugin, $phpbb_root_path . 'includes/kb_plugins/');
+	}
+}
+
+function kb_update_plugins($action , $version)
+{
+	global $phpbb_root_path;
+
+	if ($action != 'update')
+	{
+		return;
+	}
+	
+	if(!defined('IN_KB_PLUGIN')) // Killing notice when updating through several versions all using this function
+	{
+		define('IN_KB_PLUGIN', true);
+	}
+	
+	switch ($version)
+	{
+		case '1.0.0RC2':
+			$plugins = array('contributors', 'export_article', 'related_articles');
+		break;
+	}
+	
+	if (empty($plugins))
+	{
+		return;
+	}
+	
+	foreach ($plugins as $plugin)
+	{
+		update_plugin($plugin, $phpbb_root_path . 'includes/kb_plugins/', false, false, true);
 	}
 }
 

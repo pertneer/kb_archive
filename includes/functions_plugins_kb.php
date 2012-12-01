@@ -2,6 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
+* @version $Id: functions_plugins_kb.php 352 2009-11-02 13:27:46Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -509,7 +510,7 @@ function install_plugin($filename, $plugin_loc, $u_action = false)
 /**
 * Update Plugin
 */
-function update_plugin($filename, $plugin_loc, $u_action, $details)
+function update_plugin($filename, $plugin_loc, $u_action = false, $details = false, $include = false)
 {
 	global $phpbb_root_path, $phpEx, $config;
 	
@@ -517,9 +518,19 @@ function update_plugin($filename, $plugin_loc, $u_action, $details)
 	{
 		if (!file_exists($plugin_loc . 'kb_' . $filename . '.' . $phpEx))
 		{
-			trigger_error($user->lang['NO_PLUGIN_FILE'] . adm_back_link($u_action), E_USER_ERROR);
+			if ($u_action)
+			{
+				trigger_error($user->lang['NO_PLUGIN_FILE'] . adm_back_link($u_action), E_USER_ERROR);
+			}
+			
+			return;
 		}
 		
+		include($plugin_loc . 'kb_' . $filename . '.' . $phpEx);
+	}
+	
+	if ($include && !function_exists($filename))
+	{
 		include($plugin_loc . 'kb_' . $filename . '.' . $phpEx);
 	}
 	
@@ -721,16 +732,16 @@ function make_page_list($filename, $details, $page_list = false)
 		'add'			=> $user->lang['POSTING'],
 	);
 	
-	foreach($page_options as $page => $lang)
-	{
-		if(!in_array($page, $details['PLUGIN_PAGES']) && !in_array('all', $details['PLUGIN_PAGES']))
-		{
-			unset($page_options[$page]);
-		}
-	}
-	
 	if (!$page_list)
 	{
+		foreach($page_options as $page => $lang)
+		{
+			if(!in_array($page, $details['PLUGIN_PAGES']) && !in_array('all', $details['PLUGIN_PAGES']))
+			{
+				unset($page_options[$page]);
+			}
+		}
+		
 		$sql = 'SELECT plugin_pages
 			FROM ' . KB_PLUGIN_TABLE . " 
 			WHERE plugin_filename = '" . $db->sql_escape($filename) . "'";
@@ -740,11 +751,11 @@ function make_page_list($filename, $details, $page_list = false)
 	
 		// Don't show perm pages as user may get confussed
 		$show_pages = unserialize($row['plugin_pages']);	
-	
+
 		$options = '';
 		foreach ($page_options as $mode => $lang)
 		{
-			$selected = (in_array($mode, $show_pages)) ? '" selected="selected"' : '';
+			$selected = (!empty($show_pages) && in_array($mode, $show_pages)) ? '" selected="selected"' : '';
 			$options .= '<option value="' . $mode . '" ' . $selected . '>' . $lang . '</option>';
 		}
 	}
