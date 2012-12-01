@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 441 2010-02-03 19:28:02Z tom.martin60@btinternet.com $
+* @version $Id: kb.php 448 2010-02-18 10:23:12Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -1473,7 +1473,7 @@ class knowledge_base
 				'ONLINE_IMG'			=> ($poster_id == ANONYMOUS || !$config['load_onlinetrack']) ? '' : (($user_cache[$poster_id]['online']) ? $user->img('icon_user_online', 'ONLINE') : $user->img('icon_user_offline', 'OFFLINE')),
 				'S_ONLINE'				=> ($poster_id == ANONYMOUS || !$config['load_onlinetrack']) ? false : (($user_cache[$poster_id]['online']) ? true : false),
 		
-				'U_EDIT'				=> (!$user->data['is_registered']) ? '' : ((($user->data['user_id'] == $poster_id && $auth->acl_get('u_kb_comment', $this->cat_id)) || $auth->acl_get('m_kb_edit') || ($article_data['article_open'] && $user->acl_get('u_kb_add_co', $this->cat_id))) ? append_sid($base_url, (($module != '') ? $base_arg . "&amp;action=edit&amp;comment_id=$comment_id" : "i=comment&amp;action=edit&amp;comment_id=$comment_id")) : ''),
+				'U_EDIT'				=> (!$user->data['is_registered']) ? '' : ((($user->data['user_id'] == $poster_id && $auth->acl_get('u_kb_comment', $this->cat_id)) || $auth->acl_get('m_kb_edit') || ($article_data['article_open'] && $auth->acl_get('u_kb_add_co', $this->cat_id))) ? append_sid($base_url, (($module != '') ? $base_arg . "&amp;action=edit&amp;comment_id=$comment_id" : "i=comment&amp;action=edit&amp;comment_id=$comment_id")) : ''),
 				'U_QUOTE'				=> ($auth->acl_get('u_kb_comment', $this->cat_id)) ? append_sid($base_url, (($module != '') ? $base_arg . "action=add&amp;a=$this->article_id&amp;quote=$comment_id" : "i=comment&amp;action=add&amp;a=$this->article_id&amp;quote=$comment_id")) : '',
 				'U_DELETE'				=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $poster_id && $auth->acl_get('u_kb_comment', $this->cat_id)) || $auth->acl_get('m_kb_delete')) ? append_sid($base_url, (($module != '') ? $base_arg . "&amp;action=delete&amp;comment_id=$comment_id" : "i=comment&amp;action=delete&amp;comment_id=$comment_id")) : '',
 		
@@ -4324,7 +4324,7 @@ class knowledge_base
 			break;
 			
 			case 'accept':
-				if(!$request_id || !$user->lang['is_registered'])
+				if(!$request_id || !$user->data['is_registered'])
 				{
 					trigger_error('KB_NO_REQUEST');
 				}

@@ -37,13 +37,34 @@
       			</contributions-group>
 			</author>
 		</author-group>
-		<mod-version>1.0.1</mod-version>
+		<mod-version>1.0.2RC2</mod-version>
 		<installation>
 			<level>intermediate</level>
 			<time>2100</time>
-			<target-version>3.0.6</target-version>
+			<target-version>3.0.7</target-version>
 		</installation>
 		<history>
+			<entry>
+				<date>2010-04-05</date>
+				<rev-version>1.0.2RC2</rev-version>
+				<changelog lang="en">
+					<change>Issues fixed:</change>
+					<change>Request article bug</change>
+					<change>Several small typos</change>
+				</changelog>
+			</entry>
+			<entry>
+				<date>2010-02-11</date>
+				<rev-version>1.0.2RC1</rev-version>
+				<changelog lang="en">
+					<change>Issues fixed:</change>
+					<change>Fixed cosmetic bugs</change>
+					<change>Permission system fixed</change>
+					<change>Post bot fixed</change>
+					<change>New features:</change>
+					<change>Copyright line added</change>
+				</changelog>
+			</entry>
 			<entry>
 				<date>2010-01-20</date>
 				<rev-version>1.0.1</rev-version>
@@ -483,6 +504,13 @@ else
 								<action type="after-add"><![CDATA[				// Mod KB Begin
 				'_allowed_kb'	=> array(),
 				// Mod KB End]]></action>
+							</edit>
+							<edit>
+								<find><![CDATA[AND (g.allow_group = 1 OR g.allow_in_pm = 1)';]]></find>
+								<inline-edit>
+									<inline-find><![CDATA[)]]></inline-find>
+									<inline-action type="before-add"><![CDATA[ OR g.allow_in_kb = 1]]></inline-action>
+								</inline-edit>
 							</edit>
 							<edit>
 								<find><![CDATA[					'max_filesize'	=> (int) $row['max_filesize'],
