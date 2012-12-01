@@ -33,7 +33,7 @@
 						<div class="content">{EDIT_TAGS}</div>
 						<h4>{L_ARTICLE_STATUS}:</h4> 
 						<div class="content">{EDIT_STATUS}</div>
-						<h4>{L_ARTICLE_DESC}:</h2>
+						<h4>{L_ARTICLE_DESC}:</h4>
 						<div class="content">{ARTICLE_DESC}</div>
 						<h4>{L_CONTENT}:</h4>
 						<div class="content">{ARTICLE_MESSAGE}</div>
@@ -205,12 +205,12 @@
 							<div id="codepanel">
 								<div id="main"><a name="content"></a>
 										{DIFF_CONTENT}
-										<table width="100%">
+										<table style="width: 100%;">
 											<tr>
-												<td width="50%" align="center">
+												<td style="width: 50%; text-align: center;">
 													{L_KB_DIFF_FROM}
 												</td>
-												<td width="50%" align="center">
+												<td style="width: 50%; text-align: center;">
 													{L_KB_DIFF_TO}
 												</td>
 											</tr>
@@ -246,8 +246,8 @@
 						<dl>
 							<dt style="width: 30%"><a href="{editrow.U_EDIT}">{editrow.ARTICLE_TITLE}</a> {editrow.EDIT_BY} <!-- IF editrow.S_NEWEST -->&nbsp;<strong>({L_NEWEST})</strong><!-- ELSEIF editrow.S_ORG -->&nbsp;<strong>({L_ORIGINAL})</strong><!-- ENDIF --><br />
 								[ <a href="{editrow.U_EDIT}">{L_VIEW_REV_INFO}</a> ]</dt>
-							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_F --><input type="radio" id="df-{editrow.NUM}" onClick="" name="df" value="{editrow.EDIT_ID}"><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
-							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_T --><input type="radio" id="dt-{editrow.NUM}" onClick="" name="dt" value="{editrow.EDIT_ID}"><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
+							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_F --><input type="radio" id="df-{editrow.NUM}" onclick="" name="df" value="{editrow.EDIT_ID}"><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
+							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_T --><input type="radio" id="dt-{editrow.NUM}" onclick="" name="dt" value="{editrow.EDIT_ID}"><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
 							
 							<dd class="time" style="width: 30%"><span>{editrow.EDIT_TIME}</span></dd>
 							<dd class="extra">{editrow.EDIT_STATUS}</dd>
@@ -267,7 +267,7 @@
 		<!-- ENDIF --> 
 		</td>
 		<!-- IF .right_menu -->
-		<td id="left_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
+		<td id="right_menu" style="width: {RIGHT_MENU_WIDTH}; vertical-align: top; padding-left: 10px;">
 			<!-- INCLUDE kb/right_menu.html -->
 		</td>
 		<!-- ENDIF -->

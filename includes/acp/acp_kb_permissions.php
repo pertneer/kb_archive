@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: acp_kb_permissions.php 365 2009-11-13 14:51:38Z softphp $
+* @version $Id: acp_kb_permissions.php 388 2009-11-24 13:25:18Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -439,8 +439,8 @@ class acp_kb_permissions
 				}
 			break;
 			
-			// Here we set all kb permissions
-			case 'set_permissions':
+		// Here we set all kb permissions
+		case 'set_permissions':
 
 			$this->tpl_name = 'acp_permissions';
 			$this->page_title = $user->lang['ACP_KB_PERMISSIONS'];
@@ -745,21 +745,121 @@ class acp_kb_permissions
 	*/
 	function remove_permissions($mode, $permission_type, &$auth_admin, &$user_id, &$group_id, &$forum_id)
 	{
-		global $user, $db, $auth;
+		global $user, $db;
 
 		// User or group to be set?
 		$ug_type = (sizeof($user_id)) ? 'user' : 'group';
+	
+		$this->acl_delete($ug_type, $auth_admin, (($ug_type == 'user') ? $user_id : $group_id), (sizeof($forum_id) ? $forum_id : false), $permission_type);
 
-		$auth_admin->acl_delete($ug_type, (($ug_type == 'user') ? $user_id : $group_id), (sizeof($forum_id) ? $forum_id : false), $permission_type);
+		trigger_error($user->lang['AUTH_UPDATED'] . adm_back_link($this->u_action));
+	}
+	
+	/**
+	* Remove local permission
+	*/
+	function acl_delete($mode, &$auth_admin, $ug_id = false, $forum_id = false, $permission_type = false)
+	{
+		global $db;
+		
+		if ($ug_id === false && $forum_id === false)
+		{
+			return;
+		}
 
-		if ($mode == 'setting_forum_local' || $mode == 'setting_mod_local')
+		$option_id_ary = array();
+		$table = ($mode == 'user') ? ACL_USERS_TABLE : ACL_GROUPS_TABLE;
+		$id_field = $mode . '_id';
+
+		$where_sql = array();
+
+		if ($forum_id !== false)
 		{
-			trigger_error($user->lang['AUTH_UPDATED'] . adm_back_link($this->u_action . '&amp;forum_id[]=' . implode('&amp;forum_id[]=', $forum_id)));
+			$where_sql[] = (!is_array($forum_id)) ? 'forum_id = ' . (int) $forum_id : $db->sql_in_set('forum_id', array_map('intval', $forum_id));
 		}
-		else
+
+		if ($ug_id !== false)
 		{
-			trigger_error($user->lang['AUTH_UPDATED'] . adm_back_link($this->u_action));
+			$where_sql[] = (!is_array($ug_id)) ? $id_field . ' = ' . (int) $ug_id : $db->sql_in_set($id_field, array_map('intval', $ug_id));
 		}
+
+		// There seem to be auth options involved, therefore we need to go through the list and make sure we capture roles correctly
+		if ($permission_type !== false)
+		{
+			// Get permission type
+			$sql = 'SELECT auth_option, auth_option_id
+				FROM ' . ACL_OPTIONS_TABLE . "
+				WHERE auth_option " . $db->sql_like_expression($permission_type . $db->any_char);
+			$result = $db->sql_query($sql);
+
+			$auth_id_ary = array();
+			while ($row = $db->sql_fetchrow($result))
+			{
+				$option_id_ary[] = $row['auth_option_id'];
+				$auth_id_ary[$row['auth_option']] = ACL_NO;
+			}
+			$db->sql_freeresult($result);
+
+			// First of all, lets grab the items having roles with the specified auth options assigned
+			$sql = "SELECT auth_role_id, $id_field, forum_id
+				FROM $table, " . ACL_ROLES_TABLE . " r
+				WHERE auth_role_id <> 0
+					AND auth_role_id = r.role_id
+					AND r.role_type = '{$permission_type}'
+					AND " . implode(' AND ', $where_sql) . '
+				ORDER BY auth_role_id';
+			$result = $db->sql_query($sql);
+			
+			$cur_role_auth = array();
+			while ($row = $db->sql_fetchrow($result))
+			{
+				$cur_role_auth[$row['auth_role_id']][$row['forum_id']][] = $row[$id_field];
+			}
+			$db->sql_freeresult($result);
+
+			// Get role data for resetting data
+			if (sizeof($cur_role_auth))
+			{
+				$sql = 'SELECT ao.auth_option, rd.role_id, rd.auth_setting
+					FROM ' . ACL_OPTIONS_TABLE . ' ao, ' . ACL_ROLES_DATA_TABLE . ' rd
+					WHERE ao.auth_option_id = rd.auth_option_id
+						AND ' . $db->sql_in_set('rd.role_id', array_keys($cur_role_auth));
+				$result = $db->sql_query($sql);
+
+				$auth_settings = array();
+				while ($row = $db->sql_fetchrow($result))
+				{
+					// We need to fill all auth_options, else setting it will fail...
+					if (!isset($auth_settings[$row['role_id']]))
+					{
+						$auth_settings[$row['role_id']] = $auth_id_ary;
+					}
+					$auth_settings[$row['role_id']][$row['auth_option']] = $row['auth_setting'];
+				}
+				$db->sql_freeresult($result);
+
+				// Set the options
+				foreach ($cur_role_auth as $role_id => $auth_row)
+				{
+					foreach ($auth_row as $f_id => $ug_row)
+					{
+						$this->acl_set($mode, $f_id, $ug_row, $auth_settings[$role_id], 0, false);
+					}
+				}
+			}
+		}
+
+		// Now, normally remove permissions...
+		if ($permission_type !== false)
+		{
+			$where_sql[] = $db->sql_in_set('auth_option_id', array_map('intval', $option_id_ary));
+		}
+
+		$sql = "DELETE FROM $table
+			WHERE " . implode(' AND ', $where_sql);
+		$db->sql_query($sql);
+		
+		$auth_admin->acl_clear_prefetch();
 	}
 
 	/**
@@ -936,10 +1036,10 @@ class acp_kb_permissions
 		// Get any flags as required
 		reset($auth);
 		$flag = key($auth);
-		$flag = substr($flag, 0, strpos($flag, '_') + 1);
+		$flag = substr($flag, 0, strpos($flag, '_') + 4); // Allow for u_kb_ rather than just u_
 
-		// This ID (the any-flag) is set if one or more permissions are true...
-		$any_option_id = (int) $auth_admin->acl_options['id'][$flag];
+		// This ID (the any-flag) is set if one or more permissions are true... using static u_ rather than u_kb_ as that will delete forum permissions
+		$any_option_id = (int) $auth_admin->acl_options['id']['u_'];
 
 		// Remove any-flag from auth ary
 		if (isset($auth[$flag]))
@@ -959,7 +1059,7 @@ class acp_kb_permissions
 				AND $ug_id_sql
 				AND " . $db->sql_in_set('auth_option_id', $auth_option_ids);
 		$db->sql_query($sql);
-
+		
 		// Remove those having a role assigned... the correct type of course...
 		$sql = 'SELECT role_id
 			FROM ' . ACL_ROLES_TABLE . "
@@ -1111,14 +1211,14 @@ class acp_kb_permissions
 			WHERE o.auth_option_id = r.auth_option_id
 				AND r.role_id = ' . $role_id;
 		$result = $db->sql_query($sql);
-
+		
 		$test_auth_settings = array();
 		while ($row = $db->sql_fetchrow($result))
 		{
 			$test_auth_settings[$row['auth_option']] = $row['auth_setting'];
 		}
 		$db->sql_freeresult($result);
-
+		
 		// We need to add any ACL_NO setting from auth_settings to compare correctly
 		foreach ($auth_settings as $option => $setting)
 		{
@@ -1132,7 +1232,7 @@ class acp_kb_permissions
 		{
 			return false;
 		}
-
+		
 		return true;
 	}
 

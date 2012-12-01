@@ -8,6 +8,7 @@
 		<!-- ENDIF -->
 		<td style="vertical-align: top; <!-- IF .left_menu -->padding-left: 10px;<!-- ENDIF --><!-- IF .right_menu --> padding-right: 20px;<!-- ENDIF -->">			
 			<!-- IF .catrow -->
+				<!-- IF U_MODCP -->&nbsp;<!-- ENDIF -->
 				<!-- IF S_CAT_STYLE -->
 					<!-- INCLUDE kb/cat_list_modern.html -->
 				<!-- ELSE -->
@@ -52,7 +53,7 @@
 					<!-- BEGIN articlerow -->
 					<li class="row<!-- IF articlerow.S_ROW_COUNT is even --> bg1<!-- ELSE --> bg2<!-- ENDIF -->">
 						<dl class="icon" style="background-image: url({articlerow.ARTICLE_FOLDER_IMG_SRC}); background-repeat: no-repeat;">
-							<dt><!-- IF articlerow.ARTICLE_TYPE_IMG --><span class="forum-image"><img src="{articlerow.ARTICLE_TYPE_IMG}" width="{articlerow.ARTICLE_TYPE_IMG_WIDTH}" height="{articlerow.ARTICLE_TYPE_IMG_HEIGHT}" /></span>&nbsp;<!-- ENDIF --><a href="{articlerow.U_VIEW_ARTICLE}" class="topictitle">{articlerow.ARTICLE_TITLE}</a>
+							<dt><!-- IF articlerow.ARTICLE_TYPE_IMG --><span class="forum-image"><img src="{articlerow.ARTICLE_TYPE_IMG}" width="{articlerow.ARTICLE_TYPE_IMG_WIDTH}" height="{articlerow.ARTICLE_TYPE_IMG_HEIGHT}" alt="" /></span>&nbsp;<!-- ENDIF --><a href="{articlerow.U_VIEW_ARTICLE}" class="topictitle">{articlerow.ARTICLE_TITLE}</a>
 							<!-- IF articlerow.ARTICLE_UNAPPROVED --><a href="{articlerow.U_MCP_QUEUE}">{UNAPPROVED_IMG}</a> <!-- ENDIF -->
 								<br /><!-- IF articlerow.ARTICLE_DESC -->{articlerow.ARTICLE_DESC}<!-- ENDIF -->
 							</dt>

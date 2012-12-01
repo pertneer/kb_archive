@@ -7,7 +7,7 @@
 		<license>http://opensource.org/licenses/gpl-license.php GNU General Public License v2</license>
 		<title lang="en">PhpBB3 Knowledge Base Mod</title>
 		<description lang="en">This mod adds a Knowledge Base to your forum, which is fully integrated with phpBB's core system. It is fully manageable through a ACP system found under the .MODS tab.</description>
-		<author-notes lang="en">This is a Release Candidate and therefore not 100% bugfree, we do not recommend using it on a live forum yet.</author-notes>
+		<author-notes lang="en">This mod is a work in progress, so if you encounter any bugs or you have any features you want implemented, please do not hesitate to go to our website and tell us. This mod should be combitable with most other modifications, however, there are exceptions.</author-notes>
 		<author-group>
 			<author>
 				<realname>Andreas Nexmann</realname>
@@ -37,13 +37,22 @@
       			</contributions-group>
 			</author>
 		</author-group>
-		<mod-version>1.0.0RC3</mod-version>
+		<mod-version>1.0.0</mod-version>
 		<installation>
 			<level>intermediate</level>
-			<time>2200</time>
+			<time>1800</time>
 			<target-version>3.0.6</target-version>
 		</installation>
 		<history>
+			<entry>
+				<date>2009-11-19</date>
+				<rev-version>1.0.0</rev-version>
+				<changelog lang="en">
+					<change>Issues fixed:</change>
+					<change>Could not remove group permissions if role is assigned</change>
+					<change>Could not change assigned role for group</change>
+				</changelog>
+			</entry>
 			<entry>
 				<date>2009-11-16</date>
 				<rev-version>1.0.0RC3</rev-version>
@@ -198,6 +207,10 @@
 				</changelog>
 			</entry>
 		</history>
+		<link-group>
+			<link type="contrib" realname="Update 1.0.0RC3 to 1.0.0" href="./contrib/update_1.0.0RC3_to_1.0.0.xml" lang="en">Update from 1.0.0RC3 to 1.0.0</link>
+		</link-group>
+
 	</header>
 	<action-group>
 					<copy>
@@ -365,8 +378,8 @@
 											<edit>
 							<find><![CDATA[		'U_RESTORE_PERMISSIONS'	=> ($user->data['user_perm_from'] && $auth->acl_get('a_switchperm')) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'mode=restore_perm') : '',]]></find>
 															<action type="after-add"><![CDATA[
-		'U_KB'					=> append_sid("{$phpbb_root_path}kb.$phpEx"),
-		'L_KB'					=> $config['kb_link_name'],]]></action>
+'U_KB'					=> append_sid("{$phpbb_root_path}kb.$phpEx"),
+'L_KB'					=> (isset($config['kb_link_name'])) ? $config['kb_link_name'] : $user->lang['KB'],]]></action>
 													</edit>
 									</open>
 						<open src="/includes/acp/acp_attachments.php">
@@ -504,8 +517,8 @@
 							<edit>
 								<find><![CDATA[$forum_names_ary = make_forum_select(false, false, true, false, false, false, true);]]></find>
 								<inline-edit>
-									<inline-find><![CDATA[= ]]></inline-find>
-									<inline-action type="after-add"><![CDATA[($cat_data) ? $cat_data : ]]></inline-action>
+									<inline-find><![CDATA[make]]></inline-find>
+									<inline-action type="before-add"><![CDATA[ ($cat_data) ? $cat_data : ]]></inline-action>
 								</inline-edit>
 							</edit>
 						</open>
@@ -552,6 +565,6 @@ img_button_comment_new = button_comment_new.gif*25*96]]></action>
 															<action type="after-add"><![CDATA[@import url("kb.css");]]></action>
 													</edit>
 									</open>
-							<diy-instructions lang="en"><![CDATA[After saving all files, please login as admin. Then direct your browser to kb.php and follow the install steps there. Afterwards go to the ACP, then clear your cache, refresh your theme and go to the permissions screen. Here you will be able to set permissions for your new Knowledge Base, you have to do so for ALL groups before they are able to visit the KB.]]></diy-instructions>
+							<diy-instructions lang="en"><![CDATA[After completing this guide, login as admin and direct your browser to kb.php to install the mod. After this you will have to set up permissions and other stuff, please turn to our website for a more thorough guide.]]></diy-instructions>
 				</action-group>
 </mod>

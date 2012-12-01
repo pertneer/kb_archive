@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 356 2009-11-08 10:40:10Z tom.martin60@btinternet.com $
+* @version $Id: kb.php 389 2009-11-24 14:55:34Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -179,7 +179,7 @@ Here is a link to the article - {LINK}',
 
 	'INSTALLED_PLUGINS'					=> 'Installed Plugins',
 	'INSTALL_KB'						=> 'Install Knowledge Base Mod',
-	'INSTALL_KB_CONFIRM'				=> 'Please confirm that you want to install the Knowledge Base Mod. Before starting the installation please take a full backup of your forum and please make sure you have downloaded the latest version of this mod. <br />This installation script uses the latest version of UMIL (Unified Mod Install Library), please make sure you have this installed in /phpbb root/umil/umil.php on your server. The script can be found at <a href=\'http://www.phpbb.com/mods/umil/\'>phpBB.com/mods/umil</a>. <br /><br /><b>WARNING: THIS EARLY VERSION OF KB MOD IS NOT INTENDED FOR USE ON LIVE FORUMS!</b>',
+	'INSTALL_KB_CONFIRM'				=> 'Please confirm that you want to install the Knowledge Base Mod. Before starting the installation please take a full backup of your forum and please make sure you have downloaded the latest version of this mod. <br />This installation script uses the latest version of UMIL (Unified Mod Install Library), please make sure you have this installed in /phpbb root/umil/umil.php on your server. The script can be found at <a href=\'http://www.phpbb.com/mods/umil/\'>phpBB.com/mods/umil</a>. <br /><br /><b>For a detailed installation guide please see our <a href="http://kb.softphp.dk" target="_blank">website</a>.</b>',
 	'INSTALL_PLUGIN'					=> 'Install Knowledge Base Plugin',
 	'INSTALL_PLUGIN_CONFIRM'			=> 'Are you sure you want to install this plugin?',
 
@@ -233,7 +233,7 @@ Here is a link to the article - {LINK}',
 	'KB_HAS_RATED'						=> 'You have already rated this article and cannot rate it twice.',
 	'KB_ICON'							=> 'Article Icon',
 	'KB_INDEX'							=> 'Knowledge Base Index',
-	'KB_INSTALLED'						=> 'Knowledge Base Mod version %1$s has been successfully installed, you may now proceed to the ACP to set permissions for it and enable it.',
+	'KB_INSTALLED'						=> 'Knowledge Base Mod version %1$s has been successfully installed, you may now proceed to the ACP to setup the mod. For a more detailed guide on how to setup the mod please visit our <a href="http://kb.softphp.dk" target="_blank">website</a>.',
 	'KB_KEYWORDS_EXPLAIN'				=> 'Type in the keywords you want to search for here. Use a space to search for more keywords and decide if you want to search for all terms or just some of them. Special characters like + and - is not supported in this search.',
 	'KB_LAST_UPDATE'					=> 'Last updated',
 	'KB_LATEST'							=> 'Latest Article',
@@ -522,7 +522,7 @@ Here is a link to the article - {LINK}',
 		</p>
 	',
 	'UPDATE_KB'							=> 'Update Knowledge Base Mod',
-	'UPDATE_KB_CONFIRM'					=> 'Please confirm that you want to update the Knowledge Base Mod to the latest version. Make sure that your phpBB is also updated to the latest version, or this version of KB Mod might not work. Furthermore you should make sure that you have a complete backup of your forum before you begin. Like the installer, this script uses the latest version of UMIL (Unified Mod Install Library), so please make sure you have this installed in /phpbb root/umil/umil.php on your server. The script can be found at <a href=\'http://www.phpbb.com/mods/umil/\'>phpBB.com/mods/umil</a>. <br /><br /><b>WARNING: THIS EARLY VERSION OF KB MOD IS NOT INTENDED FOR USE ON LIVE FORUMS!</b>',
+	'UPDATE_KB_CONFIRM'					=> 'Please confirm that you want to update the Knowledge Base Mod to the latest version. Make sure that your phpBB is also updated to the latest version, or this version of KB Mod might not work. Furthermore you should make sure that you have a complete backup of your forum before you begin. Like the installer, this script uses the latest version of UMIL (Unified Mod Install Library), so please make sure you have this installed in /phpbb root/umil/umil.php on your server. The script can be found at <a href=\'http://www.phpbb.com/mods/umil/\'>phpBB.com/mods/umil</a>. <br /><br /><b>For a more detailed guide on how to update please visit our <a href="http://kb.softphp.dk" target="_blank">website</a>.</b>',
 	'USE_CURRENT_TIME'					=> 'Use current time',
 	'USE_CUSTOM_AUTHOR'					=> 'Define another user as author',
 	'USE_CUSTOM_TIME'					=> 'Define custom time',

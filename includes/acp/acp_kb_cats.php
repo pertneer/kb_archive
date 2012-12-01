@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: acp_kb_cats.php 342 2009-10-28 14:05:22Z tom.martin60@btinternet.com $
+* @version $Id: acp_kb_cats.php 386 2009-11-19 18:02:23Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -988,7 +988,7 @@ class acp_kb_cats
 	*/
 	function delete_cat_content($cat_id)
 	{
-		global $db, $user, $config;
+		global $db, $user, $config, $cache;
 		
 		$errors = $article_ids = array();
 		

@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: functions_install_kb.php 377 2009-11-16 18:30:02Z softphp $
+* @version $Id: functions_install_kb.php 389 2009-11-24 14:55:34Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -710,6 +710,10 @@ function get_kb_versions()
 		
 		'1.0.0RC3'	=> array(
 			// Tagging RC3
+		),
+		
+		'1.0.0'	=> array(
+			// Tagging 1.0.0
 		),
 	);
 

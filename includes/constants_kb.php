@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: constants_kb.php 377 2009-11-16 18:30:02Z softphp $
+* @version $Id: constants_kb.php 389 2009-11-24 14:55:34Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -20,7 +20,7 @@ if (!defined('IN_PHPBB'))
 // This file holds extra constants defined to use in the KB mod.
 //
 
-define('KB_VERSION', '1.0.0RC3');
+define('KB_VERSION', '1.0.0');
 //define('KB_DEV_VERSION', '1.0.0RC2');
 
 

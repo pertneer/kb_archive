@@ -36,7 +36,7 @@
 				
 				<!-- IF S_POST_ACTION -->
 				<dl style="clear: left;">
-					<dt><label for="subject">{L_ARTICLE_TITLE}:</label></dt>
+					<dt><label for="title">{L_ARTICLE_TITLE}:</label></dt>
 					<dd><input type="text" name="title" id="title" size="45" maxlength="64" tabindex="2" value="{ARTICLE_TITLE}" class="inputbox autowidth" /></dd>
 				</dl>
 				<!-- ENDIF -->
@@ -56,7 +56,7 @@
 				
 				<!-- IF S_SHOW_DESC_FIELD -->
 				<dl style="clear: left;">
-					<dt><label for="subject">{L_ARTICLE_DESC}:</label><br /><span class="gensmall">{L_ARTICLE_DESC_EXPLAIN}</span></dt>
+					<dt><label for="desc">{L_ARTICLE_DESC}:</label><br /><span class="gensmall">{L_ARTICLE_DESC_EXPLAIN}</span></dt>
 					<dd><textarea name="desc" id="desc" rows="10" cols="45" tabindex="3" class="inputbox desc" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);">{DESC}</textarea></dd>
 				</dl>
 				<!-- ENDIF -->
@@ -65,21 +65,21 @@
 				<!-- IF S_CAN_MOD_TIME -->
 				<dl style="clear: left;">
 					<dt><label for="time">{L_ARTICLE_TIME}:</label><br /><span class="gensmall">{L_ARTICLE_TIME_EXPLAIN}</span></dt>
-					<dd><label><input type="radio" name="time" value="0" checked="checked" /> {L_USE_ORIGINAL_TIME}</label><br /><label><input type="radio" name="time" value="1" /> {L_USE_CURRENT_TIME}</label><br /><label><input type="radio" name="time" value="2" /> {L_USE_CUSTOM_TIME}:</label><select name="day">{DATE_OPTIONS}</select> <select name="month">{MONTH_OPTIONS}</select> <select name="year">{YEAR_OPTIONS}</select> <select name="hour">{HOUR_OPTIONS}</select>:<select name="min">{MIN_OPTIONS}</select> </dd>
+					<dd><label><input type="radio" name="time" id="time" value="0" checked="checked" /> {L_USE_ORIGINAL_TIME}</label><br /><label><input type="radio" name="time" value="1" /> {L_USE_CURRENT_TIME}</label><br /><label><input type="radio" name="time" value="2" /> {L_USE_CUSTOM_TIME}:</label><select name="day">{DATE_OPTIONS}</select> <select name="month">{MONTH_OPTIONS}</select> <select name="year">{YEAR_OPTIONS}</select> <select name="hour">{HOUR_OPTIONS}</select>:<select name="min">{MIN_OPTIONS}</select> </dd>
 				</dl>
 				<!-- ENDIF -->
 				
 				<!-- IF S_CAN_MOD_AUTHOR -->
 				<dl style="clear: left;">
 					<dt><label for="author">{L_ARTICLE_AUTHOR}:</label><br /><span class="gensmall">{L_ARTICLE_AUTHOR_EXPLAIN}</span></dt>
-					<dd><label><input type="radio" name="author" value="0" checked="checked" /> {L_USE_ORIGINAL_AUTHOR}</label><br /><label><input type="radio" name="author" value="1" /> {L_USE_THIS_AUTHOR}</label><br /><label><input type="radio" name="author" value="2" /> {L_USE_CUSTOM_AUTHOR}:</label> <input type="text" class="text medium" id="username" name="username" /> [ <a href="{U_FIND_USERNAME}" onclick="find_username(this.href); return false;">{L_FIND_USERNAME}</a> ]</dd>
+					<dd><label><input type="radio" name="author" id="author" value="0" checked="checked" /> {L_USE_ORIGINAL_AUTHOR}</label><br /><label><input type="radio" name="author" value="1" /> {L_USE_THIS_AUTHOR}</label><br /><label><input type="radio" name="author" value="2" /> {L_USE_CUSTOM_AUTHOR}:</label> <input type="text" class="text medium" id="username" name="username" /> [ <a href="{U_FIND_USERNAME}" onclick="find_username(this.href); return false;">{L_FIND_USERNAME}</a> ]</dd>
 				</dl>
 				<!-- ENDIF -->
 				
 				<!-- IF S_REQUEST_OPTIONS -->
 				<dl style="clear: left;">
 					<dt><label for="r">{L_ARTICLE_ADD_REQ}</label></dt>
-					<dd><select name="r">{S_REQUEST_OPTIONS}</select></dd>
+					<dd><select name="r" id="r">{S_REQUEST_OPTIONS}</select></dd>
 				</dl>
 				<!-- ENDIF -->
 				<!-- INCLUDE kb/posting_buttons.html -->
@@ -198,7 +198,7 @@
 						</dl>
 						<dl>
 							<dt><label for="reason_global">{L_EDIT_REASON_GLOBAL}:</label></dt>
-							<dd><input type="checkbox" {REASON_GLOBAL}name="reason_global" id="reason" value="1" class="inputbox" /></dd>
+							<dd><input type="checkbox" {REASON_GLOBAL}name="reason_global" id="reason_global" value="1" class="inputbox" /></dd>
 						</dl>
 						<!-- ENDIF -->
 					</fieldset>
@@ -215,7 +215,7 @@
 					{L_TAGS_EXPLAIN}
 					<dl>
 						<dt><label for="tags">{L_TAGS}:</label></dt>
-						<dl><input type="text" name="tags" id="tags" value="{TAGS}" class="inputbox" size="65" maxlength="255" /></dl>
+						<dd><input type="text" name="tags" id="tags" value="{TAGS}" class="inputbox" size="65" maxlength="255" /></dd>
 					</dl>
 					</fieldset>
 					<span class="corners-bottom"><span></span></span></div>

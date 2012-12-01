@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 357 2009-11-10 15:49:48Z softphp $
+* @version $Id: kb.php 378 2009-11-17 21:23:18Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -27,7 +27,7 @@ $auth->acl($user->data);
 $user->setup('mods/kb');
 
 // Bug in update function, this will correct it
-if($config['kb_version'] == '1.0.1RC1')
+if ((isset($config['kb_version'])) ? $config['kb_version'] == '1.0.1RC1' : false)
 {
 	set_config('kb_version', '1.0.0RC2');
 }

@@ -121,6 +121,10 @@ textarea.desc {
 	vertical-align: top;
 }
 
+#right_menu {
+	vertical-align: top;
+}
+
 .left_menu_title {
 	font-weight: bold;
 	font-size: 11px;
@@ -152,16 +156,6 @@ textarea.desc {
     height: 24px;
     margin: 0;
     padding: 0;
-}
-
-.addthis_toolbox .custom_images a:hover img
-{
-    opacity: 1;
-}
-
-.addthis_toolbox .custom_images a img
-{
-    opacity: 0.75;
 }
 
 .article-icon span		{ background: transparent none 0 0 no-repeat; }
