@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 443 2010-02-09 13:10:21Z softphp $
+* @version $Id: kb.php 458 2010-04-14 11:19:05Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -218,7 +218,6 @@ Here is a link to the article - {LINK}',
 	'KB_ARTICLE_REVISIONS'				=> 'Article Revisions',
 	'KB_ART_PER_PAGE'					=> 'How many articles per page',
 	'KB_BOOKMARKED_ARTICLES'			=> 'Bookmarked articles',
-	'KB_CAN'							=> '<strong>can</strong>',
 	'KB_CATS'							=> 'Categories',
 	'KB_COMMENT_ADDED'					=> 'The comment has been successfully added and is now visible in the article %shere%s.',
 	'KB_COMMENT_DELETED'				=> 'The comment has been successfully deleted.',
@@ -271,7 +270,6 @@ Here is a link to the article - {LINK}',
 	'KB_LOGIN_EXPLAIN_REQUEST_EDIT'		=> 'You need to login in order to edit this request.',
 	'KB_LOGIN_EXPLAIN_VIEW'				=> 'You need to login in order to view this article.',
 	'KB_MANAGEMENT'						=> 'Manage Knowledge Base',
-	'KB_NOT'							=> '<strong>cannot</strong>',
 	'KB_NOTIFY_AUTHOR_COMMENT'			=> 'Notify me when the author comments the article',
 	'KB_NOTIFY_BY'						=> 'Notify by',
 	'KB_NOTIFY_COMMENT'					=> 'Notify me when someone comments the article',
@@ -306,14 +304,22 @@ Here is a link to the article - {LINK}',
 	'KB_PER_COPYRIGHT'					=> 'Copyright',
 	'KB_PER_COPYRIGHT_EXPLAIN'			=> 'The copyright you want to appear at the end of an article. The &copy; symbol is added automatically',
 	'KB_PERMISSIONS'					=> 'Knowledge Base Permissions',
-	'KB_PERM_ADD'						=> 'You %1$s start new articles',
-	'KB_PERM_ATTACH'					=> 'You %1$s use attachments in your articles/comments',
-	'KB_PERM_COM'						=> 'You %1$s comment on articles',
-	'KB_PERM_DEL'						=> 'You %1$s delete your articles/comments',
-	'KB_PERM_DOWN'						=> 'You %1$s download attachments',
-	'KB_PERM_EDIT'						=> 'You %1$s edit your articles/comments',
-	'KB_PERM_HIST'						=> 'You %1$s view article history',
-	'KB_PERM_RATE'						=> 'You %1$s rate articles',
+	'KB_PERM_CAN_ADD'					=> 'You <strong>can</strong> start new articles',
+	'KB_PERM_CANNOT_ADD'				=> 'You <strong>cannot</strong> start new articles',
+	'KB_PERM_CAN_ATTACH'				=> 'You <strong>can</strong> use attachments in your articles/comments',
+	'KB_PERM_CANNOT_ATTACH'				=> 'You <strong>cannot</strong> use attachments in your articles/comments',
+	'KB_PERM_CAN_COM'					=> 'You <strong>can</strong> comment on articles',
+	'KB_PERM_CANNOT_COM'				=> 'You <strong>cannot</strong> comment on articles',
+	'KB_PERM_CAN_DEL'					=> 'You <strong>can</strong> delete your articles/comments',
+	'KB_PERM_CANNOT_DEL'				=> 'You <strong>cannot</strong> delete your articles/comments',
+	'KB_PERM_CAN_DOWN'					=> 'You <strong>can</strong> download attachments',
+	'KB_PERM_CANNOT_DOWN'				=> 'You <strong>cannot</strong> download attachments',
+	'KB_PERM_CAN_EDIT'					=> 'You <strong>can</strong> edit your articles/comments',
+	'KB_PERM_CANNOT_EDIT'				=> 'You <strong>cannot</strong> edit your articles/comments',
+	'KB_PERM_CAN_HIST'					=> 'You <strong>can</strong> view article history',
+	'KB_PERM_CANNOT_HIST'				=> 'You <strong>cannot</strong> view article history',
+	'KB_PERM_CAN_RATE'					=> 'You <strong>can</strong> rate articles',
+	'KB_PERM_CANNOT_RATE'				=> 'You <strong>cannot</strong> rate articles',
 	'KB_QUEUED_ARTICLES'				=> 'Articles awaiting approval',
 	'KB_RAN_ART'						=> 'Random Article',
 	'KB_REQS'							=> 'Article requests',
@@ -616,6 +622,30 @@ Here is a link to the article - {LINK}',
 	'WRONG_INFO_FILE_FORMAT'			=> 'Wrong info file format',
 
 	'YOUR_KB_DETAILS'					=> 'Your activity in the knowledge base',
+	
+	// New Vars DELETED: KB_CAN, KB_NOT, KB_PERM_ADD, KB_PERM_COM, KB_PERM_EDIT, KB_PERM_DEL, KB_PERM_RATE, KB_PERM_HIST, KB_PERM_ATTACH, KB_PERM_DOWN
+	'ROLE_KB_USER'						=> 'Registered Users',
+	'ROLE_KB_USER_DESC'					=> 'This is a KB role with permissions suited for registered users.',
+	'ROLE_KB_MOD'						=> 'Moderators',
+	'ROLE_KB_MOD_DESC'					=> 'This is a KB role with permissions suited for moderators of the KB.',
+	'ROLE_KB_GUEST'						=> 'Guests',
+	'ROLE_KB_GUEST_DESC'				=> 'This is a KB role with permissions suited for guests.',
+	'KB_FIRST_CAT'						=> 'Your First Category',
+	'KB_FIRST_CAT_DESC'					=> 'Welcome to the Knowledge Base Mod, this is an example of how a category looks like. Inside you will find an introduction article.',
+	'KB_FIRST_ARTICLE_TITLE'			=> 'Your First Article',
+	'KB_FIRST_ARTICLE_DESC'				=> 'You have successfully installed Knowledge Base Mod and this is your first article, containing information on what to do after installing and other hints.',
+	'KB_FIRST_ARTICLE_TEXT'				=> '[color=purple][size=120][b]Welcome to Knowledge Base Mod![/b][/size][/color]
+Congratulations you have successfully installed the Knowledge Base Mod. If everything seems to be working fine, then continue down this article and see what you can do now to setup your new mod. If you had any problems during installation, or experience any problems in the future, do not hesitate to visit [url=http://kb.softphp.dk]kb.softphp.dk[/url], and report any bugs or ask for support. You can also find information on additional plugins, translations, styles and new versions there. 
+The team behind Knowledge Base Mod hopes you will find this mod useful as well as user friendly, happy article composing!  :D 
+
+[url=http://kb.softphp.dk/kb.php?a=14]What to do after installing[/url]:
+[list=1]
+[*]Setup the general settings the way you want them
+[*]Create your own categories - [url=http://kb.softphp.dk/kb.php?a=9]Videoguide[/url]
+[*]Set permissions for your categories - [url=http://kb.softphp.dk/kb.php?a=13]Videoguide[/url]
+[*]Configure the plugins - [url=http://kb.softphp.dk/kb.php?a=10]Videoguide[/url]
+[*]Create article types - [url=http://kb.softphp.dk/kb.php?a=11]Videoguide[/url]
+[*]Setup attachment extensions for the kb - [url=http://kb.softphp.dk/kb.php?a=12]Tutorial[/url][/list]',
 ));
 
 ?>

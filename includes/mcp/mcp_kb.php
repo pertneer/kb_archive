@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: mcp_kb.php 438 2010-02-01 15:36:06Z softphp $
+* @version $Id: mcp_kb.php 453 2010-04-07 13:10:04Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -138,6 +138,9 @@ class mcp_kb
 							'article_title'		=> $article_data['article_title'],
 						);
 						handle_latest_articles('delete', $article_data['cat_id'], $late_articles, $config['kb_latest_articles_c']);
+						
+						set_config('kb_last_updated', time(), true);
+						set_config('kb_total_articles', $config['kb_total_articles'] - 1, true);
 					}
 					
 					// Generate an entry into the edit table, only for the status change

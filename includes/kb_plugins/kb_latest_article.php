@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_latest_article.php 420 2010-01-13 14:36:10Z softphp $
+* @version $Id: kb_latest_article.php 455 2010-04-13 19:40:31Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -28,8 +28,7 @@ if (defined('IN_KB_PLUGIN'))
 		'PLUGIN_DESC'			=> 'PLUGIN_LATEST_DESC',
 		'PLUGIN_COPY'			=> 'PLUGIN_COPY',
 		'PLUGIN_VERSION'		=> '1.0.2',
-		'PLUGIN_MENU'			=> RIGHT_MENU,
-		'PLUGIN_PAGE_PERM'		=> array('add'),
+		'PLUGIN_MENU'			=> LEFT_MENU,
 		'PLUGIN_PAGES'			=> array('all'),
 	);
 }

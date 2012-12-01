@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: functions_plugins_kb.php 436 2010-01-28 14:59:33Z softphp $
+* @version $Id: functions_plugins_kb.php 456 2010-04-13 19:41:34Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -135,8 +135,11 @@ function generate_menu($page = 'index', $cat_id = 0)
 		
 			$show_pages = unserialize($plugin['PERM']);
 			if (in_array($page, $show_pages))
-			{	
-				include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
+			{
+				if(!function_exists($plugin['FILE']))
+				{
+					include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
+				}
 				
 				if($menu != 'no')
 				{
@@ -270,7 +273,7 @@ function available_plugins()
 /**
 * Adds a plugin to the table
 */
-function add_plugin($filename, $details)
+function add_plugin($filename, $details, $plugin_pages = array())
 {
 	global $db, $cache, $user;
 	
@@ -281,7 +284,7 @@ function add_plugin($filename, $details)
 		'plugin_copy'		=> $user->lang[$details['PLUGIN_COPY']],
 		'plugin_version'	=> $details['PLUGIN_VERSION'],
 		'plugin_menu'		=> $details['PLUGIN_MENU'],
-		'plugin_pages'		=> 'a:0:{}',
+		'plugin_pages'		=> serialize($plugin_pages),
 		'plugin_pages_perm'	=> (!empty($details['PLUGIN_PAGE_PERM'])) ? serialize($details['PLUGIN_PAGE_PERM']) : 'a:0:{}',
 		'plugin_perm'		=> (empty($details['PLUGIN_PERM'])) ? false : $details['PLUGIN_PERM'],
 	);
@@ -293,6 +296,7 @@ function add_plugin($filename, $details)
 	
 	$cache->destroy('_kb_plugin_left_menu');
 	$cache->destroy('_kb_plugin_right_menu');
+	$cache->destroy('_kb_plugin_no_menu');
 }
 
 /**
@@ -317,6 +321,7 @@ function update_plugin_table($filename, $details)
 	$cache->destroy('config');
 	$cache->destroy('_kb_plugin_left_menu');
 	$cache->destroy('_kb_plugin_right_menu');
+	$cache->destroy('_kb_plugin_no_menu');
 }
 
 /**
@@ -335,6 +340,7 @@ function del_plugin($filename)
 	$cache->destroy('config');
 	$cache->destroy('_kb_plugin_left_menu');
 	$cache->destroy('_kb_plugin_right_menu');
+	$cache->destroy('_kb_plugin_no_menu');
 }
 
 /**
@@ -360,6 +366,7 @@ function update_plugin_menu($filename, $config_value)
 		
 		$cache->destroy('_kb_plugin_left_menu');
 		$cache->destroy('_kb_plugin_right_menu');
+		$cache->destroy('_kb_plugin_no_menu');
 	}
 }
 
@@ -380,12 +387,13 @@ function update_pages($filename, $pages)
 	
 	$cache->destroy('_kb_plugin_left_menu');
 	$cache->destroy('_kb_plugin_right_menu');
+	$cache->destroy('_kb_plugin_no_menu');
 }
 
 /**
 * Install Plugin
 */
-function install_plugin($filename, $plugin_loc, $u_action = false)
+function install_plugin($filename, $plugin_loc, $u_action = false, $plugin_pages = array())
 {
 	global $phpbb_root_path, $phpEx, $config;
 	
@@ -419,7 +427,7 @@ function install_plugin($filename, $plugin_loc, $u_action = false)
 	unset($versions);		
 							
 	// Add to the plugins table
-	add_plugin($filename, $details);	
+	add_plugin($filename, $details, $plugin_pages);	
 	
 	unset($details);
 }
@@ -625,6 +633,7 @@ function sort_plugin_order($mode, $menu, $filename, $action = 'move_up')
 
 	$cache->destroy('_kb_plugin_left_menu');
 	$cache->destroy('_kb_plugin_right_menu');
+	$cache->destroy('_kb_plugin_no_menu');
 }
 
 /**

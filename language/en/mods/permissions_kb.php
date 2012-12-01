@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: permissions_kb.php 433 2010-01-21 13:35:18Z softphp $
+* @version $Id: permissions_kb.php 457 2010-04-13 19:43:11Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -54,12 +54,12 @@ $lang = array_merge($lang, array(
 	),
 
 	'acl_m_kb_delete'		=> array(
-		'lang'				=> 'Can delete articles',
+		'lang'				=> 'Can delete own articles',
 		'cat'				=> 'kb',
 	),
 
 	'acl_m_kb_edit'			=> array(
-		'lang'				=> 'Can edit articles',
+		'lang'				=> 'Can edit own articles',
 		'cat'				=> 'kb',
 	),
 
@@ -119,7 +119,7 @@ $lang = array_merge($lang, array(
 	),
 
 	'acl_u_kb_delete'		=> array(
-		'lang'				=> 'Can delete articles',
+		'lang'				=> 'Can delete own articles',
 		'cat'				=> 'write',
 	),
 
@@ -129,7 +129,7 @@ $lang = array_merge($lang, array(
 	),
 
 	'acl_u_kb_edit'			=> array(
-		'lang'				=> 'Can edit articles',
+		'lang'				=> 'Can edit own articles',
 		'cat'				=> 'write',
 	),
 

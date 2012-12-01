@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 448 2010-02-18 10:23:12Z softphp $
+* @version $Id: kb.php 453 2010-04-07 13:10:04Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -2211,6 +2211,7 @@ class knowledge_base
 							WHERE user_id = ' . $data['article_user_id'];
 					$db->sql_query($sql);
 					
+					set_config('kb_last_article', $article_id, true);
 					set_config('kb_total_articles', $config['kb_total_articles'] + 1, true);
 				}
 				

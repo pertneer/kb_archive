@@ -37,13 +37,25 @@
       			</contributions-group>
 			</author>
 		</author-group>
-		<mod-version>1.0.2RC2</mod-version>
+		<mod-version>1.0.2RC3</mod-version>
 		<installation>
 			<level>intermediate</level>
 			<time>2100</time>
 			<target-version>3.0.7</target-version>
 		</installation>
 		<history>
+			<entry>
+				<date>2010-04-14</date>
+				<rev-version>1.0.2RC3</rev-version>
+				<changelog lang="en">
+					<change>Issues fixed:</change>
+					<change>Fixed article counting problems</change>
+					<change>Fixed latest article plugin always appearing on post article</change>
+					<change>Fixed plugin cache cleaning problems</change>
+					<change>Added additional language support</change>
+					<change>Added 'Welcome to KB' article on fresh install</change>
+				</changelog>
+			</entry>
 			<entry>
 				<date>2010-04-05</date>
 				<rev-version>1.0.2RC2</rev-version>
@@ -245,6 +257,8 @@
 			<link type="contrib" realname="Update 1.0.0RC3 to 1.0.0" href="./contrib/update_1.0.0RC3_to_1.0.0.xml" lang="en">Update from 1.0.0RC3 to 1.0.0</link>
 			<link type="contrib" realname="Update 1.0.0 to 1.0.1" href="./contrib/update_1.0.0_to_1.0.1.xml" lang="en">Update from 1.0.0 to 1.0.1</link>
 			<link type="contrib" realname="Update 1.0.1 to 1.0.2RC1" href="./contrib/update_1.0.1_to_1.0.2RC1.xml" lang="en">Update from 1.0.1 to 1.0.2RC1</link>
+			<link type="contrib" realname="Update 1.0.2RC1 to 1.0.2RC2" href="./contrib/update_1.0.2RC1_to_1.0.2RC2.xml" lang="en">Update from 1.0.2RC1 to 1.0.2RC2</link>
+			<link type="contrib" realname="Update 1.0.2RC2 to 1.0.2RC3" href="./contrib/update_1.0.2RC2_to_1.0.2RC3.xml" lang="en">Update from 1.0.2RC2 to 1.0.2RC3</link>
 		</link-group>
 
 	</header>
