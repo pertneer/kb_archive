@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 431 2010-01-20 15:33:17Z softphp $
+* @version $Id: kb.php 443 2010-02-09 13:10:21Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -41,6 +41,7 @@ if (empty($lang) || !is_array($lang))
 $lang = array_merge($lang, array(
 	'ACCEPT_REQUEST'					=> 'Take on request',
 	'ACCEPT_REQUEST_CONFIRM'			=> 'Are you sure you want to take on the responsibility of writing an article for this request?',
+	'ACL_TYPE_U_KB_'					=> 'Knowledge Base Permissions',
 	'ACP_PLUGINS'						=> 'Knowledge Base Plugins',
 	'ADDING_ARTICLE'					=> 'Posting Knowledge Base - Article',
 	'ADDING_COMMENT'					=> 'Posting Knowledge Base - Article Comment',
@@ -63,6 +64,7 @@ $lang = array_merge($lang, array(
 	'ARTICLE_DESC_EXPLAIN'				=> 'If you wish to write a description for your article please do so. The character limit is 300 and BBCodes are enabled.',
 	'ARTICLE_HISTORY'					=> 'View article history',
 	'ARTICLE_ID'						=> 'Article ID',
+	'ARTICLE_LINK'						=> 'Article Link',
 	'ARTICLE_OPEN'						=> 'Open this article for others contribution',
 	'ARTICLE_POST_BOT'					=> 'Article post bot',
 	'ARTICLE_POST_BOT_MSG'				=> 'Post Message',
@@ -209,7 +211,7 @@ Here is a link to the article - {LINK}',
 	'KB_ALLOW_BOOK'						=> 'Allow users to bookmark articles',
 	'KB_ALLOW_FLASH'					=> 'Allow flash in articles',
 	'KB_ALLOW_LINKS'					=> 'Allow links in articles',
-	'KB_ALLOW_SIG'						=> 'Allow signitures to be used',
+	'KB_ALLOW_SIG'						=> 'Allow signatures to be used',
 	'KB_ALLOW_SMILES'					=> 'Allow smiles in articles',
 	'KB_ALLOW_SUB'						=> 'Allow users to subcribe to articles',
 	'KB_APPROVED_ARTICLES'				=> 'Approved articles',
@@ -301,6 +303,8 @@ Here is a link to the article - {LINK}',
 	'KB_NO_SUBSCRIBED_ARTICLES'			=> 'You are currently not subscribed to any articles.',
 	'KB_NO_TYPE'						=> 'There is no article type with that id.',
 	'KB_NO_UNINSTALL'					=> 'This plugin cannot be uninstalled',
+	'KB_PER_COPYRIGHT'					=> 'Copyright',
+	'KB_PER_COPYRIGHT_EXPLAIN'			=> 'The copyright you want to appear at the end of an article. The &copy; symbol is added automatically',
 	'KB_PERMISSIONS'					=> 'Knowledge Base Permissions',
 	'KB_PERM_ADD'						=> 'You %1$s start new articles',
 	'KB_PERM_ATTACH'					=> 'You %1$s use attachments in your articles/comments',

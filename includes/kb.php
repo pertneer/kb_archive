@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb.php 421 2010-01-14 13:59:44Z softphp $
+* @version $Id: kb.php 441 2010-02-03 19:28:02Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -270,7 +270,7 @@ class knowledge_base
 	{
 		global $phpbb_root_path, $phpEx;
 		
-		if(isset($exists) && !is_array($exists))
+		if($exists != '' && !is_array($exists))
 		{
 			$exists = explode(':', $exists);
 			$function = ($exists[0] == 'f') ? 'function_exists' : 'class_exists';
@@ -289,7 +289,7 @@ class knowledge_base
 				
 				if(isset($exists[$n]) && is_array($exists))
 				{
-					$exists_check = explode(':', $exists);
+					$exists_check = explode(':', $exists[$n]);
 					$function = ($exists_check[0] == 'f') ? 'function_exists' : 'class_exists';
 					
 					if($function($exists_check[1]))
@@ -926,6 +926,7 @@ class knowledge_base
 		
 		// Send vars to template
 		$template->assign_vars(array(
+			'ARTICLE_COPYRIGHT'		=> ($config['kb_copyright'] != '') ? '&copy; ' . $config['kb_copyright'] : '',
 			'ARTICLE_DESC_CLEAN'	=> ($config['kb_show_desc_article'] && !$config['kb_disable_desc']) ? strip_tags($article_desc_re) : '',
 			'ARTICLE_DESC'			=> ($config['kb_show_desc_article'] && !$config['kb_disable_desc']) ? $article_desc_re : '',
 			'ARTICLE_ID' 			=> $this->article_id,
@@ -1001,7 +1002,7 @@ class knowledge_base
 			'ONLINE_IMG'			=> ($article_data['article_user_id'] == ANONYMOUS || !$config['load_onlinetrack']) ? '' : (($author_online) ? $user->img('icon_user_online', 'ONLINE') : $user->img('icon_user_offline', 'OFFLINE')),
 			'S_ONLINE'				=> ($article_data['article_user_id'] == ANONYMOUS || !$config['load_onlinetrack']) ? false : (($author_online) ? true : false),
 	
-			'U_EDIT'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb_edit') || ($article_data['article_open'] && $user->acl_get('u_kb_add_co', $this->cat_id))) ? append_sid("{$phpbb_root_path}kb.$phpEx", "i=edit&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
+			'U_EDIT'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb_edit') || ($article_data['article_open'] && $auth->acl_get('u_kb_add_co', $this->cat_id))) ? append_sid("{$phpbb_root_path}kb.$phpEx", "i=edit&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
 			'U_STATUS'			=> ($auth->acl_get('m_kb_status')) ? append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;&amp;hmode=status&amp;a=" . $this->article_id) : '',
 			'U_DELETE'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb_delete')) ? append_sid("{$phpbb_root_path}kb.$phpEx", "i=delete&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
 			'U_HISTORY'			=> (!$auth->acl_get('u_kb_viewhistory', $this->cat_id)) ? '' : append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;a=" . $this->article_id),
@@ -2054,7 +2055,8 @@ class knowledge_base
 						{
 							$sql = 'UPDATE ' . USERS_TABLE . '
 								SET user_articles = user_articles - 1
-								WHERE user_id = ' . $article_data['article_user_id'];
+								WHERE user_articles > 0
+								AND user_id = ' . $article_data['article_user_id'];
 							$db->sql_query($sql);
 							
 							$sql = 'UPDATE ' . USERS_TABLE . '
@@ -2087,7 +2089,8 @@ class knowledge_base
 						{
 							$sql = 'UPDATE ' . USERS_TABLE . '
 								SET user_articles = user_articles - 1
-								WHERE user_id = ' . $article_data['article_user_id'];
+								WHERE user_articles > 0
+								AND user_id = ' . $article_data['article_user_id'];
 							$db->sql_query($sql);
 							
 							$sql = 'UPDATE ' . USERS_TABLE . '
@@ -4123,7 +4126,7 @@ class knowledge_base
 					'EDIT_TIME'			=> $user->format_date($edit['edit_time'], false, true),
 					'EDIT_ID'			=> $edit['edit_id'],
 					'EDIT_STATUS'		=> $user->lang[$article_status_ary[$edit['edit_article_status']]],
-					'U_EDIT'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;e=' . $edit['edit_id']),
+					'U_EDIT'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $edit['edit_id']),
 					
 					// Numbers for the checkbox
 					'NUM'				=> $num,

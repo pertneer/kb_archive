@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_auth.php 408 2009-12-15 17:19:02Z softphp $
+* @version $Id: kb_auth.php 437 2010-02-01 15:16:57Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -474,6 +474,39 @@ class kb_auth
 		}
 
 		return $hold_ary;
+	}
+	
+	/**
+	* Get assigned roles
+	*/
+	function acl_role_data($user_type, $role_type, $ug_id = false, $forum_id = false)
+	{
+		global $db;
+
+		$roles = array();
+
+		$sql_id = ($user_type == 'user') ? 'user_id' : 'group_id';
+
+		$sql_ug = ($ug_id !== false) ? ((!is_array($ug_id)) ? "AND a.$sql_id = $ug_id" : 'AND ' . $db->sql_in_set("a.$sql_id", $ug_id)) : '';
+		$sql_forum = ($forum_id !== false) ? ((!is_array($forum_id)) ? "AND a.forum_id = $forum_id" : 'AND ' . $db->sql_in_set('a.forum_id', $forum_id)) : '';
+
+		// Grab assigned roles...
+		$sql = 'SELECT a.auth_role_id, a.' . $sql_id . ', a.forum_id
+			FROM ' . (($user_type == 'user') ? KB_ACL_USERS_TABLE : KB_ACL_GROUPS_TABLE) . ' a, ' . ACL_ROLES_TABLE . " r
+			WHERE a.auth_role_id = r.role_id
+				AND r.role_type = '" . $db->sql_escape($role_type) . "'
+				$sql_ug
+				$sql_forum
+			ORDER BY r.role_order ASC";
+		$result = $db->sql_query($sql);
+
+		while ($row = $db->sql_fetchrow($result))
+		{
+			$roles[$row[$sql_id]][$row['forum_id']] = $row['auth_role_id'];
+		}
+		$db->sql_freeresult($result);
+
+		return $roles;
 	}
 	
 	/**

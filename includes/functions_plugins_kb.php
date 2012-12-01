@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: functions_plugins_kb.php 420 2010-01-13 14:36:10Z softphp $
+* @version $Id: functions_plugins_kb.php 436 2010-01-28 14:59:33Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -102,7 +102,7 @@ function latest_article_versions()
 */
 function generate_menu($page = 'index', $cat_id = 0)
 {
-	global $template, $phpbb_root_path, $phpEx, $config;
+	global $template, $phpbb_root_path, $phpEx, $config, $user;
 	
 	// Article injection variables
 	global $on_article_post, $on_article_del, $on_article_edit;
@@ -152,7 +152,7 @@ function generate_menu($page = 'index', $cat_id = 0)
 // Retrieves cached plugins and recaches
 function cached_plugins()
 {
-	global $cache, $db, $phpbb_root_path, $phpEx, $table_prefix;
+	global $cache, $db, $phpbb_root_path, $phpEx, $table_prefix, $config;
 	
 	$recache = false;
 	$return = array(

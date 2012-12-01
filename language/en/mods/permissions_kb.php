@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: permissions_kb.php 435 2010-01-21 13:39:32Z softphp $
+* @version $Id: permissions_kb.php 433 2010-01-21 13:35:18Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *

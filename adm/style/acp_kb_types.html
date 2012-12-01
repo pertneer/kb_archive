@@ -31,11 +31,11 @@
 		<dd><input class="text medium" type="text" id="suffix" name="suffix" value="{TYPE_AFTER}" maxlength="255" /></dd>
 	</dl>
 	<dl>
-		<dt><input type="radio" class="inputbox" name="img_type" value="icon"{S_ICON_CHECKED}>&nbsp;&nbsp;<label for="icon">{L_TYPE_ICON}:</label><br /><span>{L_TYPE_ICON_EXPLAIN}</span></dt>
+		<dt><input type="radio" class="inputbox" name="img_type" id="img_type1" value="icon"{S_ICON_CHECKED}>&nbsp;&nbsp;<label for="img_type1">{L_TYPE_ICON}:</label><br /><span>{L_TYPE_ICON_EXPLAIN}</span></dt>
 		<dd><!-- BEGIN topic_icon --><label for="icon-{topic_icon.ICON_ID}"><input type="radio" name="icon" id="icon-{topic_icon.ICON_ID}" value="{topic_icon.ICON_ID}" {topic_icon.S_ICON_CHECKED} /><img src="{topic_icon.ICON_IMG}" width="{topic_icon.ICON_WIDTH}" height="{topic_icon.ICON_HEIGHT}" alt="" title="" /></label> <!-- END topic_icon --></dd>
 	</dl>
 	<dl>
-		<dt><input type="radio" class="inputbox" name="img_type" value="custom"{S_CUSTOM_CHECKED}>&nbsp;&nbsp;<label for="image">{L_TYPE_IMAGE}:</label><br /><span>{L_TYPE_IMAGE_EXPLAIN}</span></dt>
+		<dt><input type="radio" class="inputbox" name="img_type" id="img_type2" value="custom"{S_CUSTOM_CHECKED}>&nbsp;&nbsp;<label for="img_type2">{L_TYPE_IMAGE}:</label><br /><span>{L_TYPE_IMAGE_EXPLAIN}</span></dt>
 		<dd><input class="text medium" type="text" id="image" name="image" value="{TYPE_IMAGE}" maxlength="255" /></dd>		
 		<!-- IF TYPE_IMAGE_SRC -->
 			<dd><img src="{TYPE_IMAGE_SRC}" alt="{L_TYPE_IMAGE}" /></dd>

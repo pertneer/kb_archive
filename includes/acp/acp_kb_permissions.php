@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: acp_kb_permissions.php 416 2010-01-12 21:02:01Z softphp $
+* @version $Id: acp_kb_permissions.php 437 2010-02-01 15:16:57Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -338,7 +338,7 @@ class acp_kb_permissions
 						// Get users/groups/categories using this preset...
 						if ($action == 'edit')
 						{
-							$hold_ary = $auth_admin->get_role_mask($role_id);
+							$hold_ary = $this->get_role_mask($role_id);
 
 							if (sizeof($hold_ary))
 							{
@@ -440,7 +440,7 @@ class acp_kb_permissions
 						'S_DISPLAY_ROLE_MASK'	=> true)
 					);
 
-					$hold_ary = $auth_admin->get_role_mask($display_item);
+					$hold_ary = $this->get_role_mask($display_item);
 					$this->display_role_mask($hold_ary);
 				}
 			break;
@@ -710,7 +710,7 @@ class acp_kb_permissions
 		$db->sql_freeresult($result);
 
 		// Get role assignments
-		$hold_ary = $auth_admin->get_role_mask($role_id);
+		$hold_ary = $this->get_role_mask($role_id);
 
 		// Re-assign permissions
 		foreach ($hold_ary as $forum_id => $forum_ary)
@@ -1498,349 +1498,44 @@ class acp_kb_permissions
 			'user_ids_options'	=> $s_defined_user_options
 		);
 	}
-
+	
 	/**
-	* Display permission mask (assign to template)
+	* Get permission mask for roles
+	* This function only supports getting masks for one role
 	*/
-	function display_mask($mode, $permission_type, &$hold_ary, $user_mode = 'user', $local = false, $group_display = true)
+	function get_role_mask($role_id)
 	{
-		global $template, $user, $db, $phpbb_root_path, $phpEx, $auth_admin;
+		global $db;
 
-		// Define names for template loops, might be able to be set
-		$tpl_pmask = 'p_mask';
-		$tpl_fmask = 'f_mask';
-		$tpl_category = 'category';
-		$tpl_mask = 'mask';
+		$hold_ary = array();
 
-		$l_acl_type = (isset($user->lang['ACL_TYPE_' . (($local) ? 'LOCAL' : 'GLOBAL') . '_' . strtoupper($permission_type)])) ? $user->lang['ACL_TYPE_' . (($local) ? 'LOCAL' : 'GLOBAL') . '_' . strtoupper($permission_type)] : 'ACL_TYPE_' . (($local) ? 'LOCAL' : 'GLOBAL') . '_' . strtoupper($permission_type);
-
-		// Allow trace for viewing permissions and in user mode
-		$show_trace = ($mode == 'view' && $user_mode == 'user') ? true : false;
-
-		// Get names
-		if ($user_mode == 'user')
-		{
-			$sql = 'SELECT user_id as ug_id, username as ug_name
-				FROM ' . USERS_TABLE . '
-				WHERE ' . $db->sql_in_set('user_id', array_keys($hold_ary)) . '
-				ORDER BY username_clean ASC';
-		}
-		else
-		{
-			$sql = 'SELECT group_id as ug_id, group_name as ug_name, group_type
-				FROM ' . GROUPS_TABLE . '
-				WHERE ' . $db->sql_in_set('group_id', array_keys($hold_ary)) . '
-				ORDER BY group_type DESC, group_name ASC';
-		}
+		// Get users having this role set...
+		$sql = 'SELECT user_id, forum_id
+			FROM ' . KB_ACL_USERS_TABLE . '
+			WHERE auth_role_id = ' . $role_id . '
+			ORDER BY forum_id';
 		$result = $db->sql_query($sql);
 
-		$ug_names_ary = array();
 		while ($row = $db->sql_fetchrow($result))
 		{
-			$ug_names_ary[$row['ug_id']] = ($user_mode == 'user') ? $row['ug_name'] : (($row['group_type'] == GROUP_SPECIAL) ? $user->lang['G_' . $row['ug_name']] : $row['ug_name']);
+			$hold_ary[$row['forum_id']]['users'][] = $row['user_id'];
 		}
 		$db->sql_freeresult($result);
 
-		// Get used forums
-		$forum_ids = array();
-		foreach ($hold_ary as $ug_id => $row)
-		{
-			$forum_ids = array_merge($forum_ids, array_keys($row));
-		}
-		$forum_ids = array_unique($forum_ids);
-
-		$forum_names_ary = array();
-		if ($local)
-		{
-			$forum_names_ary = make_forum_select(false, false, true, false, false, false, true);
-
-			// Remove the disabled ones, since we do not create an option field here...
-			foreach ($forum_names_ary as $key => $value)
-			{
-				if (!$value['disabled'])
-				{
-					continue;
-				}
-				unset($forum_names_ary[$key]);
-			}
-		}
-		else
-		{
-			$forum_names_ary[0] = $l_acl_type;
-		}
-
-		// Get available roles
-		$sql = 'SELECT *
-			FROM ' . ACL_ROLES_TABLE . "
-			WHERE role_type = '" . $db->sql_escape($permission_type) . "'
-			ORDER BY role_order ASC";
+		// Now grab groups...
+		$sql = 'SELECT group_id, forum_id
+			FROM ' . KB_ACL_GROUPS_TABLE . '
+			WHERE auth_role_id = ' . $role_id . '
+			ORDER BY forum_id';
 		$result = $db->sql_query($sql);
 
-		$roles = array();
 		while ($row = $db->sql_fetchrow($result))
 		{
-			$roles[$row['role_id']] = $row;
+			$hold_ary[$row['forum_id']]['groups'][] = $row['group_id'];
 		}
 		$db->sql_freeresult($result);
 
-		$cur_roles = $auth_admin->acl_role_data($user_mode, $permission_type, array_keys($hold_ary));
-
-		// Build js roles array (role data assignments)
-		$s_role_js_array = '';
-
-		if (sizeof($roles))
-		{
-			$s_role_js_array = array();
-
-			// Make sure every role (even if empty) has its array defined
-			foreach ($roles as $_role_id => $null)
-			{
-				$s_role_js_array[$_role_id] = "\n" . 'role_options[' . $_role_id . '] = new Array();' . "\n";
-			}
-
-			$sql = 'SELECT r.role_id, o.auth_option, r.auth_setting
-				FROM ' . ACL_ROLES_DATA_TABLE . ' r, ' . ACL_OPTIONS_TABLE . ' o
-				WHERE o.auth_option_id = r.auth_option_id
-					AND ' . $db->sql_in_set('r.role_id', array_keys($roles));
-			$result = $db->sql_query($sql);
-
-			while ($row = $db->sql_fetchrow($result))
-			{
-				$flag = substr($row['auth_option'], 0, strpos($row['auth_option'], '_') + 1);
-				if ($flag == $row['auth_option'])
-				{
-					continue;
-				}
-
-				$s_role_js_array[$row['role_id']] .= 'role_options[' . $row['role_id'] . '][\'' . addslashes($row['auth_option']) . '\'] = ' . $row['auth_setting'] . '; ';
-			}
-			$db->sql_freeresult($result);
-
-			$s_role_js_array = implode('', $s_role_js_array);
-		}
-
-		$template->assign_var('S_ROLE_JS_ARRAY', $s_role_js_array);
-		unset($s_role_js_array);
-
-		// Now obtain memberships
-		$user_groups_default = $user_groups_custom = array();
-		if ($user_mode == 'user' && $group_display)
-		{
-			$sql = 'SELECT group_id, group_name, group_type
-				FROM ' . GROUPS_TABLE . '
-				ORDER BY group_type DESC, group_name ASC';
-			$result = $db->sql_query($sql);
-
-			$groups = array();
-			while ($row = $db->sql_fetchrow($result))
-			{
-				$groups[$row['group_id']] = $row;
-			}
-			$db->sql_freeresult($result);
-
-			$memberships = group_memberships(false, array_keys($hold_ary), false);
-
-			// User is not a member of any group? Bad admin, bad bad admin...
-			if ($memberships)
-			{
-				foreach ($memberships as $row)
-				{
-					if ($groups[$row['group_id']]['group_type'] == GROUP_SPECIAL)
-					{
-						$user_groups_default[$row['user_id']][] = $user->lang['G_' . $groups[$row['group_id']]['group_name']];
-					}
-					else
-					{
-						$user_groups_custom[$row['user_id']][] = $groups[$row['group_id']]['group_name'];
-					}
-				}
-			}
-			unset($memberships, $groups);
-		}
-
-		// If we only have one forum id to display or being in local mode and more than one user/group to display,
-		// we switch the complete interface to group by user/usergroup instead of grouping by forum
-		// To achieve this, we need to switch the array a bit
-		if (sizeof($forum_ids) == 1 || ($local && sizeof($ug_names_ary) > 1))
-		{
-			$hold_ary_temp = $hold_ary;
-			$hold_ary = array();
-			foreach ($hold_ary_temp as $ug_id => $row)
-			{
-				foreach ($forum_names_ary as $forum_id => $forum_row)
-				{
-					if (isset($row[$forum_id]))
-					{
-						$hold_ary[$forum_id][$ug_id] = $row[$forum_id];
-					}
-				}
-			}
-			unset($hold_ary_temp);
-
-			foreach ($hold_ary as $forum_id => $forum_array)
-			{
-				$content_array = $categories = array();
-				$this->build_permission_array($hold_ary[$forum_id], $content_array, $categories, array_keys($ug_names_ary));
-
-				$template->assign_block_vars($tpl_pmask, array(
-					'NAME'			=> ($forum_id == 0) ? $forum_names_ary[0] : $forum_names_ary[$forum_id]['forum_name'],
-					'PADDING'		=> ($forum_id == 0) ? '' : $forum_names_ary[$forum_id]['padding'],
-
-					'CATEGORIES'	=> implode('</th><th>', $categories),
-
-					'L_ACL_TYPE'	=> $l_acl_type,
-
-					'S_LOCAL'		=> ($local) ? true : false,
-					'S_GLOBAL'		=> (!$local) ? true : false,
-					'S_NUM_CATS'	=> sizeof($categories),
-					'S_VIEW'		=> ($mode == 'view') ? true : false,
-					'S_NUM_OBJECTS'	=> sizeof($content_array),
-					'S_USER_MODE'	=> ($user_mode == 'user') ? true : false,
-					'S_GROUP_MODE'	=> ($user_mode == 'group') ? true : false)
-				);
-
-				@reset($content_array);
-				while (list($ug_id, $ug_array) = each($content_array))
-				{
-					// Build role dropdown options
-					$current_role_id = (isset($cur_roles[$ug_id][$forum_id])) ? $cur_roles[$ug_id][$forum_id] : 0;
-
-					$s_role_options = '';
-
-					@reset($roles);
-					while (list($role_id, $role_row) = each($roles))
-					{
-						$role_description = (!empty($user->lang[$role_row['role_description']])) ? $user->lang[$role_row['role_description']] : nl2br($role_row['role_description']);
-						$role_name = (!empty($user->lang[$role_row['role_name']])) ? $user->lang[$role_row['role_name']] : $role_row['role_name'];
-
-						$title = ($role_description) ? ' title="' . $role_description . '"' : '';
-						$s_role_options .= '<option value="' . $role_id . '"' . (($role_id == $current_role_id) ? ' selected="selected"' : '') . $title . '>' . $role_name . '</option>';
-					}
-
-					if ($s_role_options)
-					{
-						$s_role_options = '<option value="0"' . ((!$current_role_id) ? ' selected="selected"' : '') . ' title="' . htmlspecialchars($user->lang['NO_ROLE_ASSIGNED_EXPLAIN']) . '">' . $user->lang['NO_ROLE_ASSIGNED'] . '</option>' . $s_role_options;
-					}
-
-					if (!$current_role_id && $mode != 'view')
-					{
-						$s_custom_permissions = false;
-
-						foreach ($ug_array as $key => $value)
-						{
-							if ($value['S_NEVER'] || $value['S_YES'])
-							{
-								$s_custom_permissions = true;
-								break;
-							}
-						}
-					}
-					else
-					{
-						$s_custom_permissions = false;
-					}
-
-					$template->assign_block_vars($tpl_pmask . '.' . $tpl_fmask, array(
-						'NAME'				=> $ug_names_ary[$ug_id],
-						'S_ROLE_OPTIONS'	=> $s_role_options,
-						'UG_ID'				=> $ug_id,
-						'S_CUSTOM'			=> $s_custom_permissions,
-						'FORUM_ID'			=> $forum_id)
-					);
-
-					$this->assign_cat_array($ug_array, $tpl_pmask . '.' . $tpl_fmask . '.' . $tpl_category, $tpl_mask, $ug_id, $forum_id, $show_trace, ($mode == 'view'));
-
-					unset($content_array[$ug_id]);
-				}
-
-				unset($hold_ary[$forum_id]);
-			}
-		}
-		else
-		{
-			foreach ($ug_names_ary as $ug_id => $ug_name)
-			{
-				if (!isset($hold_ary[$ug_id]))
-				{
-					continue;
-				}
-
-				$content_array = $categories = array();
-				$auth_admin->build_permission_array($hold_ary[$ug_id], $content_array, $categories, array_keys($forum_names_ary));
-
-				$template->assign_block_vars($tpl_pmask, array(
-					'NAME'			=> $ug_name,
-					'CATEGORIES'	=> implode('</th><th>', $categories),
-
-					'USER_GROUPS_DEFAULT'	=> ($user_mode == 'user' && isset($user_groups_default[$ug_id]) && sizeof($user_groups_default[$ug_id])) ? implode(', ', $user_groups_default[$ug_id]) : '',
-					'USER_GROUPS_CUSTOM'	=> ($user_mode == 'user' && isset($user_groups_custom[$ug_id]) && sizeof($user_groups_custom[$ug_id])) ? implode(', ', $user_groups_custom[$ug_id]) : '',
-					'L_ACL_TYPE'			=> $l_acl_type,
-
-					'S_LOCAL'		=> ($local) ? true : false,
-					'S_GLOBAL'		=> (!$local) ? true : false,
-					'S_NUM_CATS'	=> sizeof($categories),
-					'S_VIEW'		=> ($mode == 'view') ? true : false,
-					'S_NUM_OBJECTS'	=> sizeof($content_array),
-					'S_USER_MODE'	=> ($user_mode == 'user') ? true : false,
-					'S_GROUP_MODE'	=> ($user_mode == 'group') ? true : false)
-				);
-
-				@reset($content_array);
-				while (list($forum_id, $forum_array) = each($content_array))
-				{
-					// Build role dropdown options
-					$current_role_id = (isset($cur_roles[$ug_id][$forum_id])) ? $cur_roles[$ug_id][$forum_id] : 0;
-
-					$s_role_options = '';
-
-					@reset($roles);
-					while (list($role_id, $role_row) = each($roles))
-					{
-						$role_description = (!empty($user->lang[$role_row['role_description']])) ? $user->lang[$role_row['role_description']] : nl2br($role_row['role_description']);
-						$role_name = (!empty($user->lang[$role_row['role_name']])) ? $user->lang[$role_row['role_name']] : $role_row['role_name'];
-
-						$title = ($role_description) ? ' title="' . $role_description . '"' : '';
-						$s_role_options .= '<option value="' . $role_id . '"' . (($role_id == $current_role_id) ? ' selected="selected"' : '') . $title . '>' . $role_name . '</option>';
-					}
-
-					if ($s_role_options)
-					{
-						$s_role_options = '<option value="0"' . ((!$current_role_id) ? ' selected="selected"' : '') . ' title="' . htmlspecialchars($user->lang['NO_ROLE_ASSIGNED_EXPLAIN']) . '">' . $user->lang['NO_ROLE_ASSIGNED'] . '</option>' . $s_role_options;
-					}
-
-					if (!$current_role_id && $mode != 'view')
-					{
-						$s_custom_permissions = false;
-
-						foreach ($forum_array as $key => $value)
-						{
-							if ($value['S_NEVER'] || $value['S_YES'])
-							{
-								$s_custom_permissions = true;
-								break;
-							}
-						}
-					}
-					else
-					{
-						$s_custom_permissions = false;
-					}
-
-					$template->assign_block_vars($tpl_pmask . '.' . $tpl_fmask, array(
-						'NAME'				=> ($forum_id == 0) ? $forum_names_ary[0] : $forum_names_ary[$forum_id]['forum_name'] . 'hhh',
-						'PADDING'			=> ($forum_id == 0) ? '' : $forum_names_ary[$forum_id]['padding'],
-						'S_ROLE_OPTIONS'	=> $s_role_options,
-						'S_CUSTOM'			=> $s_custom_permissions,
-						'UG_ID'				=> $ug_id,
-						'FORUM_ID'			=> $forum_id)
-					);
-
-					$auth_admin->assign_cat_array($forum_array, $tpl_pmask . '.' . $tpl_fmask . '.' . $tpl_category, $tpl_mask, $ug_id, $forum_id, $show_trace, ($mode == 'view'));
-				}
-
-				unset($hold_ary[$ug_id], $ug_names_ary[$ug_id]);
-			}
-		}
+		return $hold_ary;
 	}
 }
 

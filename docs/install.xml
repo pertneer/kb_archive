@@ -45,7 +45,7 @@
 		</installation>
 		<history>
 			<entry>
-				<date>2010-1-20</date>
+				<date>2010-01-20</date>
 				<rev-version>1.0.1</rev-version>
 				<changelog lang="en">
 					<change>Issues fixed:</change>
@@ -223,56 +223,57 @@
 		<link-group>
 			<link type="contrib" realname="Update 1.0.0RC3 to 1.0.0" href="./contrib/update_1.0.0RC3_to_1.0.0.xml" lang="en">Update from 1.0.0RC3 to 1.0.0</link>
 			<link type="contrib" realname="Update 1.0.0 to 1.0.1" href="./contrib/update_1.0.0_to_1.0.1.xml" lang="en">Update from 1.0.0 to 1.0.1</link>
+			<link type="contrib" realname="Update 1.0.1 to 1.0.2RC1" href="./contrib/update_1.0.1_to_1.0.2RC1.xml" lang="en">Update from 1.0.1 to 1.0.2RC1</link>
 		</link-group>
 
 	</header>
 	<action-group>
 					<copy>
-									<file from="root/kb.php" to="/kb.php" />
-									<file from="root/adm/style/acp_kb_cat.html" to="/adm/style/acp_kb_cat.html" />
-									<file from="root/adm/style/acp_kb_health.html" to="/adm/style/acp_kb_health.html" />
-									<file from="root/adm/style/acp_kb.html" to="/adm/style/acp_kb.html" />
-									<file from="root/adm/style/acp_kb_types.html" to="/adm/style/acp_kb_types.html" />
-									<file from="root/adm/style/acp_kb_plugins.html" to="/adm/style/acp_kb_plugins.html" />
-									<file from="root/includes/acp/acp_kb_cats.php" to="/includes/acp/acp_kb_cats.php" />
-									<file from="root/includes/acp/acp_kb_types.php" to="/includes/acp/acp_kb_types.php" />
-									<file from="root/includes/acp/acp_kb.php" to="/includes/acp/acp_kb.php" />
-									<file from="root/includes/acp/acp_kb_permissions.php" to="/includes/acp/acp_kb_permissions.php" />
-									<file from="root/includes/acp/info/acp_kb_cats.php" to="/includes/acp/info/acp_kb_cats.php" />
-									<file from="root/includes/acp/info/acp_kb_types.php" to="/includes/acp/info/acp_kb_types.php" />
-									<file from="root/includes/acp/info/acp_kb.php" to="/includes/acp/info/acp_kb.php" />
-									<file from="root/includes/acp/info/acp_kb_permissions.php" to="/includes/acp/info/acp_kb_permissions.php" />
-									<file from="root/includes/constants_kb.php" to="/includes/constants_kb.php" />
-									<file from="root/includes/functions_kb.php" to="/includes/functions_kb.php" />
-									<file from="root/includes/kb_auth.php" to="/includes/kb_auth.php" />
-									<file from="root/includes/functions_install_kb.php" to="/includes/functions_install_kb.php" />
-									<file from="root/includes/functions_plugins_kb.php" to="/includes/functions_plugins_kb.php" />
-									<file from="root/includes/kb.php" to="/includes/kb.php" />
-									<file from="root/includes/kb_plugins/*.*" to="/includes/kb_plugins/*.*" />
-									<file from="root/includes/ucp/ucp_kb.php" to="/includes/ucp/ucp_kb.php" />
-									<file from="root/includes/ucp/info/ucp_kb.php" to="/includes/ucp/info/ucp_kb.php" />
-									<file from="root/includes/mcp/mcp_kb.php" to="/includes/mcp/mcp_kb.php" />
-									<file from="root/includes/mcp/info/mcp_kb.php" to="/includes/mcp/info/mcp_kb.php" />
-									<file from="root/language/en/email/kb_email_notify.txt" to="/language/en/email/kb_email_notify.txt" />
-									<file from="root/language/en/email/kb_notify_email.txt" to="/language/en/email/kb_notify_email.txt" />
-									<file from="root/language/en/email/kb_notify_pm.txt" to="/language/en/email/kb_notify_pm.txt" />
-									<file from="root/language/en/mods/info_acp_kb.php" to="/language/en/mods/info_acp_kb.php" />
-									<file from="root/language/en/mods/info_acp_kb_permissions.php" to="/language/en/mods/info_acp_kb_permissions.php" />
-									<file from="root/language/en/mods/info_ucp_kb.php" to="/language/en/mods/info_ucp_kb.php" />
-									<file from="root/language/en/mods/info_mcp_kb.php" to="/language/en/mods/info_mcp_kb.php" />
-									<file from="root/language/en/mods/kb.php" to="/language/en/mods/kb.php" />
-									<file from="root/language/en/mods/permissions_kb.php" to="/language/en/mods/permissions_kb.php" />
-									<file from="root/styles/prosilver/imageset/en/button_article_new.gif" to="/styles/prosilver/imageset/en/button_article_new.gif" />
-									<file from="root/styles/prosilver/imageset/en/button_comment_new.gif" to="/styles/prosilver/imageset/en/button_comment_new.gif" />
-									<file from="root/styles/prosilver/template/kb/*.*" to="/styles/prosilver/template/kb/*.*" />
-									<file from="root/styles/prosilver/theme/kb.css" to="/styles/prosilver/theme/kb.css" />
-									<file from="root/styles/prosilver/theme/images/rate_star.gif" to="/styles/prosilver/theme/images/rate_star.gif" />
-									<file from="root/styles/prosilver/theme/images/word.jpg" to="/styles/prosilver/theme/images/word.jpg" />
-									<file from="root/styles/prosilver/theme/images/icon_kb.gif" to="/styles/prosilver/theme/images/icon_kb.gif" />
-									<file from="root/styles/prosilver/theme/images/social_bookmarking/*.*" to="/styles/prosilver/theme/images/social_bookmarking/*.*" />
-									<file from="root/umil/umil.php" to="/umil/umil.php" />
+									<file from="root/kb.php" to="kb.php" />
+									<file from="root/adm/style/acp_kb_cat.html" to="adm/style/acp_kb_cat.html" />
+									<file from="root/adm/style/acp_kb_health.html" to="adm/style/acp_kb_health.html" />
+									<file from="root/adm/style/acp_kb.html" to="adm/style/acp_kb.html" />
+									<file from="root/adm/style/acp_kb_types.html" to="adm/style/acp_kb_types.html" />
+									<file from="root/adm/style/acp_kb_plugins.html" to="adm/style/acp_kb_plugins.html" />
+									<file from="root/includes/acp/acp_kb_cats.php" to="includes/acp/acp_kb_cats.php" />
+									<file from="root/includes/acp/acp_kb_types.php" to="includes/acp/acp_kb_types.php" />
+									<file from="root/includes/acp/acp_kb.php" to="includes/acp/acp_kb.php" />
+									<file from="root/includes/acp/acp_kb_permissions.php" to="includes/acp/acp_kb_permissions.php" />
+									<file from="root/includes/acp/info/acp_kb_cats.php" to="includes/acp/info/acp_kb_cats.php" />
+									<file from="root/includes/acp/info/acp_kb_types.php" to="includes/acp/info/acp_kb_types.php" />
+									<file from="root/includes/acp/info/acp_kb.php" to="includes/acp/info/acp_kb.php" />
+									<file from="root/includes/acp/info/acp_kb_permissions.php" to="includes/acp/info/acp_kb_permissions.php" />
+									<file from="root/includes/constants_kb.php" to="includes/constants_kb.php" />
+									<file from="root/includes/functions_kb.php" to="includes/functions_kb.php" />
+									<file from="root/includes/kb_auth.php" to="includes/kb_auth.php" />
+									<file from="root/includes/functions_install_kb.php" to="includes/functions_install_kb.php" />
+									<file from="root/includes/functions_plugins_kb.php" to="includes/functions_plugins_kb.php" />
+									<file from="root/includes/kb.php" to="includes/kb.php" />
+									<file from="root/includes/kb_plugins/*.*" to="includes/kb_plugins/*.*" />
+									<file from="root/includes/ucp/ucp_kb.php" to="includes/ucp/ucp_kb.php" />
+									<file from="root/includes/ucp/info/ucp_kb.php" to="includes/ucp/info/ucp_kb.php" />
+									<file from="root/includes/mcp/mcp_kb.php" to="includes/mcp/mcp_kb.php" />
+									<file from="root/includes/mcp/info/mcp_kb.php" to="includes/mcp/info/mcp_kb.php" />
+									<file from="root/language/en/email/kb_email_notify.txt" to="language/en/email/kb_email_notify.txt" />
+									<file from="root/language/en/email/kb_notify_email.txt" to="language/en/email/kb_notify_email.txt" />
+									<file from="root/language/en/email/kb_notify_pm.txt" to="language/en/email/kb_notify_pm.txt" />
+									<file from="root/language/en/mods/info_acp_kb.php" to="language/en/mods/info_acp_kb.php" />
+									<file from="root/language/en/mods/info_acp_kb_permissions.php" to="language/en/mods/info_acp_kb_permissions.php" />
+									<file from="root/language/en/mods/info_ucp_kb.php" to="language/en/mods/info_ucp_kb.php" />
+									<file from="root/language/en/mods/info_mcp_kb.php" to="language/en/mods/info_mcp_kb.php" />
+									<file from="root/language/en/mods/kb.php" to="language/en/mods/kb.php" />
+									<file from="root/language/en/mods/permissions_kb.php" to="language/en/mods/permissions_kb.php" />
+									<file from="root/styles/prosilver/imageset/en/button_article_new.gif" to="styles/prosilver/imageset/en/button_article_new.gif" />
+									<file from="root/styles/prosilver/imageset/en/button_comment_new.gif" to="styles/prosilver/imageset/en/button_comment_new.gif" />
+									<file from="root/styles/prosilver/template/kb/*.*" to="styles/prosilver/template/kb/*.*" />
+									<file from="root/styles/prosilver/theme/kb.css" to="styles/prosilver/theme/kb.css" />
+									<file from="root/styles/prosilver/theme/images/rate_star.gif" to="styles/prosilver/theme/images/rate_star.gif" />
+									<file from="root/styles/prosilver/theme/images/word.jpg" to="styles/prosilver/theme/images/word.jpg" />
+									<file from="root/styles/prosilver/theme/images/icon_kb.gif" to="styles/prosilver/theme/images/icon_kb.gif" />
+									<file from="root/styles/prosilver/theme/images/social_bookmarking/*.*" to="styles/prosilver/theme/images/social_bookmarking/*.*" />
+									<file from="root/umil/umil.php" to="umil/umil.php" />
 							</copy>
-						<open src="/adm/style/acp_attachments.html">
+						<open src="adm/style/acp_attachments.html">
 							<edit>
 								<find><![CDATA[		<dl>
 			<dt><label for="allow_in_pm">{L_ALLOW_IN_PM}:</label></dt>
@@ -292,7 +293,7 @@
 								</inline-edit>
 							</edit>
 						</open>
-						<open src="/download/file.php">
+						<open src="download/file.php">
 							<edit>
 								<find><![CDATA[$thumbnail = request_var('t', false);]]></find>
 								<action type="after-add"><![CDATA[$in_kb = request_var('kb', false);]]></action>
@@ -421,7 +422,7 @@ else
 	wrap_img_in_html(append_sid($phpbb_root_path . 'download/file.' . $phpEx, 'id=' . $attachment['attach_id'] . $in_kb), $attachment['real_filename']);]]></action>
 							</edit>
 						</open>
-						<open src="/includes/auth.php">
+						<open src="includes/auth.php">
 							<edit>
 								<find><![CDATA[SET user_permissions = '',]]></find>
 								<inline-edit>
@@ -430,7 +431,7 @@ else
 								</inline-edit>
 							</edit>
 						</open>
-						<open src="/includes/cache.php">
+						<open src="includes/cache.php">
 							<edit>
 								<find><![CDATA[		}
 
@@ -526,7 +527,7 @@ else
 		// Mod KB End]]></action>
 							</edit>
 						</open>
-						<open src="/includes/functions.php">
+						<open src="includes/functions.php">
 											<edit>
 							<find><![CDATA[		'U_RESTORE_PERMISSIONS'	=> ($user->data['user_perm_from'] && $auth->acl_get('a_switchperm')) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'mode=restore_perm') : '',]]></find>
 															<action type="after-add"><![CDATA[
@@ -534,7 +535,7 @@ else
 'L_KB'					=> (isset($config['kb_link_name'])) ? $config['kb_link_name'] : $user->lang['KB'],]]></action>
 													</edit>
 									</open>
-						<open src="/includes/functions_user.php">
+						<open src="includes/functions_user.php">
 							<edit>
 								<find><![CDATA['user_sig'					=> '',
 		'user_sig_bbcode_uid'		=> '',
@@ -545,7 +546,7 @@ else
 							</edit>
 							
 						</open>
-						<open src="/includes/acp/acp_attachments.php">
+						<open src="includes/acp/acp_attachments.php">
 							<edit>
 								<find><![CDATA[						$allowed_forums	= request_var('allowed_forums', array(0));
 						$allow_in_pm	= (isset($_POST['allow_in_pm'])) ? true : false;]]></find>
@@ -582,7 +583,7 @@ else
 						// Mod KB End]]></action>
 							</edit>
 						</open>
-						<open src="/includes/acp/acp_styles.php">
+						<open src="includes/acp/acp_styles.php">
 							<edit>
 								<find><![CDATA['icon_back_top', 'icon_contact_aim', 'icon_contact_email', 'icon_contact_icq', 'icon_contact_jabber', 'icon_contact_msnm', 'icon_contact_pm', 'icon_contact_yahoo', 'icon_contact_www', 'icon_post_delete', 'icon_post_edit', 'icon_post_info', 'icon_post_quote', 'icon_post_report', 'icon_user_online', 'icon_user_offline', 'icon_user_profile', 'icon_user_search', 'icon_user_warn', 'button_pm_forward', 'button_pm_new', 'button_pm_reply', 'button_topic_locked', 'button_topic_new', 'button_topic_reply',]]></find>
 								<inline-edit>
@@ -591,7 +592,7 @@ else
 								</inline-edit>
 							</edit>
 						</open>
-						<open src="/includes/acp/auth.php">
+						<open src="includes/acp/auth.php">
 							<edit>
 								<find><![CDATA[function display_mask($mode, $permission_type, &$hold_ary, $user_mode = 'user', $local = false, $group_display = true)]]></find>
 								<inline-edit>
@@ -600,21 +601,35 @@ else
 								</inline-edit>
 							</edit>
 							<edit>
+								<find><![CDATA[global $template, $user, $db, $phpbb_root_path, $phpEx;]]></find>
+								<action type="after-add"><![CDATA[		if($cat_data)
+		{
+			global $kb_auth;
+		}]]></action>
+							</edit>
+							<edit>
 								<find><![CDATA[$forum_names_ary = make_forum_select(false, false, true, false, false, false, true);]]></find>
 								<inline-edit>
 									<inline-find><![CDATA[make]]></inline-find>
 									<inline-action type="before-add"><![CDATA[ ($cat_data) ? $cat_data : ]]></inline-action>
 								</inline-edit>
 							</edit>
+							<edit>
+								<find><![CDATA[$cur_roles = $this->acl_role_data($user_mode, $permission_type, array_keys($hold_ary));]]></find>
+								<inline-edit>
+									<inline-find><![CDATA[$this]]></inline-find>
+									<inline-action type="before-add"><![CDATA[ ($cat_data) ? $kb_auth->acl_role_data($user_mode, $permission_type, array_keys($hold_ary)) : ]]></inline-action>
+								</inline-edit>
+							</edit>
 						</open>
-							<open src="/language/en/common.php">
+							<open src="language/en/common.php">
 											<edit>
 							<find><![CDATA[	'KIB'					=> 'KiB',]]></find>
 															<action type="after-add"><![CDATA[	'KNOWLEDGE_BASE'		=> 'Knowledge Base',
 	'KB_EXPLAIN'			=> 'Knowledge Base',]]></action>
 													</edit>
 									</open>
-							<open src="/language/en/acp/attachments.php">
+							<open src="language/en/acp/attachments.php">
 								<edit>
 									<find><![CDATA[	'ALLOW_IN_PM'						=> 'Allowed in private messaging',]]></find>
 									<action type="after-add"><![CDATA[	// Mod KB Begin
@@ -623,7 +638,7 @@ else
 	// Mod KB End]]></action>
 								</edit>
 							</open>	
-							<open src="/language/en/acp/styles.php">
+							<open src="language/en/acp/styles.php">
 								<edit>
 									<find><![CDATA[	'IMG_BUTTON_TOPIC_NEW'		=> 'New topic',
 	'IMG_BUTTON_TOPIC_REPLY'	=> 'Reply topic',]]></find>
@@ -631,20 +646,20 @@ else
 	'IMG_BUTTON_COMMENT_NEW'	=> 'New comment',]]></action>
 								</edit>
 							</open>
-							<open src="/styles/prosilver/imageset/en/imageset.cfg">
+							<open src="styles/prosilver/imageset/en/imageset.cfg">
 								<edit>
 									<find><![CDATA[img_button_topic_reply = button_topic_reply.gif*25*96]]></find>
 									<action type="after-add"><![CDATA[img_button_article_new = button_article_new.gif*25*96
 img_button_comment_new = button_comment_new.gif*25*96]]></action>
 								</edit>
 							</open>
-							<open src="/styles/prosilver/template/overall_header.html">
+							<open src="styles/prosilver/template/overall_header.html">
 											<edit>
 							<find><![CDATA[<li class="icon-faq"><a href="{U_FAQ}" title="{L_FAQ_EXPLAIN}">{L_FAQ}</a></li>]]></find>
 															<action type="before-add"><![CDATA[<li class="icon-kb"><a href="{U_KB}" title="{L_KB_EXPLAIN}">{L_KB}</a></li>]]></action>
 													</edit>
 									</open>
-							<open src="/styles/prosilver/theme/stylesheet.css">
+							<open src="styles/prosilver/theme/stylesheet.css">
 											<edit>
 							<find><![CDATA[@import url("colours.css");]]></find>
 															<action type="after-add"><![CDATA[@import url("kb.css");]]></action>

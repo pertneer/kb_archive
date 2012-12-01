@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: functions_kb.php 422 2010-01-20 14:15:50Z softphp $
+* @version $Id: functions_kb.php 438 2010-02-01 15:36:06Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -625,7 +625,8 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 		
 		$sql = 'UPDATE ' . KB_CATS_TABLE . '
 				SET cat_articles = cat_articles - 1
-				WHERE cat_id = ' . (int) $old_data['cat_id'];
+				WHERE cat_articles > 0
+				AND cat_id = ' . (int) $old_data['cat_id'];
 		$db->sql_query($sql);
 	}
 	
@@ -1288,12 +1289,14 @@ function article_delete($article_id, $cat_id, $article_data)
 		{
 			$sql = 'UPDATE ' . KB_CATS_TABLE . "
 					SET cat_articles = cat_articles - 1
-					WHERE cat_id = $cat_id";
+					WHERE cat_articles > 0
+					AND cat_id = $cat_id";
 			$db->sql_query($sql);
 			
 			$sql = 'UPDATE ' . USERS_TABLE . " 
 					SET user_articles = user_articles - 1
-					WHERE user_id = {$article_data['article_user_id']}";
+					WHERE user_articles > 0
+					AND user_id = {$article_data['article_user_id']}";
 			$db->sql_query($sql);
 			
 			set_config('kb_total_articles', $config['kb_total_articles'] - 1, true);
@@ -2021,7 +2024,7 @@ function handle_related_articles($article_id, $article_title, $article_title_cle
 	$shown = $article_count = 0;
 	while($row = $db->sql_fetchrow($result))
 	{
-		if($shown < $show_num && $shown >= ra_start)
+		if($shown < $show_num && $shown >= $ra_start)
 		{
 			$related_articles[$row['article_id']] = $row['article_title'];
 			$shown++;
@@ -2043,7 +2046,7 @@ function handle_related_articles($article_id, $article_title, $article_title_cle
 	// Generate Pagination
 	$template->assign_vars(array(
 		'KB_PAGINATION'		=> kb_generate_pagination(kb_append_sid('article', array('id' => $article_id, 'title' => $article_title)), $article_count, $show_num, $ra_start, 'ra', true),
-		'KB_PAGE_NUMBER'	=> on_page($article_count, $show_num, $ra),
+		'KB_PAGE_NUMBER'	=> on_page($article_count, $show_num, $ra_start),
 		'KB_TOTAL_RA' 		=> $article_count,
 		'KB_S_TOTAL_RA'		=> ($article_count == 1) ? $user->lang['MATCH_FOUND'] : $user->lang['MATCHS_FOUND'],
 	));

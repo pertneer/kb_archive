@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: mcp_kb.php 405 2009-12-14 16:27:17Z softphp $
+* @version $Id: mcp_kb.php 438 2010-02-01 15:36:06Z softphp $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -122,12 +122,14 @@ class mcp_kb
 					{
 						$sql = 'UPDATE ' . KB_CATS_TABLE . '
 								SET cat_articles = cat_articles - 1
-								WHERE cat_id = ' . $article_data['cat_id'];
+								WHERE cat_articles > 0
+								AND cat_id = ' . $article_data['cat_id'];
 						$db->sql_query($sql);
 						
 						$sql = 'UPDATE ' . USERS_TABLE . '
 								SET user_articles = user_articles - 1
-								WHERE user_id = ' . $article_data['article_user_id'];
+								WHERE user_articles > 0
+								AND user_id = ' . $article_data['article_user_id'];
 						$db->sql_query($sql);
 						
 						// Remove from latest article when deactivating

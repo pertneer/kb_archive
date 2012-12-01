@@ -49,33 +49,33 @@
 	</header>
 	<action-group>
 		<copy>
-			<file from="root/kb.php" to="/kb.php" />
-			<file from="root/adm/style/acp_kb_health.html" to="/adm/style/acp_kb_health.html" />
-			<file from="root/includes/acp/acp_kb.php" to="/includes/acp/acp_kb.php" />
-			<file from="root/includes/acp/acp_kb_cats.php" to="/includes/acp/acp_kb_cats.php" />
-			<file from="root/includes/acp/acp_kb_permissions.php" to="/includes/acp/acp_kb_permissions.php" />
-			<file from="root/includes/acp/acp_kb_types.php" to="/includes/acp/acp_kb_types.php" />
-			<file from="root/includes/acp/info/acp_kb.php" to="/includes/acp/info/acp_kb.php" />
-			<file from="root/includes/acp/info/acp_kb_cats.php" to="/includes/acp/info/acp_kb_cats.php" />
-			<file from="root/includes/acp/info/acp_kb_permissions.php" to="/includes/acp/info/acp_kb_permissions.php" />
-			<file from="root/includes/acp/info/acp_kb_types.php" to="/includes/acp/info/acp_kb_types.php" />
-			<file from="root/includes/mcp/mcp_kb.php" to="/includes/mcp/mcp_kb.php" />
-			<file from="root/includes/mcp/info/mcp_kb.php" to="/includes/mcp/info/mcp_kb.php" />
-			<file from="root/includes/ucp/ucp_kb.php" to="/includes/ucp/ucp_kb.php" />
-			<file from="root/includes/ucp/info/ucp_kb.php" to="/includes/ucp/info/ucp_kb.php" />
-			<file from="root/includes/kb.php" to="/includes/kb.php" />
-			<file from="root/includes/constants_kb.php" to="/includes/constants_kb.php" />
-			<file from="root/includes/functions_plugins_kb.php" to="/includes/functions_plugins_kb.php" />
-			<file from="root/includes/functions_kb.php" to="/includes/functions_kb.php" />
-			<file from="root/includes/functions_install_kb.php" to="/includes/functions_install_kb.php" />
-			<file from="root/includes/kb_auth.php" to="/includes/kb_auth.php" />
-			<file from="root/includes/kb_plugins/*.*" to="/includes/kb_plugins/*.*" />
-			<file from="root/language/en/mods/kb.php" to="/language/en/mods/kb.php" />
-			<file from="root/language/en/mods/info_acp_kb.php" to="/language/en/mods/info_acp_kb.php" />
-			<file from="root/styles/prosilver/template/kb/*.*" to="/styles/prosilver/template/kb/*.*" />
+			<file from="root/kb.php" to="kb.php" />
+			<file from="root/adm/style/acp_kb_health.html" to="adm/style/acp_kb_health.html" />
+			<file from="root/includes/acp/acp_kb.php" to="includes/acp/acp_kb.php" />
+			<file from="root/includes/acp/acp_kb_cats.php" to="includes/acp/acp_kb_cats.php" />
+			<file from="root/includes/acp/acp_kb_permissions.php" to="includes/acp/acp_kb_permissions.php" />
+			<file from="root/includes/acp/acp_kb_types.php" to="includes/acp/acp_kb_types.php" />
+			<file from="root/includes/acp/info/acp_kb.php" to="includes/acp/info/acp_kb.php" />
+			<file from="root/includes/acp/info/acp_kb_cats.php" to="includes/acp/info/acp_kb_cats.php" />
+			<file from="root/includes/acp/info/acp_kb_permissions.php" to="includes/acp/info/acp_kb_permissions.php" />
+			<file from="root/includes/acp/info/acp_kb_types.php" to="includes/acp/info/acp_kb_types.php" />
+			<file from="root/includes/mcp/mcp_kb.php" to="includes/mcp/mcp_kb.php" />
+			<file from="root/includes/mcp/info/mcp_kb.php" to="includes/mcp/info/mcp_kb.php" />
+			<file from="root/includes/ucp/ucp_kb.php" to="includes/ucp/ucp_kb.php" />
+			<file from="root/includes/ucp/info/ucp_kb.php" to="includes/ucp/info/ucp_kb.php" />
+			<file from="root/includes/kb.php" to="includes/kb.php" />
+			<file from="root/includes/constants_kb.php" to="includes/constants_kb.php" />
+			<file from="root/includes/functions_plugins_kb.php" to="includes/functions_plugins_kb.php" />
+			<file from="root/includes/functions_kb.php" to="includes/functions_kb.php" />
+			<file from="root/includes/functions_install_kb.php" to="includes/functions_install_kb.php" />
+			<file from="root/includes/kb_auth.php" to="includes/kb_auth.php" />
+			<file from="root/includes/kb_plugins/*.*" to="includes/kb_plugins/*.*" />
+			<file from="root/language/en/mods/kb.php" to="language/en/mods/kb.php" />
+			<file from="root/language/en/mods/info_acp_kb.php" to="language/en/mods/info_acp_kb.php" />
+			<file from="root/styles/prosilver/template/kb/*.*" to="styles/prosilver/template/kb/*.*" />
 		</copy>
 		
-		<open src="/download/file.php">
+		<open src="download/file.php">
 							<edit>
 								<find><![CDATA[$thumbnail = request_var('t', false);]]></find>
 								<action type="after-add"><![CDATA[$in_kb = request_var('kb', false);]]></action>
@@ -215,7 +215,7 @@ else
 							</edit>
 							
 						</open>
-		<open src="/includes/acp/acp_forums.php">
+		<open src="includes/acp/acp_forums.php">
 							<edit>
 								<comment lang="en">This is the first of two identical edit and replacements, this one occurs around line 1112. BOTH edits have to be performed.</comment>
 								<find><![CDATA[							$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '

@@ -2,7 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: kb_forum_bot.php 420 2010-01-13 14:36:10Z softphp $
+* @version $Id: kb_forum_bot.php 442 2010-02-04 17:55:31Z tom.martin60@btinternet.com $
 * @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
@@ -134,7 +134,7 @@ function append_to_kb_options()
 					<td><b>" . $user->format_date(time()) . "</b></td>
 				</tr>
 				<tr>
-					<td>Article Link</td>
+					<td>" . $user->lang['ARTICLE_LINK'] . "</td>
 					<td><b>{LINK}</b></td>
 					<td><b>" . generate_board_url() . '/kb.' . $phpEx . "?a=1</b></td>
 				</tr>
@@ -151,33 +151,37 @@ function change_auth($user_id, $mode = 'replace', $data = false)
 	
 	switch($mode)
 	{
+		// in 3.0.6 auths are no longer a concern thanks to "force_approved_state"
 		case 'replace':
-			$data = array(
-				'user_backup' => $user,
-				'auth_backup' => $auth,
-			);
 
-			$sql = 'SELECT *
-				FROM ' . USERS_TABLE . '
-				WHERE user_id = ' . (int) $user_id;
-			$result	= $db->sql_query($sql);
-			$row = $db->sql_fetchrow($result);
-			$row['is_registered'] = true;
-			
-			$db->sql_freeresult($result);
-			
-			$user->data = array_merge($user->data, $row);
-			$auth->acl($user->data);
-			
-			unset($row);
-			
-			return $data;
+				$data = array(
+						'user_backup'   => $user->data,
+				);
+										
+				// sql to get the bots info
+				$sql = 'SELECT *
+						FROM ' . USERS_TABLE . '
+						WHERE user_id = ' . (int) $user_id;
+				$result = $db->sql_query($sql);
+				$row = $db->sql_fetchrow($result);
+				$db->sql_freeresult($result);
+
+				// reset the current users info to that of the bot      
+				$user->data = array_merge($user->data, $row);
+				
+				$kb_auth = new kb_auth;
+				$kb_auth->acl($user->data, $auth);				
+				unset($row);
+				
+				return $data;                                      
+				
 		break;
 		
-		case 'restore':				
-			$user = $data['user_backup'];
-			$auth = $data['auth_backup'];
-			unset($data);
+		// now we restore the users stuff
+		case 'restore':
+				$user->data = $data['user_backup'];
+
+				unset($data);
 		break;
 	}
 }
@@ -223,31 +227,30 @@ function post_new_article($data)
 	generate_text_for_storage($message, $uid, $bitfield, $options, true, true, true);
 
 	$data = array( 
-		'forum_id'			=> $config['kb_forum_bot_forum_id'],
-		'icon_id'			=> false,
+		'forum_id'				=> $config['kb_forum_bot_forum_id'],
+		'icon_id'				=> false,
+	
+		'enable_bbcode'			=> true,
+		'enable_smilies'		=> true,
+		'enable_urls'			=> true,
+		'enable_sig'			=> true,
 
-		'enable_bbcode'		=> true,
-		'enable_smilies'	=> true,
-		'enable_urls'		=> true,
-		'enable_sig'		=> true,
+		'message'				=> $message,
+		'post_checksum'			=> '',
+		'message_md5'			=> '',
+					
+		'bbcode_bitfield'		=> $bitfield,
+		'bbcode_uid'			=> $uid,
 
-		'message'			=> $message,
-		'post_checksum'		=> '',
-		'message_md5'		=> '',
-				
-		'bbcode_bitfield'	=> $bitfield,
-		'bbcode_uid'		=> $uid,
-
-		'post_edit_locked'	=> 0,
-		'topic_title'		=> $subject,
-		'notify_set'		=> false,
-		'notify'			=> false,
-		'post_time' 		=> 0,
-		'forum_name'		=> '',
-		'enable_indexing'	=> true,
+		'post_edit_locked'		=> 0,
+		'topic_title'			=> $subject,
+		'notify_set'			=> false,
+		'notify'				=> false,
+		'post_time' 			=> 0,
+		'forum_name'			=> '',
+		'enable_indexing'		=> true,
 		
-		'topic_approved'	=> true,
-		'post_approved'		=> true,
+		'force_approved_state'  => true,
 	);
 
 	kb_submit_post('post', $subject, '', POST_NORMAL, $poll, $data);	
