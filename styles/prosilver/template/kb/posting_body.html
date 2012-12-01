@@ -42,17 +42,33 @@
 				<!-- ENDIF -->
 				
 				<!-- IF S_IS_ARTICLE -->
-				<dl style="clear: left;">
-					<dt><label for="subject">{L_ARTICLE_DESC}:</label><br /><span class="gensmall">{L_ARTICLE_DESC_EXPLAIN}</span></dt>
-					<dd><textarea name="desc" id="desc" rows="10" cols="45" tabindex="3" class="inputbox desc" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);">{DESC}</textarea></dd>
-				</dl>
 				<dl>
 					<dt><label for="c">{L_ARTICLE_CAT}</label></dt>
 					<dd><select name="c" id="c">{S_CAT_SELECT}</select></dd>
 				</dl>
+				
+				<dl style="clear: left;">
+					<dt><label for="subject">{L_ARTICLE_DESC}:</label><br /><span class="gensmall">{L_ARTICLE_DESC_EXPLAIN}</span></dt>
+					<dd><textarea name="desc" id="desc" rows="10" cols="45" tabindex="3" class="inputbox desc" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);">{DESC}</textarea></dd>
+				</dl>
 				<!-- ENDIF -->
+				
+				<!-- IF S_CAN_MOD_TIME -->
+				<dl style="clear: left;">
+					<dt><label for="time">{L_ARTICLE_TIME}:</label><br /><span class="gensmall">{L_ARTICLE_TIME_EXPLAIN}</span></dt>
+					<dd><label><input type="radio" name="time" value="0" checked="checked" /> {L_USE_ORIGINAL_TIME}</label><br /><label><input type="radio" name="time" value="1" /> {L_USE_CURRENT_TIME}</label><br /><label><input type="radio" name="time" value="2" /> {L_USE_CUSTOM_TIME}:</label><select name="day">{DATE_OPTIONS}</select> <select name="month">{MONTH_OPTIONS}</select> <select name="year">{YEAR_OPTIONS}</select> <select name="hour">{HOUR_OPTIONS}</select>:<select name="min">{MIN_OPTIONS}</select> </dd>
+				</dl>
+				<!-- ENDIF -->
+				
+				<!-- IF S_CAN_MOD_AUTHOR -->
+				<dl style="clear: left;">
+					<dt><label for="author">{L_ARTICLE_AUTHOR}:</label><br /><span class="gensmall">{L_ARTICLE_AUTHOR_EXPLAIN}</span></dt>
+					<dd><label><input type="radio" name="author" value="0" checked="checked" /> {L_USE_ORIGINAL_AUTHOR}</label><br /><label><input type="radio" name="author" value="1" /> {L_USE_THIS_AUTHOR}</label><br /><label><input type="radio" name="author" value="2" /> {L_USE_CUSTOM_AUTHOR}:</label> <input type="text" class="text medium" id="username" name="username" /> [ <a href="{U_FIND_USERNAME}" onclick="find_username(this.href); return false;">{L_FIND_USERNAME}</a> ]</dd>
+				</dl>
+				<!-- ENDIF -->
+				
 				<!-- IF S_REQUEST_OPTIONS -->
-				<dl style="clear: left;"
+				<dl style="clear: left;">
 					<dt><label for="r">{L_ARTICLE_ADD_REQ}</label></dt>
 					<dd><select name="r">{S_REQUEST_OPTIONS}</select></dd>
 				</dl>
@@ -148,6 +164,12 @@
 					<div class="inner"><span class="corners-top"><span></span></span>
 			
 					<fieldset class="fields1">
+						<!-- IF S_OPEN_ALLOWED -->
+							<div><label for="article_open"><input type="checkbox" name="article_open" id="article_open"{S_OPEN_CHECKED} /> {L_ARTICLE_OPEN}</label></div>
+						<!-- ENDIF -->
+						<!-- IF S_CONTRIB_ALLOWED -->
+							<div><label for="article_contribution"><input type="checkbox" name="article_contribution" id="article_contribution"{S_CONTRIB_CHECKED} /> {L_ARTICLE_CONTRIBUTE}</label></div>
+						<!-- ENDIF -->
 						<!-- IF S_BBCODE_ALLOWED -->
 							<div><label for="disable_bbcode"><input type="checkbox" name="disable_bbcode" id="disable_bbcode"{S_BBCODE_CHECKED} /> {L_DISABLE_BBCODE}</label></div>
 						<!-- ENDIF -->

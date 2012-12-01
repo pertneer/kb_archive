@@ -43,10 +43,19 @@ $lang['permission_type']['kb_'] = 'Knowledge Base';
 
 $lang = array_merge($lang, array(
 	// Moderator permissions
-	'acl_m_kb'				=> array('lang'	=> 'Can moderate the knowledge base',					'cat' => 'kb'),
+	'acl_m_kb_time'			=> array('lang' => 'Can change article time',							'cat' => 'kb'),
+	'acl_m_kb_author'		=> array('lang' => 'Can change article author',							'cat' => 'kb'),
+	'acl_m_kb_view'			=> array('lang' => 'Can view unapproved articles',						'cat' => 'kb'),
+	'acl_m_kb_comment'		=> array('lang' => 'Can post moderator comments and edit all comments',	'cat' => 'kb'),
+	'acl_m_kb_edit'			=> array('lang' => 'Can edit articles',									'cat' => 'kb'),
+	'acl_m_kb_delete'		=> array('lang' => 'Can delete articles',								'cat' => 'kb'),
+	'acl_m_kb_req_edit'		=> array('lang' => 'Can edit and delete requests',						'cat' => 'kb'),
+	'acl_m_kb_status'		=> array('lang' => 'Can change status of articles',						'cat' => 'kb'),
 	
 	// Write permissions for KB
 	'acl_u_kb_add'			=> array('lang'	=> 'Can add articles',									'cat' => 'write'),
+	'acl_u_kb_add_co'		=> array('lang' => 'Can contribute to an open article',					'cat' => 'write'),
+	'acl_u_kb_add_op'		=> array('lang' => 'Can add articles open for contributions',			'cat' => 'write'),
 	'acl_u_kb_add_wa'		=> array('lang'	=> 'Can add articles without needing approval',			'cat' => 'write'),
 	'acl_u_kb_attach'		=> array('lang'	=> 'Can use attachments', 								'cat' => 'write'),
 	'acl_u_kb_bbcode'		=> array('lang'	=> 'Can use bbcodes', 									'cat' => 'write'),

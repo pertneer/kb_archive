@@ -19,6 +19,8 @@ if (!defined('IN_PHPBB'))
 // Contains ALL information about installing/updating the mod
 function get_kb_versions()
 {
+	global $user;
+
 	$versions = array(
 		'0.0.1'		=> array(
 			'table_add'	=> array(
@@ -555,6 +557,91 @@ function get_kb_versions()
 				array('u_kb_view', false),
 			),
 		),
+		
+		// New release includes revamp of moderator permissions
+		'0.3.4' => array(
+			'permission_remove' => array(
+				array('m_kb', true),
+			),
+			
+			'permission_add' => array(
+				array('u_kb_add_op', false),
+				array('u_kb_add_co', false),
+				array('m_kb_time', true),
+				array('m_kb_author', true),
+				array('m_kb_view', true),
+				array('m_kb_comment', true),
+				array('m_kb_edit', true),
+				array('m_kb_delete', true),
+				array('m_kb_req_edit', true),
+				array('m_kb_status', true),
+			),
+			
+			// Need to add contributions table aswell I think, or perhaps just a field
+			
+		),
+		
+		'0.3.5' => array(
+			// Remove and add moderation modules again due to new permission
+			'module_remove' => array(
+				array('mcp', 'MCP_KB', array(
+						'module_basename'	=> 'kb',
+						'modes'				=> array('queue', 'articles'),
+					),
+				),
+				array('mcp', '', 'MCP_KB'),
+			),
+			
+			// Add them again
+			'module_add' => array(
+				array('mcp', '', 'MCP_KB'),
+				array('mcp', 'MCP_KB', array(
+						'module_basename'	=> 'kb',
+						'modes'				=> array('queue', 'articles'),
+					),
+				),
+			),
+			
+			'table_column_add' => array(
+				array(KB_EDITS_TABLE, 'edit_type', array('VCHAR', 'a:0:{}')),
+				array(KB_EDITS_TABLE, 'edit_cat_id', array('UINT', 0)),
+				array(KB_EDITS_TABLE, 'edit_article_tags', array('VCHAR', '')),
+				array(KB_EDITS_TABLE, 'edit_article_type', array('UINT', 0)),
+				array(KB_EDITS_TABLE, 'edit_contribution', array('BOOL', 0)),
+				array(KB_TABLE, 'article_open', array('BOOL', 0)),
+			),
+			
+			/* Not removing these anyways
+			'table_column_remove' => array(
+				array(KB_EDITS_TABLE, 'edit_enable_bbcode'),
+				array(KB_EDITS_TABLE, 'edit_enable_smilies'),
+				array(KB_EDITS_TABLE, 'edit_enable_magic_url'),
+				array(KB_EDITS_TABLE, 'edit_enable_sig'),
+			),
+			*/
+			
+			// Clean history table
+			'custom' => 'kb_update_033_to_034',
+		),
+		
+		// Just spitting out versions as next release will be final beta release 0.4.0
+		'0.3.6' => array(
+			// Less queries when introducing these 2 columns... genious right?
+			'table_column_add' => array(
+				array(KB_TABLE, 'article_edit_type', array('VCHAR', 'a:0:{}')),
+				array(KB_TABLE, 'article_edit_contribution', array('BOOL', 0)),
+			),
+		),
+		
+		'0.3.7' => array(
+			'config_add' => array(
+				array('kb_link_name', $user->lang['KB']),
+			),
+		),
+		
+		'0.4.0' => array(
+			// Last version update for major changes
+		),
 	);
 
 	return $versions;
@@ -698,5 +785,25 @@ function kb_update_031_to_032($action, $version)
 		$db->sql_query($sql);
 	}
 
+}
+
+// Basicly clear history table due to revamp of it
+function kb_update_033_to_034($action, $version)
+{
+	global $db, $table_prefix;
+	
+	// Only run function when updating
+	if($action != 'update')
+	{
+		return;
+	}
+	
+	$sql = "DELETE FROM " . $table_prefix . "article_edits";
+	$db->sql_query($sql);
+	
+	// Reset edit info in main table
+	$sql = "UPDATE " . $table_prefix . "articles
+			SET article_last_edit_id = '0', article_last_edit_time = '0', article_edit_reason = '', article_edit_reason_global = '1'";
+	$db->sql_query($sql);
 }
 ?>

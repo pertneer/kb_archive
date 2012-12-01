@@ -19,8 +19,8 @@ class mcp_kb_info
 			'title'		=> 'MCP_KB',
 			'version'	=> '1.0.0',
 			'modes'		=> array(
-				'queue'			=> array('title' => 'MCP_KB_QUEUE', 'auth' => 'acl_m_kb', 'cat' => array('MCP_KB')),
-				'articles'		=> array('title' => 'MCP_KB_ARTICLES', 'auth' => 'acl_m_kb', 'cat' => array('MCP_KB')),
+				'queue'			=> array('title' => 'MCP_KB_QUEUE', 'auth' => 'acl_m_kb_status', 'cat' => array('MCP_KB')),
+				'articles'		=> array('title' => 'MCP_KB_ARTICLES', 'auth' => 'acl_m_kb_status', 'cat' => array('MCP_KB')),
 			),
 		);
 	}

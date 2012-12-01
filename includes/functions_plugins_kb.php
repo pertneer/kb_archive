@@ -139,25 +139,6 @@ function generate_menu($page = 'index', $cat_id = 0)
 		}
 	}
 	
-	$center_menu = cached_plugins('center');
-	foreach ($center_menu as $plugin)
-	{
-		if (!$config['kb_' . $plugin['FILE'] . '_enable'])
-		{
-			continue;
-		}
-	
-		$show_pages = unserialize($plugin['PERM']);
-		if (in_array($page, $show_pages))
-		{	
-			include($plugin_loc . 'kb_' . $plugin['FILE'] . '.' . $phpEx);
-			
-			$template->assign_block_vars('center_menu', array(
-				'CONTENT'		=> $plugin['FILE']($cat_id),
-			));
-		}
-	}
-	
 	$right_menu = cached_plugins('right');
 	foreach ($right_menu as $plugin)
 	{
@@ -198,17 +179,6 @@ function cached_plugins($mode)
 			}
 		break;
 		
-		case 'center':
-			if (($center_menu = $cache->get('_kb_plugin_center_menu')) === false)
-			{
-				$recache = true;
-			}
-			else
-			{
-				return $center_menu;
-			}
-		break;
-		
 		case 'right':
 			if (($right_menu = $cache->get('_kb_plugin_right_menu')) === false)
 			{
@@ -227,7 +197,6 @@ function cached_plugins($mode)
 	{
 		// Must destroy them all as it will just add them otherwise
 		$cache->destroy('_kb_plugin_left_menu');
-		$cache->destroy('_kb_plugin_center_menu');
 		$cache->destroy('_kb_plugin_right_menu');
 	
 		if (!defined('KB_PLUGIN_TABLE'))
@@ -242,7 +211,6 @@ function cached_plugins($mode)
 		$rows = $db->sql_fetchrowset($result);
 		
 		$kb_left_plugins = array();
-		$kb_center_plugins = array();
 		$kb_right_plugins = array();
 		
 		foreach($rows as $row)
@@ -270,14 +238,6 @@ function cached_plugins($mode)
 				);
 			}
 			
-			if ($row['plugin_menu'] == CENTER_MENU)
-			{
-				$kb_center_plugins[] = array(
-					'FILE'	=> $file,
-					'PERM'	=> $result,
-				);
-			}
-			
 			if ($row['plugin_menu'] == RIGHT_MENU)
 			{
 				$kb_right_plugins[] = array(
@@ -288,17 +248,12 @@ function cached_plugins($mode)
 		}
 		
 		$cache->put('_kb_plugin_left_menu', $kb_left_plugins);
-		$cache->put('_kb_plugin_center_menu', $kb_center_plugins);
 		$cache->put('_kb_plugin_right_menu', $kb_right_plugins);
 		
 		switch ($mode)
 		{
 			case 'left':
 				return $kb_left_plugins;
-			break;
-			
-			case 'center':
-				return $kb_center_plugins;
 			break;
 			
 			case 'right':
@@ -364,7 +319,6 @@ function add_plugin($filename, $details)
 	sort_plugin_order('add', $details['PLUGIN_MENU'], $filename);
 	
 	$cache->destroy('_kb_plugin_left_menu');
-	$cache->destroy('_kb_plugin_center_menu');
 	$cache->destroy('_kb_plugin_right_menu');
 }
 
@@ -389,7 +343,6 @@ function update_plugin_table($filename, $details)
 	
 	$cache->destroy('config');
 	$cache->destroy('_kb_plugin_left_menu');
-	$cache->destroy('_kb_plugin_center_menu');
 	$cache->destroy('_kb_plugin_right_menu');
 }
 
@@ -408,7 +361,6 @@ function del_plugin($filename)
 	
 	$cache->destroy('config');
 	$cache->destroy('_kb_plugin_left_menu');
-	$cache->destroy('_kb_plugin_center_menu');
 	$cache->destroy('_kb_plugin_right_menu');
 }
 
@@ -434,7 +386,6 @@ function update_plugin_menu($filename, $config_value)
 		sort_plugin_order('add', $config_value, $filename);
 		
 		$cache->destroy('_kb_plugin_left_menu');
-		$cache->destroy('_kb_plugin_center_menu');
 		$cache->destroy('_kb_plugin_right_menu');
 	}
 }
@@ -455,7 +406,6 @@ function update_pages($filename, $pages)
 	$db->sql_query($sql);
 	
 	$cache->destroy('_kb_plugin_left_menu');
-	$cache->destroy('_kb_plugin_center_menu');
 	$cache->destroy('_kb_plugin_right_menu');
 }
 
@@ -687,7 +637,6 @@ function sort_plugin_order($mode, $menu, $filename, $action = 'move_up')
 	}	
 
 	$cache->destroy('_kb_plugin_left_menu');
-	$cache->destroy('_kb_plugin_center_menu');
 	$cache->destroy('_kb_plugin_right_menu');
 }
 
@@ -796,40 +745,6 @@ function on_posting($type, $mode, $data = false)
 							$function($data);
 						}
 					}
-				break;
-			}
-		break;
-		
-		case 'comment':
-			switch ($mode)
-			{
-				case 'add':
-				
-				break;
-				
-				case 'edit':
-				
-				break;
-				
-				case 'delete':
-				
-				break;
-			}
-		break;
-		
-		case 'request':
-			switch ($mode)
-			{
-				case 'add':
-				
-				break;
-				
-				case 'edit':
-				
-				break;
-				
-				case 'delete':
-				
 				break;
 			}
 		break;

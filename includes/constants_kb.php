@@ -19,7 +19,7 @@ if (!defined('IN_PHPBB'))
 // This file holds extra constants defined to use in the KB mod.
 //
 
-define('KB_VERSION', '0.3.3');
+define('KB_VERSION', '0.4.0');
 
 
 // Extra db tables
@@ -76,6 +76,15 @@ define('STATUS_PENDING', 2);
 // Menu system
 define('NO_MENU', 0);
 define('LEFT_MENU', 1);
-define('CENTER_MENU', 2);
 define('RIGHT_MENU', 3);
+
+// Edit type
+// Used for history to determine what type of edits that have been made to the article
+define('EDIT_TYPE_TITLE', 1);
+define('EDIT_TYPE_DESC', 2);
+define('EDIT_TYPE_CONTENT', 3);
+define('EDIT_TYPE_TAGS', 4);
+define('EDIT_TYPE_TYPE', 5);
+define('EDIT_TYPE_CAT', 6);
+define('EDIT_TYPE_STATUS', 7);
 ?>

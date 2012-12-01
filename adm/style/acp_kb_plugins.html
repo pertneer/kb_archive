@@ -121,43 +121,7 @@
 						<!-- ENDIF -->
 					</td>
 				</tr>
-			<!-- END left_menu -->
-			<tr>
-				<td class="row3" colspan="5"><strong>{L_CENTER_MENU}</strong></td>
-			</tr>
-			<!-- IF not .center_menu -->
-				<tr>
-					<td class="row1" colspan="5" style="text-align: center;">{L_NO_CENTER_MENU_PLUGINS}</td>
-				</tr>
-			<!-- ENDIF -->
-			<!-- BEGIN center_menu -->
-				<tr>
-					<td><strong>{center_menu.PLUGIN_NAME}</strong><br /><span>{center_menu.PLUGIN_DESC}</span></td>
-					<td style="text-align: left;">{center_menu.PLUGIN_COPY}</td>
-					<td style="text-align: center;">{center_menu.PLUGIN_VERSION}</td>
-					<td style="text-align: center;"><a href="{center_menu.U_SETTINGS}">{L_SETTINGS}</a></td>
-					<td style="vertical-align: middle; width: 100px; text-align: right; white-space: nowrap;">
-						<!-- IF center_menu.S_FIRST_ROW && not center_menu.S_LAST_ROW -->
-							{ICON_MOVE_UP_DISABLED}
-							<a href="{center_menu.U_MOVE_DOWN}">{ICON_MOVE_DOWN}</a>
-						<!-- ELSEIF not center_menu.S_FIRST_ROW && not center_menu.S_LAST_ROW -->
-							<a href="{center_menu.U_MOVE_UP}">{ICON_MOVE_UP}</a>
-							<a href="{center_menu.U_MOVE_DOWN}">{ICON_MOVE_DOWN}</a>
-						<!-- ELSEIF center_menu.S_LAST_ROW && not center_menu.S_FIRST_ROW -->
-							<a href="{center_menu.U_MOVE_UP}">{ICON_MOVE_UP}</a>
-							{ICON_MOVE_DOWN_DISABLED}
-						<!-- ELSE -->
-							{ICON_MOVE_UP_DISABLED}
-							{ICON_MOVE_DOWN_DISABLED}
-						<!-- ENDIF -->
-						<!-- IF center_menu.PLUGIN_PERM eq 1 -->
-							{ICON_DELETE_DISABLED}
-						<!-- ELSE -->
-							<a href="{left_menu.U_UNINSTALL}">{ICON_DELETE}</a>
-						<!-- ENDIF -->
-					</td>
-				</tr>
-			<!-- END center_menu -->
+			<!-- END left_menu -->			
 			<tr>
 				<td class="row3" colspan="5"><strong>{L_RIGHT_MENU}</strong></td>
 			</tr>
@@ -189,7 +153,7 @@
 						<!-- IF right_menu.PLUGIN_PERM eq 1 -->
 							{ICON_DELETE_DISABLED}
 						<!-- ELSE -->
-							<a href="{left_menu.U_UNINSTALL}">{ICON_DELETE}</a>
+							<a href="{right_menu.U_UNINSTALL}">{ICON_DELETE}</a>
 						<!-- ENDIF -->
 					</td>
 				</tr>

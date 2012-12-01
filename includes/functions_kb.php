@@ -190,13 +190,13 @@ function kb_upload_attachment($form_name, $cat_id, $local = false, $local_storag
 	$filedata['thumbnail'] = ($ext_cat_id == ATTACHMENT_CATEGORY_IMAGE && $config['img_create_thumbnail']) ? 1 : 0;
 
 	// Check Image Size, if it is an image
-	if (!$auth->acl_get('a_') && !$auth->acl_get('m_kb', $cat_id) && $ext_cat_id == ATTACHMENT_CATEGORY_IMAGE)
+	if (!$auth->acl_get('a_') && !$auth->acl_get('m_kb_view') && $ext_cat_id == ATTACHMENT_CATEGORY_IMAGE)
 	{
 		$file->upload->set_allowed_dimensions(0, 0, $config['img_max_width'], $config['img_max_height']);
 	}
 
 	// Admins and mods are allowed to exceed the allowed filesize
-	if (!$auth->acl_get('a_') && !$auth->acl_get('m_kb', $cat_id))
+	if (!$auth->acl_get('a_') && !$auth->acl_get('m_kb_view'))
 	{
 		if (!empty($extensions[$file->get('extension')]['max_filesize']))
 		{
@@ -417,6 +417,98 @@ function kb_delete_attachments($mode, $ids, $resync = true)
 	return $num_deleted;
 }
 
+/*
+* Check edit type
+* Function checks for the edit types and returns array ready to be serialized
+*/
+function check_edit_type($data, $old_data, $update_message = false)
+{
+	$edit_type = array();
+	if(utf8_clean_string($data['article_title']) != $old_data['article_title_clean'])
+	{
+		$edit_type[] = EDIT_TYPE_TITLE;
+	}
+	
+	if($data['article_desc'] != $old_data['article_desc'])
+	{
+		$edit_type[] = EDIT_TYPE_DESC;
+	}
+	
+	if($update_message)
+	{
+		$edit_type[] = EDIT_TYPE_CONTENT;
+	}
+	
+	if($data['article_tags'] != $old_data['article_tags'])
+	{
+		$edit_type[] = EDIT_TYPE_TAGS;
+	}
+	
+	if($data['article_type'] != $old_data['article_type'])
+	{
+		$edit_type[] = EDIT_TYPE_TYPE;
+	}
+	
+	if($data['cat_id'] != $old_data['cat_id'])
+	{
+		$edit_type[] = EDIT_TYPE_CAT;
+	}
+	
+	if($data['article_status'] != $old_data['article_status'])
+	{
+		$edit_type[] = EDIT_TYPE_STATUS;
+	}
+	
+	return $edit_type;
+}
+
+/**
+* Submit edit
+* submits all information about article edits to the 
+*/
+function edit_submit($data, $old_data, $update_message)
+{
+	global $db, $user;
+	
+	// Build edits table to take care of old data
+	$sql_data[KB_EDITS_TABLE]['sql'] = array(
+		'article_id'						=> 		$old_data['article_id'],
+		'parent_id'							=>		$old_data['article_last_edit_id'], // So silly of me, no need for a function here
+		'edit_user_id'						=>		$user->data['user_id'], // Data of the user doing the edit
+		'edit_user_name'					=>		$user->data['username'],
+		'edit_user_color'					=>		$user->data['user_colour'],
+		'edit_time'							=>		$old_data['article_time'],
+		'edit_article_title'				=>		$old_data['article_title'],
+		'edit_article_desc'					=>		$old_data['article_desc'],
+		'edit_article_desc_bitfield'		=>		$old_data['article_desc_bitfield'],
+		'edit_article_desc_options'			=>		$old_data['article_desc_options'],
+		'edit_article_desc_uid'				=>		$old_data['article_desc_uid'],
+		'edit_article_checksum'				=>		$old_data['article_checksum'],
+		'edit_article_text'					=>		$old_data['article_text'],
+		'edit_enable_bbcode'                =>      $old_data['enable_bbcode'],
+		'edit_enable_smilies'               =>      $old_data['enable_smilies'],
+		'edit_enable_magic_url'             =>      $old_data['enable_magic_url'],
+		'edit_enable_sig'                   =>      $old_data['enable_sig'],
+		'edit_bbcode_bitfield'				=>		$old_data['bbcode_bitfield'],
+		'edit_bbcode_uid'					=>		$old_data['bbcode_uid'],
+		'edit_article_status'				=>		$old_data['article_status'],
+		'edit_reason'						=>		$old_data['article_edit_reason'],
+		'edit_reason_global'				=>		$old_data['article_edit_reason_global'],
+		'edit_moderated'					=>		$old_data['edit_moderated'],
+		'edit_type'							=>		$old_data['article_edit_type'], //serialize($edit_type),
+		'edit_cat_id'						=>		$old_data['cat_id'],
+		'edit_article_tags'					=>		$old_data['article_tags'],
+		'edit_article_type'					=>		$old_data['article_type'],
+		'edit_contribution'					=>		$old_data['article_edit_contribution'],
+	);
+	
+	$sql = 'INSERT INTO ' . KB_EDITS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_data[KB_EDITS_TABLE]['sql']);
+	$db->sql_query($sql);
+	$edit_id = $db->sql_nextid();
+	
+	return $edit_id;
+}
+
 /**
 * Submit Article
 */
@@ -441,46 +533,7 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 	$sql_data = array();
 	$data['article_title'] = truncate_string($data['article_title']);
 	$data['article_desc'] = truncate_string($data['article_desc'], 300, 500);
-	if($mode == 'edit')
-	{
-		// Build edits table to take care of old data
-		$sql_data[KB_EDITS_TABLE]['sql'] = array(
-				'article_id'						=> 		$old_data['article_id'],
-				'parent_id'							=>		$old_data['article_last_edit_id'], // So silly of me, no need for a function here
-				'edit_user_id'						=>		$user->data['user_id'], // Data of the user doing the edit
-				'edit_user_name'					=>		$user->data['username'],
-				'edit_user_color'					=>		$user->data['user_colour'],
-				'edit_time'							=>		$old_data['article_time'],
-				'edit_article_title'				=>		$old_data['article_title'],
-				'edit_article_desc'					=>		$old_data['article_desc'],
-				'edit_article_desc_bitfield'		=>		$old_data['article_desc_bitfield'],
-				'edit_article_desc_options'			=>		$old_data['article_desc_options'],
-				'edit_article_desc_uid'				=>		$old_data['article_desc_uid'],
-				'edit_article_text'					=>		'',
-				'edit_enable_bbcode'				=>		$old_data['enable_bbcode'],
-				'edit_enable_smilies'				=>		$old_data['enable_smilies'],
-				'edit_enable_magic_url'				=>		$old_data['enable_magic_url'],
-				'edit_enable_sig'					=>		$old_data['enable_sig'],
-				'edit_bbcode_bitfield'				=>		$old_data['bbcode_bitfield'],
-				'edit_bbcode_uid'					=>		$old_data['bbcode_uid'],
-				'edit_article_status'				=>		$old_data['article_status'],
-				'edit_reason'						=>		$old_data['article_edit_reason'],
-				'edit_reason_global'				=>		$old_data['article_edit_reason_global'],
-				'edit_moderated'					=>		$old_data['edit_moderated'],
-		);
-		
-		if($update_message)
-		{
-			$sql_data[KB_EDITS_TABLE]['sql'] = array_merge($sql_data[KB_EDITS_TABLE]['sql'], array(
-				'edit_article_text'					=>		$old_data['article_text'],
-				'edit_article_checksum'				=>		$old_data['article_checksum'],
-			));
-		}
-		
-		$sql = 'INSERT INTO ' . KB_EDITS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_data[KB_EDITS_TABLE]['sql']);
-		$db->sql_query($sql);
-		$edit_id = $db->sql_nextid();
-	}
+	$edit_type = check_edit_type($data, $old_data, $update_message);
 	
 	// Build sql data for articles table
 	$sql_data[KB_TABLE]['sql'] = array(
@@ -511,10 +564,15 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 		'article_last_edit_id'			=>	$data['article_last_edit_id'],
 		'article_edit_reason'			=>	$data['article_edit_reason'],
 		'article_edit_reason_global'	=>	$data['article_edit_reason_global'],
+		'article_open'					=>  $data['article_open'],
+		'article_edit_contribution'		=>  $data['article_contribution'],
+		'article_edit_type'				=>  serialize($edit_type),
 	);
 	
+	// Submit an edit based on this edit
 	if($mode == 'edit')
 	{
+		$edit_id = edit_submit($data, $old_data, $update_message);
 		$sql_data[KB_TABLE]['sql']['article_last_edit_id'] = $edit_id;
 	}
 	
@@ -924,7 +982,7 @@ function request_submit($mode, &$data, $update_message = true)
 /**
 * Generate inline attachment entry
 */
-function kb_posting_gen_attachment_entry($attachment_data, &$filename_data, $show_attach_box = true)
+function kb_posting_gen_attachment_entry($attachment_data, &$filename_data, $show_attach_box = true, $cat_id)
 {
 	global $template, $config, $phpbb_root_path, $phpEx, $user, $auth;
 
@@ -951,7 +1009,7 @@ function kb_posting_gen_attachment_entry($attachment_data, &$filename_data, $sho
 				$hidden .= '<input type="hidden" name="attachment_data[' . $count . '][' . $key . ']" value="' . $value . '" />';
 			}
 
-			$download_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'mode=view&amp;id=' . (int) $attach_row['attach_id'], true, ($attach_row['is_orphan']) ? $user->session_id : false);
+			$download_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'mode=view&amp;c=' . $cat_id . '&amp;id=' . (int) $attach_row['attach_id'], true, ($attach_row['is_orphan']) ? $user->session_id : false);
 
 			$template->assign_block_vars('attach_row', array(
 				'FILENAME'			=> basename($attach_row['real_filename']),
@@ -1022,7 +1080,7 @@ function kb_handle_notification($article_id, $article_title, $notify_on)
 				$messenger->assign_vars(array(
 					'ARTICLE_TITLE'	=> htmlspecialchars_decode($article_title),
 					'USERNAME'		=> htmlspecialchars_decode($row['username']),
-					'U_ARTICLE'		=> htmlspecialchars_decode(generate_board_url() . "kb.$phpEx?a=" . $article_id),
+					'U_ARTICLE'		=> htmlspecialchars_decode(generate_board_url() . "/kb.$phpEx?a=" . $article_id),
 				));
 
 				$messenger->send(NOTIFY_EMAIL);
@@ -1395,12 +1453,12 @@ function show_request_list($in_menu, $num, $start = 0)
 */
 function generate_kb_nav($page_title = '', $data = array())
 {
-	global $phpEx, $user, $phpbb_root_path, $template;
+	global $phpEx, $user, $phpbb_root_path, $template, $config;
 	
 	// Knowledge Base link
 	$template->assign_block_vars('navlinks', array(
 		'S_IS_CAT'		=> true,
-		'FORUM_NAME'	=> $user->lang['KB'],
+		'FORUM_NAME'	=> $config['kb_link_name'],
 		'FORUM_ID'		=> 0,
 		'U_VIEW_FORUM'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx"))
 	);
@@ -1517,7 +1575,7 @@ function kb_get_cat_children($cat_id)
 * @param array &$update_count The attachment counts to be updated - will be filled
 * @param bool $preview If set to true the attachments are parsed for preview. Within preview mode the comments are fetched from the given $attachments array and not fetched from the database.
 */
-function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview = false)
+function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview = false, $cat_id)
 {
 	if (!sizeof($attachments))
 	{
@@ -1703,14 +1761,14 @@ function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview
 				$display_cat = ATTACHMENT_CATEGORY_NONE;
 			}
 
-			$download_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id']);
+			$download_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;c=' . $cat_id);
 
 			switch ($display_cat)
 			{
 				// Images
 				case ATTACHMENT_CATEGORY_IMAGE:
 					$l_downloaded_viewed = 'VIEWED_COUNT';
-					$inline_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id']);
+					$inline_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;c=' . $cat_id);
 					$download_link .= '&amp;mode=view';
 
 					$block_array += array(
@@ -1724,7 +1782,7 @@ function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview
 				// Images, but display Thumbnail
 				case ATTACHMENT_CATEGORY_THUMB:
 					$l_downloaded_viewed = 'VIEWED_COUNT';
-					$thumbnail_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;t=1');
+					$thumbnail_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;t=1' . '&amp;c=' . $cat_id);
 					$download_link .= '&amp;mode=view';
 
 					$block_array += array(
@@ -2455,6 +2513,86 @@ function make_cat_select($select_id = false, $ignore_id = false, $in_acp = false
 	return $cat_list;
 }
 
+// Returns array with select options for date, month, year, hours and minutes.
+function make_time_selects($current_time)
+{
+	global $user;
+	
+	// Set up a helping month array for the lang files
+	$month_names = array(
+		1	=> 'January',
+		2	=> 'February',
+		3	=> 'March',
+		4	=> 'April',
+		5	=> 'May',
+		6	=> 'June',
+		7	=> 'July',
+		8	=> 'August',
+		9 	=> 'September',
+		10	=> 'October',
+		11	=> 'November',
+		12	=> 'December',
+	);
+	
+	// Convert current timestamp to a date and split it up so it will become, date:month:year:hour:min
+	$date = date('j:n:Y:G:i', $current_time);
+	$date = explode(':', $date);
+	
+	$month_options = "";
+	for($i = 1; $i <= 12; $i++)
+	{
+		$selected = ($date[1] == $i) ? ' selected="selected"' : '';
+		$month_options .= "<option value='" . $i . "'" . $selected . ">" . $user->lang['datetime'][$month_names[$i]] . "</option>\n";
+	}
+	
+	$day_options = "";
+	for($i = 1; $i <= 31; $i++)
+	{
+		$selected = ($date[0] == $i) ? ' selected="selected"' : '';
+		$day_options .= "<option value='" . $i . "'" . $selected . ">" . $i . "</option>\n";
+	}
+	
+	$year_options = "";
+	for($i = $date[2] - 10; $i < ($date[2] + 10); $i++)
+	{
+		$selected = ($date[2] == $i) ? ' selected="selected"' : '';
+		$year_options .= "<option value='" . $i . "'" . $selected . ">" . $i . "</option>\n";
+	}
+	
+	$hour_options = "";
+	for($i = 0; $i < 24; $i++)
+	{
+		$o = "";
+		if($i < 10 )
+		{
+			$o = "0";
+		}
+		$selected = ($date[3] == $i) ? ' selected="selected"' : '';
+		$hour_options .= "<option value='" . $i . "'" . $selected . ">" . $o . $i . "</option>\n";
+	}
+	
+	$min_options = "";
+	for($i = 0; $i < 60; $i++)
+	{
+		$o = "";
+		if($i < 10)
+		{
+			$o = "0";
+		}
+		$minute = $o . $i;
+		$selected = ($date[4] == $minute) ? ' selected="selected"' : '';
+		$min_options .= "<option value='" . $i . "'" . $selected . ">" . $minute . "</option>\n";
+	}
+	
+	return array(
+		'day'	=> $day_options,
+		'month' => $month_options,
+		'year'	=> $year_options,
+		'hour'	=> $hour_options,
+		'min'	=> $min_options,
+	);
+}
+
 // Insert article type into article data
 // Mode can be both|img|title
 function gen_article_type($article_type, $article_title, $types, $icons)
@@ -2501,8 +2639,8 @@ function gen_kb_auth_level($cat_id = false)
 	$rules = array(
 		($auth->acl_get('u_kb_add', $cat_id)) ? sprintf($user->lang['KB_PERM_ADD'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_ADD'], $user->lang['KB_NOT']),
 		($auth->acl_get('u_kb_comment', $cat_id)) ? sprintf($user->lang['KB_PERM_COM'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_COM'], $user->lang['KB_NOT']),
-		($user->data['is_registered'] && $auth->acl_gets(array('u_kb_edit', 'm_kb'), $cat_id)) ? sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_NOT']),
-		($user->data['is_registered'] && $auth->acl_gets(array('u_kb_delete', 'm_kb'), $cat_id)) ? sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_NOT']),
+		($user->data['is_registered'] && $auth->acl_gets(array('u_kb_edit', 'm_kb_edit'), $cat_id)) ? sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_NOT']),
+		($user->data['is_registered'] && $auth->acl_gets(array('u_kb_delete', 'm_kb_delete'), $cat_id)) ? sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_NOT']),
 		($auth->acl_get('u_kb_rate', $cat_id)) ? sprintf($user->lang['KB_PERM_RATE'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_RATE'], $user->lang['KB_NOT']),
 		($auth->acl_get('u_kb_viewhistory', $cat_id)) ? sprintf($user->lang['KB_PERM_HIST'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_HIST'], $user->lang['KB_NOT']),
 	);

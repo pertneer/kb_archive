@@ -57,12 +57,6 @@ class acp_kb
 				$config_show = false;
 			break;
 			
-			case 'plugin_menu':
-				$this->tpl_name = 'acp_kb_plugins';
-				$this->page_title = 'ACP_KB_' . strtoupper($mode);
-				$config_show = false;
-			break;
-			
 			case 'health_check':
 				$this->tpl_name = 'acp_kb_health';
 				$this->page_title = 'ACP_KB_HEALTH_CHECK';
@@ -84,6 +78,7 @@ class acp_kb
 					'vars'	=> array(
 						'legend1'				=> 'ACP_KB_SETTINGS',
 						'kb_enable'				=> array('lang' => 'KB_ENABLE',			'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),						
+						'kb_link_name'			=> array('lang' => 'KB_LINK_NAME',		'validate' => 'string',	'type' => 'text:40:50', 	'explain' => true),						
 						'kb_allow_subscribe'	=> array('lang' => 'KB_ALLOW_SUB',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_allow_bookmarks'	=> array('lang' => 'KB_ALLOW_BOOK',		'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_articles_per_page'	=> array('lang' => 'KB_ART_PER_PAGE',	'validate' => 'int',	'type' => 'text:3:5', 		'explain' => false),
@@ -230,21 +225,6 @@ class acp_kb
 									'PLUGIN_DESC'		=> $row['plugin_desc'],
 									'PLUGIN_COPY'		=> $row['plugin_copy'],
 									'PLUGIN_VERSION'	=> $row['plugin_version'],
-									'PLUGIN_PERM'		=> $row['plugin_perm'],
-									'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
-									'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
-									'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
-									'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
-								));
-							}
-							
-							if ($row['plugin_menu'] == CENTER_MENU)
-							{
-								$template->assign_block_vars('center_menu', array(
-									'PLUGIN_NAME'		=> $row['plugin_name'],
-									'PLUGIN_DESC'		=> $row['plugin_desc'],
-									'PLUGIN_COPY'		=> $row['plugin_copy'],
-									'PLUGIN_VERSION'	=> $row['plugin_version'],									
 									'PLUGIN_PERM'		=> $row['plugin_perm'],
 									'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
 									'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
@@ -509,7 +489,7 @@ class acp_kb
 */
 function select_menu_check($value, $key = '')
 {
-	$radio_ary = array(LEFT_MENU => 'LEFT_MENU', CENTER_MENU => 'CENTER_MENU', RIGHT_MENU => 'RIGHT_MENU');
+	$radio_ary = array(LEFT_MENU => 'LEFT_MENU', RIGHT_MENU => 'RIGHT_MENU');
 
 	return h_radio('config[' . $key . ']', $radio_ary, $value, $key);
 }

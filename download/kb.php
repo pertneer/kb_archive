@@ -36,6 +36,7 @@ include($phpbb_root_path . 'includes/kb.' . $phpEx);
 
 $download_id = request_var('id', 0);
 $mode = request_var('mode', '');
+$cat_id = request_var('c', 0);
 $thumbnail = request_var('t', false);
 
 // Start session management, do not update session page.
@@ -89,7 +90,7 @@ if ($attachment['is_orphan'])
 }
 else
 {
-	if (!$auth->acl_get('u_kb_download'))
+	if (!$auth->acl_get('u_kb_download', $cat_id))
 	{
 		header('HTTP/1.0 403 Forbidden');
 		trigger_error('SORRY_AUTH_VIEW_ATTACH');

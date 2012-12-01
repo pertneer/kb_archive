@@ -11,16 +11,30 @@
 				<div class="inner"><span class="corners-top"><span></span></span>
 					<div class="postbody" style="width: 100%;">
 						<h3><a href="{U_VIEW_ARTICLE}">{ARTICLE_TITLE}</a></h3>
-						
-						<p class="author">{MINI_POST_IMG}{L_POST_BY_AUTHOR} <strong>{ARTICLE_AUTHOR_FULL}</strong> &raquo; {ARTICLE_TIME} </p>
-						<h4>{L_DESCRIPTION}:</h2>
+						<h4>{L_EDIT_AUTHOR}:</h4>
+						<div class="content">{EDIT_AUTHOR}</div>
+						<h4>{L_EDIT_TIME}:</h4>
+						<div class="content">{EDIT_TIME}</div>
+						<h4>{L_REV_CHANGES}:</h4>
+						<p><!-- BEGIN changerow -->{changerow.CHANGE}<br /><!-- END changerow --></p>
+						<!-- IF EDIT_REASON != '' and EDIT_REASON_GLOBAL -->
+						<h4>{L_EDIT_REASON}:</h4>
+						<div class="content">{EDIT_REASON}</div>
+						<!-- ENDIF -->
+						<h4>{L_ARTICLE_TITLE}:</h4> 
+						<div class="content">{EDIT_TITLE}</div>
+						<h4>{L_ARTICLE_CAT}:</h4> 
+						<div class="content">{CAT_NAME}</div>
+						<h4>{L_ARTICLE_TYPE}:</h4> 
+						<div class="content">{EDIT_TYPE}</div>
+						<h4>{L_TAGS}:</h4> 
+						<div class="content">{EDIT_TAGS}</div>
+						<h4>{L_ARTICLE_STATUS}:</h4> 
+						<div class="content">{EDIT_STATUS}</div>
+						<h4>{L_ARTICLE_DESC}:</h2>
 						<div class="content">{ARTICLE_DESC}</div>
 						<h4>{L_CONTENT}:</h4>
 						<div class="content">{ARTICLE_MESSAGE}</div>
-
-						<br />
-
-						<!-- IF SIGNATURE or ARTICLE_TAGS != '' --><div id="sig" class="signature"><!-- IF SIGNATURE -->{SIGNATURE}<!-- ENDIF --><!-- IF ARTICLE_TAGS != '' --><!-- IF SIGNATURE --><br /><!-- ENDIF --><strong>{L_TAGS}:</strong> {ARTICLE_TAGS}<!-- ENDIF --></div><!-- ENDIF -->
 					</div>
 				<span class="corners-bottom"><span></span></span></div>
 			</div>
@@ -226,18 +240,15 @@
 				
 				<ul class="topiclist cplist">
 				<!-- BEGIN editrow -->
-					<li class="row <!-- IF editrow.S_ROW_COUNT is odd -->bg1<!-- ELSE -->bg2<!-- ENDIF -->">
+					<li class="row <!-- IF editrow.S_IS_CONTRIB -->bg3<!-- ELSE --><!-- IF editrow.S_ROW_COUNT is odd -->bg1<!-- ELSE -->bg2<!-- ENDIF --><!-- ENDIF -->">
 						<dl>
-							<!-- IF editrow.S_STATUS_EDIT -->
-							<dt>{editrow.L_STATUS_EDIT}<br /><!-- IF editrow.REASON --><strong>{L_REASON}:</strong> {editrow.REASON}<!-- ENDIF --></dt>
-							<!-- ELSE -->
 							<dt style="width: 30%"><a href="{editrow.U_EDIT}">{editrow.ARTICLE_TITLE}</a> {editrow.EDIT_BY} <!-- IF editrow.S_NEWEST -->&nbsp;<strong>({L_NEWEST})</strong><!-- ELSEIF editrow.S_ORG -->&nbsp;<strong>({L_ORIGINAL})</strong><!-- ENDIF --><br />
-								<!-- IF editrow.EDIT_REASON -->{L_REASON}: <strong>{editrow.EDIT_REASON}</strong><!-- ENDIF --></dt>
-							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_F --><input type="radio" id="df-{editrow.NUM}" onClick="" name="df" value="{editrow.EDIT_ID}"><!-- ELSE -->&nbsp;<!-- ENDIF --></dd>
-							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_T --><input type="radio" id="dt-{editrow.NUM}" onClick="" name="dt" value="{editrow.EDIT_ID}"><!-- ELSE -->&nbsp;<!-- ENDIF --></dd>
+								[ <a href="{editrow.U_EDIT}">{L_VIEW_REV_INFO}</a> ]</dt>
+							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_F --><input type="radio" id="df-{editrow.NUM}" onClick="" name="df" value="{editrow.EDIT_ID}"><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
+							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_T --><input type="radio" id="dt-{editrow.NUM}" onClick="" name="dt" value="{editrow.EDIT_ID}"><!-- ELSE -->{L_N_A}<!-- ENDIF --></dd>
+							
 							<dd class="time" style="width: 30%"><span>{editrow.EDIT_TIME}</span></dd>
 							<dd class="extra">{editrow.EDIT_STATUS}</dd>
-							<!-- ENDIF -->
 						</dl>
 					</li>
 				<!-- END editrow -->

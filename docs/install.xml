@@ -37,13 +37,24 @@
       			</contributions-group>
 			</author>
 		</author-group>
-		<mod-version>0.3.0</mod-version>
+		<mod-version>0.4.0</mod-version>
 		<installation>
 			<level>intermediate</level>
 			<time>1800</time>
 			<target-version>3.0.5</target-version>
 		</installation>
 		<history>
+			<entry>
+				<date>2009-08-31</date>
+				<rev-version>0.4.0</rev-version>
+				<changelog lang="en">
+					<change>Third and last BETA release</change>
+					<change>Added feature: Expansion of moderator permissions</change>
+					<change>Added feature: Open articles where all users can make contributions</change>
+					<change>Changed feature: The history section has been expanded and changed radically.</change>
+					<change>Fixed a decent amount of bugs</change>
+				</changelog>
+			</entry>
 			<entry>
 				<date>2009-08-04</date>
 				<rev-version>0.3.0</rev-version>
@@ -254,9 +265,9 @@
 						<open src="/includes/functions.php">
 											<edit>
 							<find><![CDATA[		'U_RESTORE_PERMISSIONS'	=> ($user->data['user_perm_from'] && $auth->acl_get('a_switchperm')) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'mode=restore_perm') : '',]]></find>
-															<action type="after-add"><![CDATA[		'U_KB'					=> append_sid("{$phpbb_root_path}kb.$phpEx"),
-		'L_KB_EXPLAIN'			=> $user->lang['KB_EXPLAIN'],
-		'L_KB'					=> $user->lang['KNOWLEDGE_BASE'],]]></action>
+															<action type="after-add"><![CDATA[
+		'U_KB'					=> append_sid("{$phpbb_root_path}kb.$phpEx"),
+		'L_KB'					=> $config['kb_link_name'],]]></action>
 													</edit>
 									</open>
 						<open src="/includes/acp/acp_attachments.php">
@@ -284,7 +295,7 @@
 							<edit>
 								<find><![CDATA[							'ALLOW_GROUP'			=> $ext_group_row['allow_group'],
 							'ALLOW_IN_PM'			=> $ext_group_row['allow_in_pm'],]]></find>
-								<action type="add-after"><![CDATA[							// KB Mod Begin
+								<action type="after-add"><![CDATA[							// KB Mod Begin
 							'ALLOW_IN_KB'			=> $ext_group_row['allow_in_kb'],
 							// KB Mod End]]></action>
 							</edit>

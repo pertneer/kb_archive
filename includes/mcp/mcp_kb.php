@@ -45,7 +45,7 @@ class mcp_kb
 		$kb = new knowledge_base(0, false);
 		
 		// Not sure about auth being checked when we don't specify a mode?
-		if(!$auth->acl_get('m_kb'))
+		if(!$auth->acl_gets('m_kb_status', 'm_kb_comment'))
 		{
 			trigger_error('NO_MCP_PERM');
 		}
@@ -148,6 +148,7 @@ class mcp_kb
 						'edit_reason'						=>		$reason,
 						'edit_reason_global'				=>		($global) ? 1 : 0,
 						'edit_moderated'					=>		1,
+						'edit_type'							=>		EDIT_TYPE_STATUS,
 					);
 					
 					$sql = 'INSERT INTO ' . KB_EDITS_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_data);

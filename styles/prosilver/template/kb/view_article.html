@@ -18,6 +18,18 @@
 				</div>
 			</div>
 		<!-- ENDIF -->
+				<!-- IF .changerow -->
+				<div id="a" class="panel">
+					<div class="inner">
+						<span class="corners-top"><span></span></span>
+							<div class="postbody" style="width: 100%;">
+							<h4>{L_REV_CHANGES}:</h4>
+							<p><!-- BEGIN changerow -->{changerow.CHANGE}<br /><!-- END changerow --></p>
+							</div>
+						<span class="corners-bottom"><span></span></span>
+					</div>
+				</div>
+				<!-- ENDIF -->
 				<div id="a" class="<!-- IF S_IS_MCP or S_IS_UCP -->panel<!-- ELSE -->post bg1<!-- ENDIF -->">
 					<div class="inner">
 						<span class="corners-top"><span></span></span>
