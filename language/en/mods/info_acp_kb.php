@@ -36,11 +36,14 @@ if (empty($lang) || !is_array($lang))
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
 
 $lang = array_merge($lang, array(
+	'ACL_TYPE_LOCAL_U_KB_'			=> 'Knowledge Base',
 	'ACP_KB'						=> 'Knowledge Base Configuration',
 	'ACP_KB_HEALTH_CHECK'			=> 'Health Check',
 	'ACP_KB_HEALTH_CHECK_EXPLAIN'	=> 'This is where you can check that the knowledge base is up to date as well as run check to make sure it is running properly. You can also uninstall the Knowledge Base from here.',
 	'ACP_KB_MANAGEMENT'				=> 'Knowledge Base Management',
 	'ACP_KB_ARTICLE_TYPES'			=> 'Article Types Management',
+	'ACP_KB_PLUGIN_MENU'			=> 'Plugin Menu',
+	'ACP_KB_PLUGINS'				=> 'Plugins',
 	'ACP_KB_SETTINGS'				=> 'Settings',
 	'ACP_KB_SETTINGS_EXPLAIN'		=> 'Customise your knowledge base settings here',
 	'ACP_MANAGE_CATS'				=> 'Manage Categories',
@@ -55,6 +58,11 @@ $lang = array_merge($lang, array(
 	'LOG_TYPE_MOVE_DOWN'			=> '<strong>Article type %1$s moved down</strong>',
 	'LOG_TYPE_MOVE_UP'				=> '<strong>Article type %1$s moved up </strong>',
 	'LOG_TYPE_DELETE'				=> '<strong>Articel type deleted </strong>',
+	
+	'LOG_CAT_MOVE_ARTICLES_MOVE_CATS'		=> '<strong>Deleted category: %3$s</strong><br />Moved articles to: %1$s<br />Moved subcategories to: %2$s',
+	'LOG_CAT_DELETE_ARTICLES_MOVE_CATS'		=> '<strong>Deleted category: %2$s</strong><br />Deleted articles<br />Moved subcategories to: %1$s',
+	'LOG_CAT_MOVE_ARTICLES_DELETE_CATS'		=> '<strong>Deleted category: %2$s</strong><br />Moved articles to: %1$s<br />Deleted subcategories',
+	'LOG_CAT_DELETE_ARTICLES_DELETE_CATS'	=> '<strong>Deleted category: %1$s</strong><br />Deleted articles and subcategories',
 ));
 
 ?>

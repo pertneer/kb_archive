@@ -16,6 +16,8 @@ if (!defined('IN_PHPBB'))
 	exit;
 }
 
+define('IN_KB_PLUGIN', true);
+
 /**
 * @package acp
 */
@@ -26,11 +28,12 @@ class acp_kb
 
 	function main($id, $mode)
 	{
-		global $user, $template, $config, $phpbb_root_path, $phpEx, $table_prefix;
+		global $user, $template, $config, $phpbb_root_path, $phpEx, $table_prefix, $db, $cache, $phpbb_admin_path;
 
 		$user->add_lang('mods/kb');
 		include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
 		include($phpbb_root_path . 'includes/functions_kb.' . $phpEx);
+		include($phpbb_root_path . 'includes/functions_plugins_kb.' . $phpEx);
 
 		$action	= request_var('action', '');
 		$submit = (isset($_POST['submit'])) ? true : false;		
@@ -45,11 +48,25 @@ class acp_kb
 			case 'settings':
 				$this->tpl_name = 'acp_kb';
 				$this->page_title = 'ACP_KB_' . strtoupper($mode);
+				$config_show = true;
+			break;
+			
+			case 'plugins':
+				$this->tpl_name = 'acp_kb_plugins';
+				$this->page_title = 'ACP_KB_' . strtoupper($mode);
+				$config_show = false;
+			break;
+			
+			case 'plugin_menu':
+				$this->tpl_name = 'acp_kb_plugins';
+				$this->page_title = 'ACP_KB_' . strtoupper($mode);
+				$config_show = false;
 			break;
 			
 			case 'health_check':
 				$this->tpl_name = 'acp_kb_health';
 				$this->page_title = 'ACP_KB_HEALTH_CHECK';
+				$config_show = false;
 			break;
 		}
 
@@ -81,6 +98,205 @@ class acp_kb
 						'kb_allow_post_links'	=> array('lang' => 'KB_ALLOW_LINKS',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 					)
 				);
+			break;
+			
+			case 'plugins':		
+				$filename	= request_var('filename', '');
+				$plugin_loc = $phpbb_root_path . 'includes/kb_plugins/';
+			
+				switch ($action)
+				{
+					case 'install':
+						if(confirm_box(true))
+						{						
+							// Lets install the mod
+							install_plugin($filename, $plugin_loc, $this->u_action);
+							
+							trigger_error($user->lang['PLUGIN_INSTALLED'] . adm_back_link($this->u_action));
+						}
+						else
+						{
+							$hidden_fields = build_hidden_fields(array(
+								'action'	=> 'install',
+								'filename'	=> $filename,
+							));
+							
+							confirm_box(false, 'INSTALL_PLUGIN', $hidden_fields);
+						}
+					break;
+					
+					case 'uninstall':
+						if (!file_exists($plugin_loc . 'kb_' . $filename . '.' . $phpEx))
+						{
+							trigger_error($user->lang['NO_PLUGIN_FILE'] . adm_back_link($u_action), E_USER_ERROR);
+						}
+						
+						include($plugin_loc . 'kb_' . $filename . '.' . $phpEx);
+						
+						$continue = (empty($details['PLUGIN_PERM'])) ? false : $details['PLUGIN_PERM'];
+					
+						if(confirm_box(true))
+						{						
+							// Uninstall the plugin
+							uninstall_plugin($filename, $plugin_loc, $this->u_action);
+							
+							trigger_error($user->lang['PLUGIN_UNINSTALLED'] . adm_back_link($this->u_action));
+						}
+						else
+						{								
+							if (!$continue)
+							{
+								$hidden_fields = build_hidden_fields(array(
+									'action'	=> 'uninstall',
+									'filename'	=> $filename,
+								));
+								
+								confirm_box(false, 'UNINSTALL_PLUGIN', $hidden_fields);
+							}
+							else
+							{
+								trigger_error($user->lang['KB_NO_UNINSTALL'] . adm_back_link($this->u_action), E_USER_WARNING);
+							}
+						}
+					break;
+					
+					case 'settings':
+						if (!file_exists($plugin_loc . 'kb_' . $filename . '.' . $phpEx))
+						{
+							trigger_error($user->lang['NO_PLUGIN_FILE'] . adm_back_link($this->u_action));
+						}
+						
+						include($plugin_loc . 'kb_' . $filename . '.' . $phpEx);
+						
+						if (version_compare($details['PLUGIN_VERSION'], $config['kb_' . $filename . '_version'], '>')) 
+						{
+							// Uninstall the plugin
+							update_plugin($filename, $plugin_loc, $this->u_action, $details);
+							
+							$template->assign_vars(array(
+								'S_SUCCESS'			=> true,
+								'SUCCESS_MSG'		=> $user->lang['PLUGIN_UPDATED'],
+							));
+						}
+						
+						$display_vars = array(
+							'title'	=> 'ACP_KB_SETTINGS',
+							'vars'	=> $acp_options,
+						);
+						
+						$config_show = true;
+						
+						$template->assign_vars(array(
+							'S_ERROR'			=> (sizeof($error)) ? true : false,
+							'ERROR_MSG'			=> implode('<br />', $error),
+							
+							'S_SETTINGS'		=> true,
+							
+							'U_BACK_LINK'		=> adm_back_link($this->u_action),
+							'U_ACTION_PLUG'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $filename,
+							'PAGE_OPTIONS'		=> make_page_list($filename),
+						));
+					break;
+					
+					default:
+						if ($action == 'move_up')
+						{
+							sort_plugin_order('update', '', $filename, 'move_up');
+						}						
+						else if ($action == 'move_down')
+						{
+							sort_plugin_order('update', '', $filename, 'move_down');
+						}
+					
+						$installed_plugins = array();
+					
+						$sql = 'SELECT *
+							FROM ' . KB_PLUGIN_TABLE . ' 
+							ORDER BY plugin_order ASC';
+						$result = $db->sql_query($sql);		
+						$rows = $db->sql_fetchrowset($result);
+						$db->sql_freeresult($result);
+						
+						foreach($rows as $row)
+						{
+							$installed_plugins[] = $row['plugin_filename'];
+						
+							if ($row['plugin_menu'] == LEFT_MENU)
+							{
+								$template->assign_block_vars('left_menu', array(
+									'PLUGIN_NAME'		=> $row['plugin_name'],
+									'PLUGIN_DESC'		=> $row['plugin_desc'],
+									'PLUGIN_COPY'		=> $row['plugin_copy'],
+									'PLUGIN_VERSION'	=> $row['plugin_version'],
+									'PLUGIN_PERM'		=> $row['plugin_perm'],
+									'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
+									'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
+									'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
+									'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
+								));
+							}
+							
+							if ($row['plugin_menu'] == CENTER_MENU)
+							{
+								$template->assign_block_vars('center_menu', array(
+									'PLUGIN_NAME'		=> $row['plugin_name'],
+									'PLUGIN_DESC'		=> $row['plugin_desc'],
+									'PLUGIN_COPY'		=> $row['plugin_copy'],
+									'PLUGIN_VERSION'	=> $row['plugin_version'],									
+									'PLUGIN_PERM'		=> $row['plugin_perm'],
+									'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
+									'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
+									'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
+									'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
+								));
+							}
+							
+							if ($row['plugin_menu'] == RIGHT_MENU)
+							{
+								$template->assign_block_vars('right_menu', array(
+									'PLUGIN_NAME'		=> $row['plugin_name'],
+									'PLUGIN_DESC'		=> $row['plugin_desc'],
+									'PLUGIN_COPY'		=> $row['plugin_copy'],
+									'PLUGIN_VERSION'	=> $row['plugin_version'],
+									'PLUGIN_PERM'		=> $row['plugin_perm'],
+									'U_MOVE_UP'			=> $this->u_action . '&amp;action=move_up&amp;filename=' . $row['plugin_filename'],
+									'U_MOVE_DOWN'		=> $this->u_action . '&amp;action=move_down&amp;filename=' . $row['plugin_filename'],
+									'U_SETTINGS'		=> $this->u_action . '&amp;action=settings&amp;filename=' . $row['plugin_filename'],
+									'U_UNINSTALL'		=> $this->u_action . '&amp;action=uninstall&amp;filename=' . $row['plugin_filename'],
+								));
+							}
+						}
+						
+						$all_plugins = available_plugins();				
+						
+						if (!empty($all_plugins))
+						{
+							$available_plugins = array_diff($all_plugins, $installed_plugins);
+							
+							foreach ($available_plugins as $key => $data)
+							{
+								if (!file_exists($plugin_loc . 'kb_' . $data . '.' . $phpEx))
+								{
+									continue;
+								}
+								
+								include($plugin_loc . 'kb_' . $data . '.' . $phpEx);
+							
+								$template->assign_block_vars('uninstalled', array(
+									'PLUGIN_NAME'		=> $details['PLUGIN_NAME'],
+									'PLUGIN_DESC'		=> $details['PLUGIN_DESC'],
+									'PLUGIN_COPY'		=> $details['PLUGIN_COPY'],
+									'PLUGIN_VERSION'	=> $details['PLUGIN_VERSION'],
+
+									'U_INSTALL'			=> $this->u_action . '&amp;action=install&amp;filename=' . $data,
+								));
+								
+								unset($details);
+							}
+						}
+						
+						$template->assign_var('S_PLUGIN_MENU', true);
+				}				
 			break;
 			
 			case 'health_check':
@@ -124,12 +340,12 @@ class acp_kb
 				{
 					if(confirm_box(true))
 					{
-						if (!file_exists($phpbb_root_path . 'umil/umil_frontend.' . $phpEx))
+						if (!file_exists($phpbb_root_path . 'umil/umil.' . $phpEx))
 						{
 							trigger_error('KB_UPDATE_UMIL', E_USER_ERROR);
 						}
 
-						include($phpbb_root_path . 'umil/umil_frontend.' . $phpEx);
+						include($phpbb_root_path . 'umil/umil.' . $phpEx);
 						$umil = new umil(true);
 		
 						include($phpbb_root_path . 'includes/functions_install_kb.' . $phpEx);
@@ -167,10 +383,26 @@ class acp_kb
 			$submit = false;
 		}
 		
-		if ($mode == 'settings')
+		if ($config_show)
 		{
 			$this->new_config = $config;
 			$cfg_array = (isset($_REQUEST['config'])) ? utf8_normalize_nfc(request_var('config', array('' => ''), true)) : $this->new_config;
+			
+			if ($submit && $mode == 'plugins')
+			{
+				if (request_var('all_pages', 0))
+				{
+					$pages = make_page_list('', true);
+				}
+				else
+				{
+					$pages = request_var('page', array('' => ''));
+				}
+				
+				$serial_page = serialize($pages);
+				
+				update_pages($filename, $serial_page);
+			}
 
 			// We validate the complete config if whished
 			validate_config_vars($display_vars['vars'], $cfg_array, $error);			
@@ -188,12 +420,22 @@ class acp_kb
 				if ($submit)
 				{
 					set_config($config_name, $config_value);
+					
+					if ($mode == 'plugins')
+					{
+						if ($config_name == 'kb_' . $filename . '_menu')
+						{
+							update_plugin_menu($filename, $config_value);
+						}
+					}
 				}
 			}
 
 			if ($submit)
 			{
 				add_log('admin', 'LOG_CONFIG_' . strtoupper($mode));
+				
+				$cache->destroy('config');
 
 				trigger_error($user->lang['CONFIG_UPDATED'] . adm_back_link($this->u_action));
 			}
@@ -250,13 +492,24 @@ class acp_kb
 					'TITLE'			=> (isset($user->lang[$vars['lang']])) ? $user->lang[$vars['lang']] : $vars['lang'],
 					'S_EXPLAIN'		=> $vars['explain'],
 					'TITLE_EXPLAIN'	=> $l_explain,
-					'CONTENT'		=> build_cfg_template($type, $config_key, $this->new_config, $config_key, $vars),
-				));
+					'CONTENT'		=> $content,
+					)
+				);
 
 				unset($display_vars['vars'][$config_key]);
 			}
 		}
-	}	
+	}		
+}
+
+/**
+* Select menu
+*/
+function select_menu_check($value, $key = '')
+{
+	$radio_ary = array(LEFT_MENU => 'LEFT_MENU', CENTER_MENU => 'CENTER_MENU', RIGHT_MENU => 'RIGHT_MENU');
+
+	return h_radio('config[' . $key . ']', $radio_ary, $value, $key);
 }
 
 ?>

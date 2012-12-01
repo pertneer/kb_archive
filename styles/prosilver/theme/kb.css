@@ -164,3 +164,11 @@ textarea.desc {
 {
     opacity: 0.75;
 }
+
+.article-icon span		{ background: transparent none 0 0 no-repeat; }
+.buttons div.article-icon		{ width: {IMG_BUTTON_ARTICLE_NEW_WIDTH}px; height: {IMG_BUTTON_ARTICLE_NEW_HEIGHT}px; }
+.article-icon span		{ background-image: url("{IMG_BUTTON_ARTICLE_NEW_SRC}"); }
+
+.comment-icon span		{ background: transparent none 0 0 no-repeat; }
+.buttons div.comment-icon		{ width: {IMG_BUTTON_COMMENT_NEW_WIDTH}px; height: {IMG_BUTTON_COMMENT_NEW_HEIGHT}px; }
+.comment-icon span		{ background-image: url("{IMG_BUTTON_COMMENT_NEW_SRC}"); }

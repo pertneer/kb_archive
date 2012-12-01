@@ -12,17 +12,12 @@
 			<!-- INCLUDE kb/left_menu.html -->
 		</td>
 		<td style="vertical-align: top; padding-left: 10px;">
-			<div class="pagination">
-				{ARTICLE_VIEWS}
-			</div>
-		<!-- ENDIF -->
-			<!-- IF U_ADD_COMMENT -->
 			<div class="topic-actions">
-				<div class="buttons">
-					<!-- IF U_ADD_COMMENT --><div class="reply-icon"><a href="{U_ADD_COMMENT}" title="{L_KB_ADD_COMMENT}"><span></span>{L_KB_ADD_COMMENT}</a></div><!-- ENDIF -->
+				<div class="pagination">
+					{ARTICLE_VIEWS}
 				</div>
 			</div>
-			<!-- ENDIF -->
+		<!-- ENDIF -->
 				<div id="a" class="<!-- IF S_IS_MCP or S_IS_UCP -->panel<!-- ELSE -->post bg1<!-- ENDIF -->">
 					<div class="inner">
 						<span class="corners-top"><span></span></span>
@@ -175,20 +170,32 @@
 				<!-- END postrow -->
 			<!-- ENDIF -->
 
-			<div class="pagination">
+			<form id="sort_cat" method="post" action="{S_ARTICLE_ACTION}">
+			<fieldset class="display-options" style="margin-top: 0; ">
+				<!-- IF PREVIOUS_PAGE --><a href="{PREVIOUS_PAGE}" class="left-box {S_CONTENT_FLOW_BEGIN}">{L_PREVIOUS}</a><!-- ENDIF -->
+				<!-- IF NEXT_PAGE --><a href="{NEXT_PAGE}" class="right-box {S_CONTENT_FLOW_END}">{L_NEXT}</a><!-- ENDIF -->
+				<!-- IF not S_IS_BOT -->
+				<label>{L_KB_SORT_BY} {S_SORT_OPTIONS}</label> <label>{S_SORT_DIRECTION} <input type="submit" name="gosort" value="{L_GO}" class="button2" /></label>
+				<!-- ENDIF -->
+			</fieldset>
+		
+			</form>
+			<hr />
+
+			<div class="topic-actions">
+				<!-- IF U_ADD_COMMENT -->
+				<div class="buttons">
+					<!-- IF U_ADD_COMMENT --><div class="comment-icon"><a href="{U_ADD_COMMENT}" title="{L_KB_ADD_COMMENT}"><span></span>{L_KB_ADD_COMMENT}</a></div><!-- ENDIF -->
+				</div>
+				<!-- ENDIF -->
+				
+				<div class="pagination">
 				{TOTAL_COMMENTS} {L_COMMENTS_LC}
 				<!-- IF PAGE_NUMBER -->
 					<!-- IF PAGINATION --> &bull; <a href="#" onclick="jumpto(); return false;" title="{L_JUMP_TO_PAGE}">{PAGE_NUMBER}</a> &bull; <span>{PAGINATION}</span><!-- ELSE --> &bull; {PAGE_NUMBER}<!-- ENDIF -->
 				<!-- ENDIF -->
-			</div>
-
-			<!-- IF U_ADD_COMMENT -->
-			<div class="topic-actions">
-				<div class="buttons">
-					<!-- IF U_ADD_COMMENT --><div class="reply-icon"><a href="{U_ADD_COMMENT}" title="{L_KB_ADD_COMMENT}"><span></span>{L_KB_ADD_COMMENT}</a></div><!-- ENDIF -->
 				</div>
 			</div>
-			<!-- ENDIF -->
 <!-- IF not S_IS_MCP and not S_IS_UCP -->
 		</td>
 		<td id="left_menu" style="width: 240px; vertical-align: top; padding-left: 10px;">
@@ -200,9 +207,6 @@
 	<h3><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a></h3>
 	<p>{LOGGED_IN_USER_LIST}</p>
 <!-- ENDIF -->
-
-<h3>{L_KB_PERMISSIONS}</h3>
-<p><!-- BEGIN rules -->{rules.RULE}<br /><!-- END rules --></p>
 
 <!-- INCLUDE overall_footer.html -->
 <!-- ELSE -->

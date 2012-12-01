@@ -397,6 +397,134 @@ function get_kb_versions()
 		'0.1.0'	=> array(
 			array(),
 		),
+
+		'0.1.1'	=> array(
+			'module_add' => array(
+				array('acp', 'ACP_KB', array(
+						'module_basename'		=> 'kb',
+						'modes'					=> array('plugins'),
+					),
+				),
+			),
+			
+			'config_add'	=> array(
+				array('kb_latest_article_enable', 1),
+				array('kb_latest_article_menu', LEFT_MENU),
+			),
+		),			
+		
+		// Adding localized permissions, therefore 0.2.0 as it is major change
+		'0.2.0' => array(
+			'table_column_add'	=> array(
+				array(ACL_USERS_TABLE, 'kb_auth', array('BOOL', 0)),
+				array(ACL_GROUPS_TABLE, 'kb_auth', array('BOOL', 0)),
+			),
+			
+			// Add ACP modules
+			'module_add' => array(
+				array('acp', 'ACP_KB', array(
+						'module_basename'		=> 'kb_permissions',
+						'modes'					=> array('set_permissions', 'set_roles'),
+					),
+				),
+			),
+			
+			// Delete permissions and add localized ones later
+			'permission_remove'	=> array(
+				array('u_kb_read', true),
+				array('u_kb_add', true),
+				array('u_kb_add_wa', true),
+				array('u_kb_attach', true),
+				array('u_kb_bbcode', true),
+				array('u_kb_comment', true),
+				array('u_kb_delete', true),
+				array('u_kb_download', true),
+				array('u_kb_edit', true),
+				array('u_kb_flash', true),
+				array('u_kb_icons', true),
+				array('u_kb_img', true),
+				array('u_kb_rate', true),
+				array('u_kb_sigs', true),
+				array('u_kb_smilies', true),
+				array('u_kb_types', true),
+			),
+			
+			// Now add them as local permissions
+			'permission_add'	=> array(
+				array('u_kb_read', false),
+				array('u_kb_add', false),
+				array('u_kb_add_wa', false),
+				array('u_kb_attach', false),
+				array('u_kb_bbcode', false),
+				array('u_kb_comment', false),
+				array('u_kb_delete', false),
+				array('u_kb_download', false),
+				array('u_kb_edit', false),
+				array('u_kb_flash', false),
+				array('u_kb_img', false),
+				array('u_kb_rate', false),
+				array('u_kb_sigs', false),
+				array('u_kb_smilies', false),
+				array('u_kb_types', false),
+				array('u_kb_search', false),
+			),
+		),
+	
+		'0.2.1'	=> array(
+			'table_add'	=> array(
+				array('phpbb_article_plugins', array(
+					'COLUMNS'		=> array(
+						'plugin_id'					=> array('UINT', NULL, 'auto_increment'),
+						'plugin_name'				=> array('VCHAR', ''),
+						'plugin_filename'			=> array('VCHAR', ''),
+						'plugin_desc'				=> array('TEXT_UNI', ''),
+						'plugin_copy'				=> array('VCHAR', ''),
+						'plugin_version'			=> array('VCHAR:20', ''),
+						'plugin_menu'				=> array('BOOL', NO_MENU),
+						'plugin_order'				=> array('BOOL', 0),
+					),
+					'PRIMARY_KEY'	=> 'plugin_id'
+				)),
+			),			
+			
+			'config_remove'	=> array(
+				array('kb_latest_article_enable'),
+				array('kb_latest_article_menu'),
+				array('kb_last_article'),
+			),
+		),	
+		
+		'0.2.2' => array(
+			'table_column_add'	=> array(
+				array(KB_PLUGIN_TABLE, 'plugin_pages', array('TEXT_UNI', 'a:0:{}'))
+			),
+		),
+		
+		'0.2.3' => array(
+			'table_column_add'	=> array(
+				array(KB_PLUGIN_TABLE, 'plugin_pages_perm', array('TEXT_UNI', 'a:0:{}'))
+			),
+		),
+		
+		'0.2.4' => array(
+			'table_column_add'	=> array(
+				array(KB_PLUGIN_TABLE, 'plugin_perm', array('BOOL', 0))
+			),
+			
+			'custom'	=> 'kb_install_perm_plugins',
+		),
+		
+		'0.2.5' => array(
+			'custom'	=> 'kb_install_perm_plugins',
+		),
+		
+		'0.2.6' => array(
+			'custom'	=> 'kb_install_perm_plugins',
+		),
+		
+		'0.3.0' => array(
+			// New release ;)
+		),
 	);
 
 	return $versions;
@@ -406,6 +534,46 @@ function get_kb_versions()
 // ALL FUNCTIONS BELOW THIS LINE ARE CUSTOM UPDATE FUNCTIONS
 // (expect long and annoying function names)
 //
+function kb_install_perm_plugins($action , $version)
+{
+	global $phpbb_root_path;
+
+	if ($action == 'uninstall')
+	{
+		return;
+	}
+	
+	if(!defined('IN_KB_PLUGIN')) // Killing notice when updating through several versions all using this function
+	{
+		define('IN_KB_PLUGIN', true);
+	}
+	
+	switch ($version)
+	{
+		case '0.2.4':
+			$plugins = array('search');
+		break;
+		
+		case '0.2.5':
+			$plugins = array('stats');
+		break;
+		
+		case '0.2.6':
+			$plugins = array('request_list');
+		break;
+	}
+	
+	if (empty($plugins))
+	{
+		return;
+	}
+	
+	foreach ($plugins as $plugin)
+	{
+		install_plugin($plugin, $phpbb_root_path . 'includes/kb_plugins/');
+	}
+}
+
 function kb_update_0_0_11_to_0_0_12($action, $version)
 {
 	global $db, $table_prefix;

@@ -393,7 +393,7 @@ class ucp_kb
 							'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
 							'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
 							'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
-							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
+							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_kb_download', $row['cat_id']) && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 							
 							'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $row['article_id']),
 						));
@@ -583,7 +583,7 @@ class ucp_kb
 							'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
 							'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
 							'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
-							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
+							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_kb_download', $row['cat_id']) && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 							
 							'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $row['article_id']),
 						));
@@ -666,7 +666,7 @@ class ucp_kb
 								'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
 								'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
 								'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
-								'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
+								'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_kb_download', $row['cat_id']) && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 								
 								'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}ucp.$phpEx", "i=kb&amp;mode=articles&amp;ma=view&amp;a=" . $row['article_id']), // Mode articles here for style continuity
 							));

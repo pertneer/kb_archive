@@ -27,14 +27,33 @@
       		  		<contributions status="current" from="2009-05-01" position="Developer"/>
       			</contributions-group>
 			</author>
+			<author>
+				<realname>C1</realname>
+				<email>C1WebDesign@gmail.com</email>
+				<username>thecharmed01</username>
+				<homepage></homepage>
+				<contributions-group>
+      		  		<contributions status="current" from="2009-08-01" position="Developer"/>
+      			</contributions-group>
+			</author>
 		</author-group>
-		<mod-version>0.1.0</mod-version>
+		<mod-version>0.3.0</mod-version>
 		<installation>
-			<level>easy</level>
-			<time>600</time>
+			<level>intermediate</level>
+			<time>1800</time>
 			<target-version>3.0.5</target-version>
 		</installation>
 		<history>
+			<entry>
+				<date>2009-08-04</date>
+				<rev-version>0.3.0</rev-version>
+				<changelog lang="en">
+					<change>Second BETA release</change>
+					<change>Added feature: Pluginsystem that completely customizes your KB</change>
+					<change>Added feature: Localized category permissions that allow for integration with the above</change>
+					<change>Fixed a large number of bugs and added a couple of lesser features as well</change>
+				</changelog>
+			</entry>
 			<entry>
 				<date>2009-06-18</date>
 				<rev-version>0.1.0</rev-version>
@@ -79,26 +98,37 @@
 									<file from="/adm/style/acp_kb_health.html" to="/adm/style/acp_kb_health.html" />
 									<file from="/adm/style/acp_kb.html" to="/adm/style/acp_kb.html" />
 									<file from="/adm/style/acp_kb_types.html" to="/adm/style/acp_kb_types.html" />
+									<file from="/adm/style/acp_kb_plugins.html" to="/adm/style/acp_kb_plugins.html" />
 									<file from="/download/kb.php" to="/download/kb.php" />
 									<file from="/includes/acp/acp_kb_cats.php" to="/includes/acp/acp_kb_cats.php" />
 									<file from="/includes/acp/acp_kb_types.php" to="/includes/acp/acp_kb_types.php" />
 									<file from="/includes/acp/acp_kb.php" to="/includes/acp/acp_kb.php" />
+									<file from="/includes/acp/acp_kb_permissions.php" to="/includes/acp/acp_kb_permissions.php" />
 									<file from="/includes/acp/info/acp_kb_cats.php" to="/includes/acp/info/acp_kb_cats.php" />
 									<file from="/includes/acp/info/acp_kb_types.php" to="/includes/acp/info/acp_kb_types.php" />
 									<file from="/includes/acp/info/acp_kb.php" to="/includes/acp/info/acp_kb.php" />
+									<file from="/includes/acp/info/acp_kb_permissions.php" to="/includes/acp/info/acp_kb_permissions.php" />
 									<file from="/includes/constants_kb.php" to="/includes/constants_kb.php" />
 									<file from="/includes/functions_kb.php" to="/includes/functions_kb.php" />
 									<file from="/includes/functions_install_kb.php" to="/includes/functions_install_kb.php" />
+									<file from="/includes/functions_plugins_kb.php" to="/includes/functions_plugins_kb.php" />
 									<file from="/includes/kb.php" to="/includes/kb.php" />
+									<file from="/includes/kb_plugins/*.*" to="/includes/kb_plugins/*.*" />
 									<file from="/includes/ucp/ucp_kb.php" to="/includes/ucp/ucp_kb.php" />
 									<file from="/includes/ucp/info/ucp_kb.php" to="/includes/ucp/info/ucp_kb.php" />
 									<file from="/includes/mcp/mcp_kb.php" to="/includes/mcp/mcp_kb.php" />
 									<file from="/includes/mcp/info/mcp_kb.php" to="/includes/mcp/info/mcp_kb.php" />
+									<file from="/language/en/email/kb_email_notify.txt" to="/language/en/email/kb_email_notify.txt" />
+									<file from="/language/en/email/kb_notify_email.txt" to="/language/en/email/kb_notify_email.txt" />
+									<file from="/language/en/email/kb_notify_pm.txt" to="/language/en/email/kb_notify_pm.txt" />
 									<file from="/language/en/mods/info_acp_kb.php" to="/language/en/mods/info_acp_kb.php" />
+									<file from="/language/en/mods/info_acp_kb_permissions.php" to="/language/en/mods/info_acp_kb_permissions.php" />
 									<file from="/language/en/mods/info_ucp_kb.php" to="/language/en/mods/info_ucp_kb.php" />
 									<file from="/language/en/mods/info_mcp_kb.php" to="/language/en/mods/info_mcp_kb.php" />
 									<file from="/language/en/mods/kb.php" to="/language/en/mods/kb.php" />
 									<file from="/language/en/mods/permissions_kb.php" to="/language/en/mods/permissions_kb.php" />
+									<file from="/styles/prosilver/imageset/en/button_article_new.gif" to="/styles/prosilver/imageset/en/button_article_new.gif" />
+									<file from="/styles/prosilver/imageset/en/button_comment_new.gif" to="/styles/prosilver/imageset/en/button_comment_new.gif" />
 									<file from="/styles/prosilver/template/kb/*.*" to="/styles/prosilver/template/kb/*.*" />
 									<file from="/styles/prosilver/theme/kb.css" to="/styles/prosilver/theme/kb.css" />
 									<file from="/styles/prosilver/theme/images/rate_star.gif" to="/styles/prosilver/theme/images/rate_star.gif" />
@@ -116,13 +146,7 @@
 			<dd><input type="checkbox" class="radio" id="allow_in_kb" name="allow_in_kb" value="1"<!-- IF ALLOW_IN_KB --> checked="checked"<!-- ENDIF --> /></dd>
 		</dl>]]></action>
 							</edit>
-							<edit>
-								<find><![CDATA[						'ALLOW_GROUP'			=> $ext_group_row['allow_group'],
-							'ALLOW_IN_PM'			=> $ext_group_row['allow_in_pm'],]]></find>
-								<action type="add-after"><![CDATA[						// KB Mod Begin
-							'ALLOW_IN_KB'			=> $ext_group_row['allow_in_kb'],
-							// KB Mod End]]></action>
-							</edit>
+							
 							<edit>
 								<find><![CDATA[<!-- ELSE --><br /><span>&raquo; {L_ALLOWED_IN_PM_POST}</span><!-- ENDIF -->]]></find>
 								<inline-edit>
@@ -188,12 +212,12 @@
 								<find><![CDATA[					'max_filesize'	=> (int) $row['max_filesize'],
 					'allow_group'	=> $row['allow_group'],
 					'allow_in_pm'	=> $row['allow_in_pm'],]]></find>
-								<action type="after-add"><![CDATA[				// Mod KB Begin
+								<action type="after-add"><![CDATA[					// Mod KB Begin
 					'allow_in_kb'	=> $row['allow_in_kb'],
 					// Mod KB End]]></action>
 							</edit>
 							<edit>
-								<find><![CDATA[			if ($row['allow_in_pm'])
+								<find><![CDATA[				if ($row['allow_in_pm'])
 				{
 					$extensions['_allowed_pm'][$extension] = 0;
 				}]]></find>
@@ -206,7 +230,7 @@
 				// Mod KB End]]></action>
 							</edit>
 							<edit>
-								<find><![CDATA[	else if ($forum_id === true)
+								<find><![CDATA[		else if ($forum_id === true)
 		{
 			return $extensions;
 		}]]></find>
@@ -258,11 +282,139 @@
 								// Mod KB End]]></action>
 							</edit>
 							<edit>
+								<find><![CDATA[							'ALLOW_GROUP'			=> $ext_group_row['allow_group'],
+							'ALLOW_IN_PM'			=> $ext_group_row['allow_in_pm'],]]></find>
+								<action type="add-after"><![CDATA[							// KB Mod Begin
+							'ALLOW_IN_KB'			=> $ext_group_row['allow_in_kb'],
+							// KB Mod End]]></action>
+							</edit>
+							<edit>
 								<find><![CDATA[						'S_ADD_SPACER'		=> $s_add_spacer,
 						'S_ALLOWED_IN_PM'	=> ($row['allow_in_pm']) ? true : false,]]></find>
 								<action type="after-add"><![CDATA[						// Mod KB Begin
 						'S_ALLOWED_IN_KB'	=> ($row['allow_in_kb']) ? true : false,
 						// Mod KB End]]></action>
+							</edit>
+						</open>
+						<open src="/includes/acp/acp_forums.php">
+							<edit>
+								<find><![CDATA[									$sql = 'DELETE FROM ' . ACL_USERS_TABLE . '
+										WHERE forum_id = ' . (int) $forum_data['forum_id'];
+									$db->sql_query($sql);
+	
+									$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '
+										WHERE forum_id = ' . (int) $forum_data['forum_id'];
+									$db->sql_query($sql);]]></find>
+								<action type="replace-with"><![CDATA[									$sql = 'DELETE FROM ' . ACL_USERS_TABLE . '
+										WHERE forum_id = ' . (int) $forum_data['forum_id'] . '
+										AND kb_auth = 0';
+									$db->sql_query($sql);
+	
+									$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '
+										WHERE forum_id = ' . (int) $forum_data['forum_id'] . '
+										AND kb_auth = 0';
+									$db->sql_query($sql);]]></action>
+							</edit>
+							<edit>
+								<comment lang="en">This is the first of two identical edit and replacements, this one occurs around line 1112. BOTH edits have to be performed.</comment>
+								<find><![CDATA[							$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '
+								WHERE ' . $db->sql_in_set('forum_id', $forum_ids);
+							$db->sql_query($sql);
+
+							$sql = 'DELETE FROM ' . ACL_USERS_TABLE . '
+								WHERE ' . $db->sql_in_set('forum_id', $forum_ids);
+							$db->sql_query($sql);]]></find>
+								<action type="replace-with"><![CDATA[							$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '
+								WHERE ' . $db->sql_in_set('forum_id', $forum_ids) . '
+								AND kb_auth = 0';
+							$db->sql_query($sql);
+
+							$sql = 'DELETE FROM ' . ACL_USERS_TABLE . '
+								WHERE ' . $db->sql_in_set('forum_id', $forum_ids) . '
+								AND kb_auth = 0';
+							$db->sql_query($sql);]]></action>
+							</edit>
+							<edit>
+								<comment lang="en">This is the second of two identical edit and replacements, this one occurs around line 1459. BOTH edits have to be performed.</comment>
+								<find><![CDATA[			$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '
+				WHERE ' . $db->sql_in_set('forum_id', $forum_ids);
+			$db->sql_query($sql);
+
+			$sql = 'DELETE FROM ' . ACL_USERS_TABLE . '
+				WHERE ' . $db->sql_in_set('forum_id', $forum_ids);
+			$db->sql_query($sql);]]></find>
+								<action type="replace-with"><![CDATA[			$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '
+				WHERE ' . $db->sql_in_set('forum_id', $forum_ids) . '
+				AND kb_auth = 0';
+			$db->sql_query($sql);
+
+			$sql = 'DELETE FROM ' . ACL_USERS_TABLE . '
+				WHERE ' . $db->sql_in_set('forum_id', $forum_ids) . '
+				AND kb_auth = 0';
+			$db->sql_query($sql);]]></action>
+							</edit>
+							<edit>
+								<comment lang="en">This is the first of another pair of identical edits. This one occurs around line 1516. Both edits have to be performed.</comment>
+								<find><![CDATA[					$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
+						WHERE forum_id = $forum_id";
+					$db->sql_query($sql);
+
+					$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
+						WHERE forum_id = $forum_id";
+					$db->sql_query($sql);]]></find>
+								<action type="replace-with"><![CDATA[					$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
+						WHERE forum_id = $forum_id
+						AND kb_auth = 0";
+					$db->sql_query($sql);
+
+					$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
+						WHERE forum_id = $forum_id
+						AND kb_auth = 0";
+					$db->sql_query($sql);]]></action>
+							</edit>
+							<edit>
+								<comment lang="en">This is the second of another pair of identical edits. This one occurs around line 1538. Both edits have to be performed.</comment>
+								<find><![CDATA[					$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
+						WHERE forum_id = $forum_id";
+					$db->sql_query($sql);
+
+					$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
+						WHERE forum_id = $forum_id";
+					$db->sql_query($sql);]]></find>
+								<action type="replace-with"><![CDATA[					$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
+						WHERE forum_id = $forum_id
+						AND kb_auth = 0";
+					$db->sql_query($sql);
+
+					$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
+						WHERE forum_id = $forum_id
+						AND kb_auth = 0";
+					$db->sql_query($sql);]]></action>
+							</edit>
+						</open>
+						<open src="/includes/acp/acp_styles.php">
+							<edit>
+								<find><![CDATA['icon_back_top', 'icon_contact_aim', 'icon_contact_email', 'icon_contact_icq', 'icon_contact_jabber', 'icon_contact_msnm', 'icon_contact_pm', 'icon_contact_yahoo', 'icon_contact_www', 'icon_post_delete', 'icon_post_edit', 'icon_post_info', 'icon_post_quote', 'icon_post_report', 'icon_user_online', 'icon_user_offline', 'icon_user_profile', 'icon_user_search', 'icon_user_warn', 'button_pm_forward', 'button_pm_new', 'button_pm_reply', 'button_topic_locked', 'button_topic_new', 'button_topic_reply',]]></find>
+								<inline-edit>
+									<inline-find><![CDATA['button_topic_reply',]]></inline-find>
+									<inline-action type="after-add"><![CDATA[ 'button_article_new', 'button_comment_new',]]></inline-action>
+								</inline-edit>
+							</edit>
+						</open>
+						<open src="/includes/acp/auth.php">
+							<edit>
+								<find><![CDATA[function display_mask($mode, $permission_type, &$hold_ary, $user_mode = 'user', $local = false, $group_display = true)]]></find>
+								<inline-edit>
+									<inline-find><![CDATA[)]]></inline-find>
+									<inline-action type="before-add"><![CDATA[, $cat_data = false]]></inline-action>
+								</inline-edit>
+							</edit>
+							<edit>
+								<find><![CDATA[$forum_names_ary = make_forum_select(false, false, true, false, false, false, true);]]></find>
+								<inline-edit>
+									<inline-find><![CDATA[= ]]></inline-find>
+									<inline-action type="after-add"><![CDATA[($cat_data) ? $cat_data : ]]></inline-action>
+								</inline-edit>
 							</edit>
 						</open>
 							<open src="/language/en/common.php">
@@ -281,6 +433,21 @@
 	// Mod KB End]]></action>
 								</edit>
 							</open>	
+							<open src="/language/en/acp/styles.php">
+								<edit>
+									<find><![CDATA[	'IMG_BUTTON_TOPIC_NEW'		=> 'New topic',
+	'IMG_BUTTON_TOPIC_REPLY'	=> 'Reply topic',]]></find>
+									<action type="after-add"><![CDATA[	'IMG_BUTTON_ARTICLE_NEW'	=> 'New article',
+	'IMG_BUTTON_COMMENT_NEW'	=> 'New comment',]]></action>
+								</edit>
+							</open>
+							<open src="/styles/prosilver/imageset/en/imageset.cfg">
+								<edit>
+									<find><![CDATA[img_button_topic_reply = button_topic_reply.gif*25*96]]></find>
+									<action type="after-add"><![CDATA[img_button_article_new = button_article_new.gif*25*96
+img_button_comment_new = button_comment_new.gif*25*96]]></action>
+								</edit>
+							</open>
 							<open src="/styles/prosilver/template/overall_header.html">
 											<edit>
 							<find><![CDATA[<li class="icon-faq"><a href="{U_FAQ}" title="{L_FAQ_EXPLAIN}">{L_FAQ}</a></li>]]></find>

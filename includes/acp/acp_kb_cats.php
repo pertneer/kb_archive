@@ -69,9 +69,21 @@ class acp_kb_cats
 			switch ($action)
 			{
 				case 'delete':
-					trigger_error('not working');
-				break;
+					$action_subcats		= request_var('action_subcats', '');
+					$subcats_to_id		= request_var('subcats_to_id', 0);
+					$action_articles	= request_var('action_articles', '');
+					$articles_to_id		= request_var('articles_to_id', 0);
 
+					$errors = $this->delete_cat($cat_id, $action_articles, $action_subcats, $articles_to_id, $subcats_to_id);
+
+					if (sizeof($errors))
+					{
+						break;
+					}
+
+					trigger_error($user->lang['CAT_DELETED'] . adm_back_link($this->u_action . '&amp;parent_id=' . $this->parent_id));
+				break;
+			
 				case 'edit':
 					$cat_data = array(
 						'cat_id'		=>	$cat_id
@@ -168,14 +180,14 @@ class acp_kb_cats
 						$exclude_cats[] = $row['cat_id'];
 					}
 
-					$parents_list = make_cat_select($cat_data['parent_id'], $exclude_cats, false, false, false);
+					$parents_list = make_cat_select($cat_data['parent_id'], $exclude_cats, true);
 				}
 				else
 				{
 					$this->page_title = 'CREATE_CAT';
 
 					$cat_id = $this->parent_id;
-					$parents_list = make_cat_select($this->parent_id, false, false, false, false);
+					$parents_list = make_cat_select($this->parent_id, false, true);
 
 					// Fill cat data with default values
 					if (!$update)
@@ -238,7 +250,7 @@ class acp_kb_cats
 						$subforums_id[] = $row['cat_id'];
 					}
 
-					$cat_list = make_cat_select($cat_data['parent_id'], $subforums_id);
+					$cat_list = make_cat_select($cat_data['parent_id'], $subforums_id, true);
 
 					$sql = 'SELECT cat_id
 					FROM ' . KB_CATS_TABLE . "
@@ -248,7 +260,7 @@ class acp_kb_cats
 					if ($db->sql_fetchrow($result))
 					{
 						$template->assign_vars(array(
-							'S_MOVE_CAT_OPTIONS'		=> make_cat_select($cat_data['parent_id'], $subforums_id)) // , false, true, false???
+							'S_MOVE_CAT_OPTIONS'		=> make_cat_select($cat_data['parent_id'], $subforums_id, true))
 						);
 					}
 					$db->sql_freeresult($result);
@@ -280,7 +292,7 @@ class acp_kb_cats
 					'CAT_DESC'					=> $cat_desc_data['text'],
 
 					'S_PARENT_OPTIONS'			=> $parents_list,
-					'S_CAT_OPTIONS'				=> make_cat_select(($action == 'add') ? $cat_data['parent_id'] : false, ($action == 'edit') ? $cat_data['cat_id'] : false, false, false, false),
+					'S_CAT_OPTIONS'				=> make_cat_select(($action == 'add') ? $cat_data['parent_id'] : false, ($action == 'edit') ? $cat_data['cat_id'] : false, true),
 				));
 
 				return;
@@ -288,7 +300,6 @@ class acp_kb_cats
 			break;
 
 			case 'delete':
-				trigger_error('not working');
 				if (!$cat_id)
 				{
 					trigger_error($user->lang['NO_CAT'] . adm_back_link($this->u_action . '&amp;parent_id=' . $this->parent_id), E_USER_WARNING);
@@ -304,7 +315,7 @@ class acp_kb_cats
 					$subforums_id[] = $row['cat_id'];
 				}
 
-				$cat_list = make_cat_select($cat_data['parent_id'], $subforums_id);
+				$cat_list = make_cat_select($cat_data['parent_id'], $subforums_id, true);
 
 				$sql = 'SELECT cat_id
 					FROM ' . KB_CATS_TABLE . "
@@ -314,7 +325,7 @@ class acp_kb_cats
 				if ($db->sql_fetchrow($result))
 				{
 					$template->assign_vars(array(
-						'S_MOVE_CAT_OPTIONS'		=> make_cat_select($cat_data['parent_id'], $subforums_id, false, true)) // , false, true, false???
+						'S_MOVE_CAT_OPTIONS'		=> make_cat_select($cat_data['parent_id'], $subforums_id, true))
 					);
 				}
 				$db->sql_freeresult($result);
@@ -322,11 +333,12 @@ class acp_kb_cats
 				$parent_id = ($this->parent_id == $cat_id) ? 0 : $this->parent_id;
 
 				$template->assign_vars(array(
-					'S_DELETE_CAT'		=> true,
+					'S_DELETE_CAT'			=> true,
+					'S_CAT_ARTICLES'		=> $cat_data['cat_articles'],
 					'U_ACTION'				=> $this->u_action . "&amp;parent_id={$parent_id}&amp;action=delete&amp;c=$cat_id",
 					'U_BACK'				=> $this->u_action . '&amp;parent_id=' . $this->parent_id,
 
-					'FORUM_NAME'			=> $cat_data['cat_name'],
+					'CAT_NAME'				=> $cat_data['cat_name'],
 					'S_HAS_SUBFORUMS'		=> ($cat_data['right_id'] - $cat_data['left_id'] > 1) ? true : false,
 					'S_CAT_LIST'			=> $cat_list,
 					'S_ERROR'				=> (sizeof($errors)) ? true : false,
@@ -361,7 +373,7 @@ class acp_kb_cats
 		}
 
 		// Jumpbox
-		$cat_box = make_cat_select($this->parent_id, false, false, false, false); //make_forum_select($this->parent_id);
+		$cat_box = make_cat_select($this->parent_id, false, true); //make_forum_select($this->parent_id);
 
 		$sql = 'SELECT *
 			FROM ' . KB_CATS_TABLE . "
@@ -627,6 +639,431 @@ class acp_kb_cats
 		$db->sql_query($sql);
 
 		return $target['cat_name'];
+	}
+	
+	/**
+	* Remove complete cat
+	*/
+	function delete_cat($cat_id, $action_articles = 'delete', $action_subcats = 'delete', $articles_to_id = 0, $subcats_to_id = 0)
+	{
+		global $db, $user, $cache;
+		
+		$cat_data = $this->get_cat_info($cat_id);
+
+		$errors = array();
+		$log_action_articles = $log_action_cats = $articles_to_name = $subcats_to_name = '';
+		$cat_ids = array($cat_id);
+
+		if ($action_articles == 'delete')
+		{
+			$log_action_articles = 'DELETE_ARTICLES';
+			$errors = array_merge($errors, $this->delete_cat_content($cat_id));
+		}
+		else if ($action_articles == 'move')
+		{
+			if (!$articles_to_id)
+			{
+				$errors[] = $user->lang['NO_DESTINATION_CAT'];
+			}
+			else
+			{
+				$log_action_articles = 'MOVE_ARTICLES';
+
+				$sql = 'SELECT cat_name
+						FROM ' . KB_CATS_TABLE . '
+						WHERE cat_id = ' . $articles_to_id;
+				$result = $db->sql_query($sql);
+				$row = $db->sql_fetchrow($result);
+				$db->sql_freeresult($result);
+
+				if (!$row)
+				{
+					$errors[] = $user->lang['NO_CAT'];
+				}
+				else
+				{
+					$articles_to_name = $row['cat_name'];
+					$errors = array_merge($errors, $this->move_cat_content($cat_id, $articles_to_id));
+				}
+			}
+		}
+
+		if (sizeof($errors))
+		{
+			return $errors;
+		}
+
+		if ($action_subcats == 'delete')
+		{
+			$log_action_cats = 'DELETE_CATS';
+			
+			$rows = get_cat_branch($cat_id, 'children', 'descending', false);
+			foreach ($rows as $row)
+			{
+				$cat_ids[] = $row['cat_id'];
+				$errors = array_merge($errors, $this->delete_cat_content($row['cat_id']));
+			}
+
+			if (sizeof($errors))
+			{
+				return $errors;
+			}
+
+			$diff = sizeof($cat_ids) * 2;
+
+			$sql = 'DELETE FROM ' . KB_CATS_TABLE . '
+					WHERE ' . $db->sql_in_set('cat_id', $cat_ids);
+			$db->sql_query($sql);
+			
+			// Delete auth stuff aswell
+			$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
+					WHERE " . $db->sql_in_set('forum_id', $cat_ids) . " 
+					AND kb_auth = 1";
+			$db->sql_query($sql);
+
+			$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
+					WHERE " . $db->sql_in_set('forum_id', $cat_ids) . " 
+					AND kb_auth = 1";
+			$db->sql_query($sql);
+		}
+		else if ($action_subcats == 'move')
+		{
+			if (!$subcats_to_id)
+			{
+				$errors[] = $user->lang['NO_DESTINATION_CAT'];
+			}
+			else
+			{
+				$log_action_forums = 'MOVE_CATS';
+
+				$sql = 'SELECT cat_name
+						FROM ' . KB_CATS_TABLE . '
+						WHERE cat_id = ' . $subcats_to_id;
+				$result = $db->sql_query($sql);
+				$row = $db->sql_fetchrow($result);
+				$db->sql_freeresult($result);
+
+				if (!$row)
+				{
+					$errors[] = $user->lang['NO_CAT'];
+				}
+				else
+				{
+					$subcats_to_name = $row['cat_name'];
+
+					$sql = 'SELECT cat_id
+							FROM ' . KB_CATS_TABLE . "
+							WHERE parent_id = $cat_id";
+					$result = $db->sql_query($sql);
+					
+					while ($row = $db->sql_fetchrow($result))
+					{
+						$this->move_cat($row['cat_id'], $subcats_to_id);
+					}
+					$db->sql_freeresult($result);
+
+					// Grab new forum data for correct tree updating later
+					$cat_data = $this->get_cat_info($cat_id);
+
+					$sql = 'UPDATE ' . KB_CATS_TABLE . "
+							SET parent_id = $subcats_to_id
+							WHERE parent_id = $cat_id";
+					$db->sql_query($sql);
+
+					$diff = 2;
+					$sql = 'DELETE FROM ' . KB_CATS_TABLE . "
+							WHERE cat_id = $cat_id";
+					$db->sql_query($sql);
+					
+					// Auth entries
+					$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
+							WHERE forum_id = $cat_id
+							AND kb_auth = 1";
+					$db->sql_query($sql);
+
+					$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
+							WHERE forum_id = $cat_id
+							AND kb_auth = 1";
+					$db->sql_query($sql);
+				}
+			}
+
+			if (sizeof($errors))
+			{
+				return $errors;
+			}
+		}
+		else
+		{
+			$diff = 2;
+			$sql = 'DELETE FROM ' . KB_CATS_TABLE . "
+					WHERE cat_id = $cat_id";
+			$db->sql_query($sql);
+			
+			$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
+					WHERE forum_id = $cat_id
+					AND kb_auth = 1";
+			$db->sql_query($sql);
+
+			$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
+					WHERE forum_id = $cat_id
+					AND kb_auth = 1";
+			$db->sql_query($sql);
+		}
+
+		// Resync tree
+		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+				SET right_id = right_id - $diff
+				WHERE left_id < {$cat_data['right_id']} AND right_id > {$cat_data['right_id']}";
+		$db->sql_query($sql);
+
+		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+				SET left_id = left_id - $diff, right_id = right_id - $diff
+				WHERE left_id > {$cat_data['right_id']}";
+		$db->sql_query($sql);
+
+		$log_action = implode('_', array($log_action_articles, $log_action_cats));
+
+		switch ($log_action)
+		{
+			case 'MOVE_ARTICLES_MOVE_CATS':
+				add_log('admin', 'LOG_CAT_' . $log_action, $articles_to_name, $subcats_to_name, $cat_data['cat_name']);
+			break;
+
+			case 'DELETE_ARTICLES_MOVE_CATS':
+				add_log('admin', 'LOG_CAT_' . $log_action, $subcats_to_name, $cat_data['cat_name']);
+			break;
+
+			case 'DELETE_ARTICLES_DELETE_CATS':
+				add_log('admin', 'LOG_CAT_' . $log_action, $cat_data['cat_name']);
+			break;
+
+			case 'MOVE_ARTICLES_DELETE_CATS':
+				add_log('admin', 'LOG_CAT_' . $log_action, $subcats_to_name, $cat_data['cat_name']);
+			break;
+
+			default:
+				add_log('admin', 'LOG_CAT_DELETE_ARTICLES_DELETE_CATS', $cat_data['cat_name']);
+			break;
+		}
+
+		return $errors;
+	}
+	
+	/**
+	* Move cat content
+	* Luckily this should be fairly easy
+	*/
+	function move_cat_content($from_id, $to_id)
+	{
+		global $db, $user;
+		
+		$errors = $article_ids = array();
+		$article_count = 0;
+		
+		// Retrieve all articles in category
+		$sql = 'SELECT article_id
+				FROM ' . KB_TABLE . ' 
+				WHERE cat_id = ' . $db->sql_escape($from_id);
+		$result = $db->sql_query($sql);
+		while($row = $db->sql_fetchrow($result))
+		{
+			$article_ids[] = $row['article_id'];
+		}
+		$article_count = count($article_ids);
+		$db->sql_freeresult($result);
+		
+		// Update article table
+		$sql = 'UPDATE ' . KB_TABLE . '
+				SET cat_id = ' . $db->sql_escape($to_id) . '
+				WHERE ' . $db->sql_in_set('article_id', $article_ids);
+		$db->sql_query($sql);
+		
+		// Update count
+		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+				SET cat_articles = cat_articles + $article_count
+				WHERE cat_id = " . $db->sql_escape($to_id);
+		$db->sql_query($sql);
+		
+		return $errors;
+	}
+	
+	/**
+	* Deletes all articles in a category
+	*/
+	function delete_cat_content($cat_id)
+	{
+		global $db, $user, $config;
+		
+		$errors = $article_ids = array();
+		
+		// Retrieve all articles in category
+		$sql = 'SELECT article_id
+				FROM ' . KB_TABLE . ' 
+				WHERE cat_id = ' . $db->sql_escape($cat_id);
+		$result = $db->sql_query($sql);
+		while($row = $db->sql_fetchrow($result))
+		{
+			$article_ids[] = $row['article_id'];
+		}
+		$db->sql_freeresult($result);
+		
+		if(sizeof($article_ids))
+		{
+			// Delete them en masse
+			// Delete from rate table
+			$sql = 'DELETE FROM ' . KB_RATE_TABLE . "
+					WHERE " . $db->sql_in_set('article_id', $article_ids);
+			$db->sql_query($sql);
+			
+			// Delete from comments table - no need to store these
+			$comment_ids = array();
+			$sql = 'SELECT comment_id
+					FROM ' . KB_COMMENTS_TABLE . "
+					WHERE " . $db->sql_in_set('article_id', $article_ids);
+			$result = $db->sql_query($sql);
+			while($row = $db->sql_fetchrow($result))
+			{
+				// Don't loop this: comment_delete($row['comment_id'], $article_id, false);
+				$comment_ids[] = $row['comment_id'];
+			}
+			$db->sql_freeresult($result);
+			
+			if(sizeof($comment_ids))
+			{
+				// Delete comments
+				$sql = 'DELETE FROM ' . KB_COMMENTS_TABLE . "
+						WHERE " . $db->sql_in_set('comment_id', $comment_ids);
+				$db->sql_query($sql);
+				
+				// Delete from attachments table, and delete attachment files
+				kb_delete_attachments('comment', $comment_ids);
+			}
+			
+			// Delete from edits table
+			$sql = 'DELETE FROM ' . KB_EDITS_TABLE . "
+					WHERE " . $db->sql_in_set('article_id', $article_ids);
+			$db->sql_query($sql);
+			
+			// Delete from attachments table, and delete attachment files
+			kb_delete_attachments('delete', $article_ids);
+			
+			// Delete from tags table
+			$sql = 'DELETE FROM ' . KB_TAGS_TABLE . "
+					WHERE " . $db->sql_in_set('article_id', $article_ids);
+			$db->sql_query($sql);
+			
+			// Delete from tracking table
+			$sql = 'DELETE FROM ' . KB_TRACK_TABLE . "
+					WHERE " . $db->sql_in_set('article_id', $article_ids);
+			$db->sql_query($sql);
+			
+			// Delete from article table
+			$sql = 'DELETE FROM ' . KB_TABLE . "
+					WHERE " . $db->sql_in_set('article_id', $article_ids);
+			$db->sql_query($sql);
+			
+			// Unset requests...
+			$sql = 'UPDATE ' . KB_REQ_TABLE . " 
+					SET article_id = 0, request_accepted = 0, request_status = " . STATUS_REQUEST . "
+					WHERE " . $db->sql_in_set('article_id', $article_ids);
+			$db->sql_query($sql);
+			
+			//Resync Stats
+			$total_articles = sizeof($article_ids);
+			$total_comments = sizeof($comment_ids);
+			
+			set_config('kb_total_articles', $config['kb_total_articles'] - $total_articles, true);
+			if ($total_comments)
+			{
+				set_config('kb_total_comments', $config['kb_total_comments'] - $total_comments, true);
+			}
+			set_config('kb_last_updated', time(), true);
+		}
+		
+		return $errors;
+	}
+	
+	/**
+	* Move category
+	*/
+	function move_cat($from_id, $to_id)
+	{
+		global $db, $user;
+
+		$moved_cats = $errors = array();
+		$moved_cats = get_cat_branch($from_id, 'children', 'descending');
+		$from_data = $moved_cats[0];
+		$diff = sizeof($moved_cats) * 2;
+
+		$moved_ids = array();
+		for ($i = 0; $i < sizeof($moved_cats); ++$i)
+		{
+			$moved_ids[] = $moved_cats[$i]['cat_id'];
+		}
+
+		// Resync parents
+		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+				SET right_id = right_id - $diff
+				WHERE left_id < " . $from_data['right_id'] . "
+				AND right_id > " . $from_data['right_id'];
+		$db->sql_query($sql);
+
+		// Resync righthand side of tree
+		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+				SET left_id = left_id - $diff, right_id = right_id - $diff
+				WHERE left_id > " . $from_data['right_id'];
+		$db->sql_query($sql);
+
+		if ($to_id > 0)
+		{
+			// Retrieve $to_data again, it may have been changed...
+			$to_data = $this->get_cat_info($to_id);
+
+			// Resync new parents
+			$sql = 'UPDATE ' . KB_CATS_TABLE . "
+					SET right_id = right_id + $diff
+					WHERE " . $to_data['right_id'] . ' BETWEEN left_id AND right_id
+					AND ' . $db->sql_in_set('cat_id', $moved_ids, true);
+			$db->sql_query($sql);
+
+			// Resync the righthand side of the tree
+			$sql = 'UPDATE ' . KB_CATS_TABLE . "
+					SET left_id = left_id + $diff, right_id = right_id + $diff
+					WHERE left_id > " . $to_data['right_id'] . '
+					AND ' . $db->sql_in_set('cat_id', $moved_ids, true);
+			$db->sql_query($sql);
+
+			// Resync moved branch
+			$to_data['right_id'] += $diff;
+
+			if ($to_data['right_id'] > $from_data['right_id'])
+			{
+				$diff = '+ ' . ($to_data['right_id'] - $from_data['right_id'] - 1);
+			}
+			else
+			{
+				$diff = '- ' . abs($to_data['right_id'] - $from_data['right_id'] - 1);
+			}
+		}
+		else
+		{
+			$sql = 'SELECT MAX(right_id) AS right_id
+					FROM ' . KB_CATS_TABLE . '
+					WHERE ' . $db->sql_in_set('cat_id', $moved_ids, true);
+			$result = $db->sql_query($sql);
+			$row = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
+
+			$diff = '+ ' . ($row['right_id'] - $from_data['left_id'] + 1);
+		}
+
+		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+				SET left_id = left_id $diff, right_id = right_id $diff
+				WHERE " . $db->sql_in_set('cat_id', $moved_ids);
+		$db->sql_query($sql);
+
+		return $errors;
 	}
 
 	/**

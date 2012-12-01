@@ -38,6 +38,7 @@ class mcp_kb
 		$user->add_lang('mods/kb');
 		include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
 		include($phpbb_root_path . 'includes/functions_kb.' . $phpEx);
+		include($phpbb_root_path . 'includes/functions_plugins_kb.' . $phpEx);
 		include($phpbb_root_path . 'includes/kb.' . $phpEx);
 
 		$submit = (isset($_POST['submit'])) ? true : false;
@@ -88,7 +89,7 @@ class mcp_kb
 					if($status == STATUS_APPROVED && $article_data['article_status'] != STATUS_APPROVED) // Secure against inflation
 					{
 						$sql = 'UPDATE ' . KB_REQ_TABLE . '
-								SET request_status = ' . REQUEST_ADDED . '
+								SET request_status = ' . STATUS_ADDED . '
 								WHERE article_id = ' . $article_id;
 						$db->sql_query($sql);
 						
@@ -262,7 +263,7 @@ class mcp_kb
 							'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
 							'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
 							'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
-							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
+							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_kb_download', $row['cat_id']) && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 							
 							'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;hmode=view&amp;a=" . $row['article_id']),
 							'U_STATUS'					=> append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;hmode=status&amp;a=" . $row['article_id']),
@@ -310,7 +311,7 @@ class mcp_kb
 							'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
 							'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
 							'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
-							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
+							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_kb_download', $row['cat_id']) && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 							
 							'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;mode=articles&amp;hmode=view&amp;a=" . $row['article_id']), // Mode articles here for style continuity
 							'U_STATUS'					=> append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;mode=articles&amp;hmode=status&amp;a=" . $row['article_id']),

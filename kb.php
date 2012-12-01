@@ -18,6 +18,7 @@ include($phpbb_root_path . 'common.' . $phpEx);
 include($phpbb_root_path . 'includes/kb.' . $phpEx);
 include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
 include($phpbb_root_path . 'includes/functions_kb.' . $phpEx);
+include($phpbb_root_path . 'includes/functions_plugins_kb.' . $phpEx);
 
 // Init session etc, we will just add lang files along the road
 $user->session_begin();
@@ -62,7 +63,7 @@ if ((!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION) && $a
 		confirm_box(false, $message, $hidden_fields);
 	}
 	
-	redirect(append_sid("{$phpbb_root_path}index.$phpEx"));
+	redirect(kb_append_sid("{$phpbb_root_path}index.$phpEx"));
 }
 else if(!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION)
 {
@@ -82,17 +83,11 @@ $cat_search = ($cat_id == 0) ? '' : '&amp;cat_ids[]=' . $cat_id;
 
 // Some default template variables
 $template->assign_vars(array(
-	'U_KB_SEARCH'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search' . $cat_search),
-	'U_KB_SEARCH_ADV'	=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search'),
-	'TOTAL_KB_CAT'		=> $config['kb_total_cats'],
-	'TOTAL_KB_ARTICLES'	=> $config['kb_total_articles'],
-	'TOTAL_KB_COMMENTS'	=> $config['kb_total_comments'],
-	'LAST_UPDATED'		=> $user->format_date($config['kb_last_updated']),
-	'U_MCP'				=> ($auth->acl_get('m_kb')) ? append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=kb') : false,
+	'U_MCP'				=> ($auth->acl_get('m_kb')) ? kb_append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=kb') : false,
 ));
 
 // Handle all knowledge base related stuff, this file is only to call it, makes the user able to move it around
-gen_kb_auth_level();
+gen_kb_auth_level($cat_id);
 $kb = new knowledge_base($cat_id);
 
 ?>

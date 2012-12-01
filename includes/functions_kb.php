@@ -91,7 +91,7 @@ function kb_generate_smilies($mode)
 	{
 		$template->assign_vars(array(
 			'S_SHOW_SMILEY_LINK' 	=> true,
-			'U_MORE_SMILIES' 		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=smilies')
+			'U_MORE_SMILIES' 		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=smilies')
 		));
 	}
 
@@ -131,7 +131,7 @@ function kb_upload_popup()
 * Uses upload class
 * Slightly modified phpBB class
 */
-function kb_upload_attachment($form_name, $local = false, $local_storage = '', $local_filedata = false)
+function kb_upload_attachment($form_name, $cat_id, $local = false, $local_storage = '', $local_filedata = false)
 {
 	global $auth, $user, $config, $db, $cache;
 	global $phpbb_root_path, $phpEx;
@@ -529,6 +529,11 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 		$sql = 'INSERT INTO ' . KB_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_data[KB_TABLE]['sql']);
 		$db->sql_query($sql);
 		$data['article_id'] = $db->sql_nextid();
+		
+		if ($data['article_status'] == STATUS_APPROVED)
+		{
+			on_posting('article', 'add', $data);
+		}
 	}
 	elseif($mode == 'edit')
 	{
@@ -537,7 +542,26 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 				WHERE article_id = ' . $data['article_id'];
 		$db->sql_query($sql);
 		
+		if ($data['article_status'] == STATUS_APPROVED)
+		{
+			on_posting('article', 'edit', $data);
+		}
+		
 		set_config('kb_last_updated', time(), true);
+	}
+	
+	// Synchronize tables when moving category
+	if($mode == 'edit' && $data['article_status'] == STATUS_APPROVED && $old_data['article_status'] == STATUS_APPROVED && $data['cat_id'] != $old_data['cat_id'])
+	{
+		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+				SET cat_articles = cat_articles + 1
+				WHERE cat_id = '" . $db->sql_escape($data['cat_id']) . "'";
+		$db->sql_query($sql);
+		
+		$sql = 'UPDATE ' . KB_CATS_TABLE . "
+				SET cat_articles = cat_articles - 1
+				WHERE cat_id = '" . $db->sql_escape($old_data['cat_id']) . "'";
+		$db->sql_query($sql);
 	}
 	
 	// Handle tags
@@ -926,7 +950,7 @@ function kb_posting_gen_attachment_entry($attachment_data, &$filename_data, $sho
 				$hidden .= '<input type="hidden" name="attachment_data[' . $count . '][' . $key . ']" value="' . $value . '" />';
 			}
 
-			$download_link = append_sid("{$phpbb_root_path}download/kb.$phpEx", 'mode=view&amp;id=' . (int) $attach_row['attach_id'], true, ($attach_row['is_orphan']) ? $user->session_id : false);
+			$download_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'mode=view&amp;id=' . (int) $attach_row['attach_id'], true, ($attach_row['is_orphan']) ? $user->session_id : false);
 
 			$template->assign_block_vars('attach_row', array(
 				'FILENAME'			=> basename($attach_row['real_filename']),
@@ -1127,15 +1151,23 @@ function article_delete($article_id, $cat_id, $article_data)
 		$db->sql_query($sql);
 		
 		// Delete from comments table - no need to store these
+		$comment_ids = array();
 		$sql = 'SELECT comment_id
 				FROM ' . KB_COMMENTS_TABLE . "
 				WHERE article_id = $article_id";
 		$result = $db->sql_query($sql);
 		while($row = $db->sql_fetchrow($result))
 		{
-			comment_delete($row['comment_id'], $article_id, false);
+			$comment_ids[] = $row['comment_id'];
 		}
 		$db->sql_freeresult($result);
+		
+		$sql = 'DELETE FROM ' . KB_COMMENTS_TABLE . "
+				WHERE " . $db->sql_in_set('comment_id', $comment_ids);
+		$db->sql_query($sql);
+		
+		// Delete from attachments table, and delete attachment files
+		kb_delete_attachments('comment', $comment_ids);
 		
 		// Delete from edits table
 		$sql = 'DELETE FROM ' . KB_EDITS_TABLE . "
@@ -1182,7 +1214,7 @@ function article_delete($article_id, $cat_id, $article_data)
 			set_config('kb_total_articles', $config['kb_total_articles'] - 1, true);
 		}
 		
-		$meta_info = append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id");
+		$meta_info = kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id");
 		$message = $user->lang['ARTICLE_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB_CAT'], '<a href="' . $meta_info . '">', '</a>');
 		meta_refresh(5, $meta_info);
 		trigger_error($message);
@@ -1192,13 +1224,13 @@ function article_delete($article_id, $cat_id, $article_data)
 		confirm_box(false, 'DELETE_ARTICLE', $s_hidden_fields);
 	}
 	
-	redirect(append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"));
+	redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"));
 }
 
 /*
 * Delete a comment
 */
-function comment_delete($comment_id, $article_id, $show_confirm_box, $type = COMMENT_GLOBAL)
+function comment_delete($comment_id, $article_id, $type = COMMENT_GLOBAL)
 {
 	global $phpEx, $user, $phpbb_root_path, $auth, $db;
 	
@@ -1208,23 +1240,9 @@ function comment_delete($comment_id, $article_id, $show_confirm_box, $type = COM
 		'i'		=> 'comment')
 	);
 	
-	$do_delete = true;
-	if($show_confirm_box)
+	if(confirm_box(true))
 	{
-		if(confirm_box(true))
-		{
-			$do_delete = true;
-		}
-		else
-		{
-			confirm_box(false, 'DELETE_COMMENT', $s_hidden_fields);
-		}
-	}
-	
-	if($do_delete)
-	{
-		// Delete article
-		// Delete from rate table
+		// Delete comment
 		$sql = 'DELETE FROM ' . KB_COMMENTS_TABLE . "
 				WHERE comment_id = $comment_id";
 		$db->sql_query($sql);
@@ -1243,18 +1261,17 @@ function comment_delete($comment_id, $article_id, $show_confirm_box, $type = COM
 			set_config('kb_total_comments', $config['kb_total_comments'] - 1, true);
 		}
 		
-		if(!$show_confirm_box)
-		{
-			return;
-		}
-		
-		$meta_info = append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id");
+		$meta_info = kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id");
 		$message = $user->lang['COMMENT_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB_ARTICLE'], '<a href="' . $meta_info . '">', '</a>');
 		meta_refresh(5, $meta_info);
 		trigger_error($message);
 	}
+	else
+	{
+		confirm_box(false, 'DELETE_COMMENT', $s_hidden_fields);
+	}
 	
-	redirect(append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"));
+	redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"));
 }
 
 /*
@@ -1275,8 +1292,8 @@ function request_delete($request_id)
 				WHERE request_id = '. $request_id;
 		$db->sql_query($sql);
 		
-		$meta_info = append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list');
-		$message = $user->lang['REQUEST_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx") . '">', '</a>');
+		$meta_info = kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list');
+		$message = $user->lang['REQUEST_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx") . '">', '</a>');
 		meta_refresh(5, $meta_info);
 		trigger_error($message);
 	}
@@ -1285,7 +1302,7 @@ function request_delete($request_id)
 		confirm_box(false, 'DELETE_REQUEST', $s_hidden_fields);
 	}
 	
-	redirect(append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=view&amp;r=$request_id"));
+	redirect(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=view&amp;r=$request_id"));
 }
 
 /*
@@ -1297,10 +1314,6 @@ function show_request_list($in_menu, $num, $start = 0)
 {
 	global $phpEx, $user, $auth;
 	global $db, $phpbb_root_path, $template;
-	
-	get_random_article(0);
-	get_latest_article();	
-	show_cats(0);
 	
 	$sql = $db->sql_build_query('SELECT', array(
 		'SELECT'	=> 'r.*',
@@ -1356,15 +1369,15 @@ function show_request_list($in_menu, $num, $start = 0)
 			'REQ_TITLE'			=> $title,
 			'REQ_DATE'			=> ($in_menu) ? '' : $user->format_date($row['request_time']),
 			'REQ_AUTHOR_FULL'	=> ($in_menu) ? '' : get_username_string('full', $row['request_user_id'], $row['request_user_name'], $row['request_user_color'], $row['request_user_name']),
-			'U_VIEW_REQ'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=view&amp;r=' . $row['request_id']),
+			'U_VIEW_REQ'		=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=view&amp;r=' . $row['request_id']),
 		));	
 	}
 	$db->sql_freeresult($result);
 	
 	$template->assign_vars(array(
-		'U_ADD_REQ'			=> ($auth->acl_get('u_kb_request')) ? append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=add') : '',
-		'U_VIEW_ALL'		=> ($in_menu) ? append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list') : '',
-		'PAGINATION'		=> ($in_menu) ? '' : generate_pagination(append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=list"), $requests_count, $num, $start),
+		'U_ADD_REQ'			=> ($auth->acl_get('u_kb_request')) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=add') : '',
+		'U_VIEW_ALL'		=> ($in_menu) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list') : '',
+		'PAGINATION'		=> ($in_menu) ? '' : generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=list"), $requests_count, $num, $start),
 		'PAGE_NUMBER'		=> ($in_menu) ? '' : on_page($requests_count, $num, $start),
 		'TOTAL_REQUESTS' 	=> ($in_menu) ? '' : $requests_count,
 		'S_SHOW_REQ_LIST'	=> ($in_menu) ? true : false,
@@ -1384,7 +1397,7 @@ function generate_kb_nav($page_title = '', $data = array())
 		'S_IS_CAT'		=> true,
 		'FORUM_NAME'	=> $user->lang['KB'],
 		'FORUM_ID'		=> 0,
-		'U_VIEW_FORUM'	=> append_sid("{$phpbb_root_path}kb.$phpEx"))
+		'U_VIEW_FORUM'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx"))
 	);
 	
 	// Parent Categories
@@ -1397,7 +1410,7 @@ function generate_kb_nav($page_title = '', $data = array())
 				'S_IS_CAT'		=> true,
 				'FORUM_NAME'	=> $parent_name,
 				'FORUM_ID'		=> $parent_cat_id,
-				'U_VIEW_FORUM'	=> append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $parent_cat_id))
+				'U_VIEW_FORUM'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $parent_cat_id))
 			);
 		}
 	}
@@ -1409,7 +1422,7 @@ function generate_kb_nav($page_title = '', $data = array())
 			'S_IS_CAT'		=> true,
 			'FORUM_NAME'	=> $data['cat_name'],
 			'FORUM_ID'		=> $data['cat_id'],
-			'U_VIEW_FORUM'	=> append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $data['cat_id']))
+			'U_VIEW_FORUM'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'c=' . $data['cat_id']))
 		);
 	}
 	
@@ -1454,6 +1467,40 @@ function kb_get_cat_parents(&$cat_data)
 	}
 
 	return $cat_parents;
+}
+
+/*
+* Returns children of cat id
+*/
+function kb_get_cat_children($cat_id)
+{
+	global $db;
+	
+	$cats = array();
+	$sql = $db->sql_build_query('SELECT', array(
+		'SELECT'	=> 'c2.*',
+		'FROM'		=> array(
+			KB_CATS_TABLE	=> 'c1',
+		),
+		'LEFT_JOIN'	=> array(
+			array(
+				'FROM'	=> array(KB_CATS_TABLE => 'c2'),
+				'ON'	=> 'c2.left_id >= c1.left_id AND c2.left_id <= c1.right_id',
+			),
+		),
+		'WHERE'		=> 'c1.cat_id = ' . $cat_id,
+			
+		'ORDER_BY'	=> 'c2.left_id ASC',
+	));
+	
+	$result = $db->sql_query($sql);
+	while($row = $db->sql_fetchrow($result))
+	{
+		$cats[] = $row;
+	}
+	$db->sql_freeresult($result);
+	
+	return $cats;
 }
 
 /**
@@ -1651,14 +1698,14 @@ function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview
 				$display_cat = ATTACHMENT_CATEGORY_NONE;
 			}
 
-			$download_link = append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id']);
+			$download_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id']);
 
 			switch ($display_cat)
 			{
 				// Images
 				case ATTACHMENT_CATEGORY_IMAGE:
 					$l_downloaded_viewed = 'VIEWED_COUNT';
-					$inline_link = append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id']);
+					$inline_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id']);
 					$download_link .= '&amp;mode=view';
 
 					$block_array += array(
@@ -1672,7 +1719,7 @@ function kb_parse_attachments(&$message, &$attachments, &$update_count, $preview
 				// Images, but display Thumbnail
 				case ATTACHMENT_CATEGORY_THUMB:
 					$l_downloaded_viewed = 'VIEWED_COUNT';
-					$thumbnail_link = append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;t=1');
+					$thumbnail_link = kb_append_sid("{$phpbb_root_path}download/kb.$phpEx", 'id=' . $attachment['attach_id'] . '&amp;t=1');
 					$download_link .= '&amp;mode=view';
 
 					$block_array += array(
@@ -1884,14 +1931,14 @@ function handle_related_articles($article_id, $show_num = 5)
 		foreach ($articles as $article_id_ra => $article_title_ra)
 		{
 			$template->assign_block_vars('related_articles', array(
-				'U_VIEW_ARTICLE'	=> append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id_ra"),
+				'U_VIEW_ARTICLE'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id_ra"),
 				'TITLE'				=> $article_title_ra,
 			));
 		}
 		
 		// Generate Pagination
 		$template->assign_vars(array(
-			'KB_PAGINATION'	=> kb_generate_pagination(append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"), $articles_found, $show_num, $ra, 'ra', true),
+			'KB_PAGINATION'	=> kb_generate_pagination(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"), $articles_found, $show_num, $ra, 'ra', true),
 			'KB_PAGE_NUMBER'	=> on_page($articles_found, $show_num, $ra),
 			'KB_TOTAL_RA' 		=> $articles_found,
 			'KB_S_TOTAL_RA'	=> ($articles_found == 1) ? $user->lang['MATCH_FOUND'] : $user->lang['MATCHS_FOUND'],
@@ -1923,7 +1970,7 @@ function handle_latest_articles($mode, $cat_id, $data, $show = 4)
 				for($i = 0; $i < $show; $i++)
 				{
 					$article = $latest_articles[$i];
-					$article_links[] = '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $article['article_id']) . '">' . $article['article_title'] . '</a>';
+					$article_links[] = '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $article['article_id']) . '">' . $article['article_title'] . '</a>';
 				}
 			}	
 			
@@ -1973,27 +2020,6 @@ function handle_latest_articles($mode, $cat_id, $data, $show = 4)
 			// Call delete here only used it article id thats getting deleted is is recent articles for that cat
 		break;
 	}
-}
-
-/**
-* Show cats here
-* Moved from main kb.php
-* Might pass cat_id later so selected cat is in bold
-*/
-function show_cats($cat_id)
-{
-	global $template, $phpbb_root_path, $phpEx;
-	
-	$cats = make_cat_select($cat_id, false, false, false, true, false, true);
-	foreach ($cats as $cat)
-	{
-		$template->assign_block_vars('cat_list', array(
-			'CAT_SEL'				=> $cat['selected'],
-			'CAT_NAME'				=> $cat['padding'] . $cat['cat_name'],
-			'U_VIEW_CAT'			=> append_sid("{$phpbb_root_path}kb.$phpEx", "c=" . $cat['cat_id']),
-		));
-	}
-	unset($cats);
 }
 
 /**
@@ -2203,28 +2229,31 @@ function kb_display_cats($root_data = '')
 	
 	while($row = $db->sql_fetchrow($result))
 	{
-		$cat_id = $row['cat_id'];
-		$cat_ids[] = $cat_id;
-		
-		if ($row['parent_id'] == $root_data['cat_id'])
+		// Only show cats you can read
+		if ($auth->acl_get('u_kb_read', $row['cat_id']))
 		{
-			// Direct child of current branch
-			$parent_id = $cat_id;
-			$cat[] = $row;
-			$cats[$cat_id] = $row;
-		}
-		else
-		{
-			$cats[$parent_id]['cat_articles'] += $row['cat_articles'];
-			$subcats[$parent_id][$cat_id]['name'] = $row['cat_name'];
-			$subcats[$parent_id][$cat_id]['children'] = array();
-
-			if (isset($subforums[$parent_id][$row['parent_id']]))
+			$cat_id = $row['cat_id'];
+			$cat_ids[] = $cat_id;
+			
+			if ($row['parent_id'] == $root_data['cat_id'])
 			{
-				$subcats[$parent_id][$row['parent_id']]['children'][] = $cat_id;
+				// Direct child of current branch
+				$parent_id = $cat_id;
+				$cat[] = $row;
+				$cats[$cat_id] = $row;
+			}
+			else
+			{
+				$cats[$parent_id]['cat_articles'] += $row['cat_articles'];
+				$subcats[$parent_id][$cat_id]['name'] = $row['cat_name'];
+				$subcats[$parent_id][$cat_id]['children'] = array();
+
+				if (isset($subforums[$parent_id][$row['parent_id']]))
+				{
+					$subcats[$parent_id][$row['parent_id']]['children'][] = $cat_id;
+				}
 			}
 		}
-
 	}
 	$db->sql_freeresult($result);
 	
@@ -2252,9 +2281,9 @@ function kb_display_cats($root_data = '')
 					$visible_subcats[$cat_id]++;
 					$subcats_list[] = array(
 						'name' => $subcat['name'],
-						'link' => append_sid("{$phpbb_root_path}kb.$phpEx", "c=$subcat_id"),
+						'link' => kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$subcat_id"),
 					);
-					$s_subcats_list[] = '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "c=$subcat_id") . '">' . $subcat['name'] . '</a>';
+					$s_subcats_list[] = '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$subcat_id") . '">' . $subcat['name'] . '</a>';
 				}
 				$s_subcats_list = implode(', ', $s_subcats_list);
 			}
@@ -2279,8 +2308,8 @@ function kb_display_cats($root_data = '')
 				'LATEST_ARTICLE'		=> $latest_articles,
 
 				'L_SUBCAT'				=> ($visible_subcats[$cat_id] == 1) ? $user->lang['SUBCAT'] : $user->lang['SUBCATS'],
-				'U_VIEWCAT'				=> append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id"),
-				'U_RSS_CAT'				=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=cat&amp;feed_cat_id=' . $cats[$cat_id]['cat_id'] . '&amp;feed_cat_name=' . $cats[$cat_id]['cat_name']),
+				'U_VIEWCAT'				=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id"),
+				'U_RSS_CAT'				=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=cat&amp;feed_cat_id=' . $cats[$cat_id]['cat_id'] . '&amp;feed_cat_name=' . $cats[$cat_id]['cat_name']),
 			));		
 		}
 	}	
@@ -2301,7 +2330,7 @@ function gen_kb_edit_string($article_id, $last_edit_id, $article_time, $edit_tim
 		$edit_data = $db->sql_fetchrow($result);
 		$db->sql_freeresult($result);
 		
-		$l_edit = sprintf($user->lang['KB_EDITED_BY'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;e=$article_id") . '">', '</a>', get_username_string('full', $edit_data['edit_user_id'], $edit_data['edit_user_name'], $edit_data['edit_user_color']), $user->format_date($edit_time, false, true));
+		$l_edit = sprintf($user->lang['KB_EDITED_BY'], '<a href="' . kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;e=$article_id") . '">', '</a>', get_username_string('full', $edit_data['edit_user_id'], $edit_data['edit_user_name'], $edit_data['edit_user_color']), $user->format_date($edit_time, false, true));
 		
 		if($reason != '' && $reason_global)
 		{
@@ -2358,7 +2387,7 @@ function make_article_type_select($type_id = 0)
 }	
 
 //Make cat list
-function make_cat_select($select_id = false, $ignore_id = false, $ignore_acl = false, $ignore_nonpost = false, $ignore_emptycat = true, $only_acl_post = false, $return_array = false)
+function make_cat_select($select_id = false, $ignore_id = false, $in_acp = false, $return_array = false)
 {
 	global $db, $user, $auth;
 
@@ -2376,9 +2405,15 @@ function make_cat_select($select_id = false, $ignore_id = false, $ignore_acl = f
 	// Sometimes it could happen that forums will be displayed here not be displayed within the index page
 	// This is the result of forums not displayed at index, having list permissions and a parent of a forum with no permissions.
 	// If this happens, the padding could be "broken"
-
 	while ($row = $db->sql_fetchrow($result))
 	{
+		if (!$auth->acl_get('u_kb_read', $row['cat_id']) && !$in_acp)
+		{
+			// if no permission, skip branch
+			$right = $row['right_id'];
+			continue;
+		}
+		
 		if ($row['left_id'] < $right)
 		{
 			$padding .= '&nbsp; &nbsp;';
@@ -2459,20 +2494,20 @@ function gen_kb_auth_level($cat_id = false)
 	global $template, $auth, $user, $config;
 
 	$rules = array(
-		($auth->acl_get('u_kb_add')) ? sprintf($user->lang['KB_PERM_ADD'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_ADD'], $user->lang['KB_NOT']),
-		($auth->acl_get('u_kb_comment')) ? sprintf($user->lang['KB_PERM_COM'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_COM'], $user->lang['KB_NOT']),
-		($user->data['is_registered'] && $auth->acl_gets('u_kb_edit', 'm_kb')) ? sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_NOT']),
-		($user->data['is_registered'] && $auth->acl_gets('u_kb_delete', 'm_kb')) ? sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_NOT']),
-		($auth->acl_get('u_kb_rate')) ? sprintf($user->lang['KB_PERM_RATE'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_RATE'], $user->lang['KB_NOT']),
-		($auth->acl_get('u_kb_viewhistory')) ? sprintf($user->lang['KB_PERM_HIST'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_HIST'], $user->lang['KB_NOT']),
+		($auth->acl_get('u_kb_add', $cat_id)) ? sprintf($user->lang['KB_PERM_ADD'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_ADD'], $user->lang['KB_NOT']),
+		($auth->acl_get('u_kb_comment', $cat_id)) ? sprintf($user->lang['KB_PERM_COM'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_COM'], $user->lang['KB_NOT']),
+		($user->data['is_registered'] && $auth->acl_gets(array('u_kb_edit', 'm_kb'), $cat_id)) ? sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_NOT']),
+		($user->data['is_registered'] && $auth->acl_gets(array('u_kb_delete', 'm_kb'), $cat_id)) ? sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_NOT']),
+		($auth->acl_get('u_kb_rate', $cat_id)) ? sprintf($user->lang['KB_PERM_RATE'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_RATE'], $user->lang['KB_NOT']),
+		($auth->acl_get('u_kb_viewhistory', $cat_id)) ? sprintf($user->lang['KB_PERM_HIST'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_HIST'], $user->lang['KB_NOT']),
 	);
 
 	if ($config['kb_allow_attachments'])
 	{
-		$rules[] = ($auth->acl_get('u_kb_attach')) ? sprintf($user->lang['KB_PERM_ATTACH'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_ATTACH'], $user->lang['KB_NOT']);
+		$rules[] = ($auth->acl_get('u_kb_attach', $cat_id)) ? sprintf($user->lang['KB_PERM_ATTACH'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_ATTACH'], $user->lang['KB_NOT']);
 	}
 	
-	$rules[] = ($auth->acl_get('u_kb_download')) ? sprintf($user->lang['KB_PERM_DOWN'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_DOWN'], $user->lang['KB_NOT']);
+	$rules[] = ($auth->acl_get('u_kb_download', $cat_id)) ? sprintf($user->lang['KB_PERM_DOWN'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_DOWN'], $user->lang['KB_NOT']);
 
 	foreach ($rules as $rule)
 	{
@@ -2482,108 +2517,38 @@ function gen_kb_auth_level($cat_id = false)
 	return;
 }
 
-// Get latest article
-function get_latest_article()
+// Gets ids of the cats the user can read
+// Sets it in $user->data to cache the function
+function get_readable_cats()
 {
-	global $config, $db, $template, $phpbb_root_path, $phpEx;
+	global $db, $user, $auth;
 	
-	if ($config['kb_last_article'] == '')
+	if(!isset($user->data['kb_readable_cats']))
 	{
-		$template->assign_vars(array(
-			'NO_LAST_ARTICLE'		=> true,
-		));
+		$sql = 'SELECT cat_id
+				FROM ' . KB_CATS_TABLE . '
+				ORDER BY cat_id ASC';
+		$result = $db->sql_query($sql);
 		
-		return;
-	}
-
-	$sql = 'SELECT article_title, article_desc, article_desc_bitfield, article_desc_options, article_desc_uid, article_views, article_comments 
-		FROM ' . KB_TABLE . '
-		WHERE article_id = ' . $config['kb_last_article'];
-	$result = $db->sql_query($sql);
-	$row = $db->sql_fetchrow($result);
-	if (!$db->sql_affectedrows())	
-	{
-		$template->assign_vars(array(
-			'NO_LAST_ARTICLE'		=> true,
-		));
+		$allowed_cats = array();
+		while($row = $db->sql_fetchrow($result))
+		{
+			if($auth->acl_get('u_kb_read', $row['cat_id']))
+			{
+				$allowed_cats[] = $row['cat_id'];
+			}
+		}
+		$db->sql_freeresult($result);
 		
-		return;
+		$user->data['kb_readable_cats'] = $allowed_cats;
 	}	
-	$db->sql_freeresult($result);
-
-	$template->assign_vars(array(
-		'LAST_ARTICLE_TITLE'		=> $row['article_title'],
-		'LAST_ARTICLE_DESC'			=> generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options']),
-		'LAST_ARTICLE_COMMENTS'		=> $row['article_comments'],
-		'LAST_ARTICLE_VIEWS'		=> $row['article_views'],
-		
-		'U_LAST_ARTICLE'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $config['kb_last_article']),
-		'U_RSS_LAST_ARTICLE'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=latest'),
-	));
-}
-
-// Random article - need all ids first, May as well cache the results for an hour to add later after debuggig
-function get_random_article($cat_id, $second_pass = false)
-{
-	global $db, $template, $phpbb_root_path, $phpEx;
-	$random_where = ($cat_id == 0) ? ' WHERE article_status = ' . STATUS_APPROVED : " WHERE cat_id = '" . $db->sql_escape($cat_id) . "'  AND article_status = " . STATUS_APPROVED;
 	
-	$all_ids = array();
-
-	$sql = 'SELECT article_id 
-			FROM ' . KB_TABLE . "
-			$random_where";
-	$result = $db->sql_query($sql);
-	while($row = $db->sql_fetchrow($result))
+	if (empty($user->data['kb_readable_cats']))
 	{
-		$all_ids[] = $row['article_id'];
-	}
-		
-	if (!$db->sql_affectedrows())	
-	{
-		if (!$second_pass)
-		{
-			// Call again with second pass saves writing another sql
-			get_random_article(0, true);
-		}
-		else
-		{
-			$template->assign_vars(array(
-				'NO_ARTICLE'		=> true,
-			));
-		}
-		
-		return;
-	}
-	$db->sql_freeresult($result);	
-	
-	if (empty($all_ids))
-	{
-		$template->assign_vars(array(
-			'NO_ARTICLE'		=> true,
-		));
-		
-		return;
+		$user->data['kb_readable_cats'] = array(0);
 	}
 	
-	$value = array_rand($all_ids);
-	$article_id = $all_ids[$value];
-
-	$sql = 'SELECT article_title, article_desc, article_desc_bitfield, article_desc_options, article_desc_uid, article_views, article_comments 
-			FROM ' . KB_TABLE . '
-			WHERE article_id = ' . $article_id;
-	$result = $db->sql_query($sql);
-	$row = $db->sql_fetchrow($result);
-	$db->sql_freeresult($result);
-
-	$template->assign_vars(array(
-		'RAN_ARTICLE_TITLE'		=> $row['article_title'],
-		'RAN_ARTICLE_DESC'		=> generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options']),
-		'RAN_ARTICLE_COMMENTS'	=> $row['article_comments'],
-		'RAN_ARTICLE_VIEWS'		=> $row['article_views'],
-		
-		'U_RAN_ARTICLE'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $article_id),
-	));
+	return $user->data['kb_readable_cats'];
 }
 
 /**
@@ -2631,6 +2596,178 @@ function fix_error_vars($mode, $error)
 	}
 	
 	return $error;
+}
+
+function export_data($type = 'word', $article_id)
+{
+	global $db, $phpbb_root_path, $user;
+	
+	if(!$article_id)
+	{
+		trigger_error('KB_NO_ARTICLE');
+	}
+	
+	$sql = $db->sql_build_query('SELECT', array(
+		'SELECT'	=> 'a.*',
+		'FROM'		=> array(
+			KB_TABLE => 'a'
+		),
+		'WHERE'		=> "a.article_id = '" . $db->sql_escape($article_id) . "'",
+	));
+	
+	$result = $db->sql_query($sql);
+	$article_data = $db->sql_fetchrow($result);
+			
+	if(!$article_data)
+	{
+		trigger_error('KB_NO_ARTICLE');
+	}
+	
+	$text = generate_text_for_display($article_data['article_text'], $article_data['bbcode_uid'], $article_data['bbcode_bitfield'], 7);
+	$desc = generate_text_for_display($article_data['article_desc'], $article_data['article_desc_uid'], $article_data['article_desc_bitfield'], 7);
+	
+	$output = '';
+	
+	switch ($type)
+	{
+		case 'word':
+			$output .= "<html xmlns:o=\"urn:schemas-microsoft-com:office:office\"";
+			$output .= "   xmlns:w=\"urn:schemas-microsoft-com:office:word\"";
+			$output .= "   xmlns=\"http://www.w3.org/TR/REC-html40\">";
+			$output .= "<head>
+							<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
+							<meta name=\"ProgId\" content=\"Word.Document\">
+							<style>
+							@page Section1
+							{
+								mso-page-orientation: portrait;
+								margin: 3cm 2.5cm 3cm 2.5cm;
+								mso-header-margin: 36pt;
+								mso-footer-margin: 36pt;
+								mso-paper-source: 0;
+							}
+							</style>
+						</head>
+						<body>
+						<div class=\"Section1\">";
+			$output .= "<span style=\"font-weight: bold; text-align: center; font-size: 150%; \">" . $article_data['article_title'] . "</span><br /><br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['ARTICLE_ID'] . ": </span>" . $article_data['article_id'] . "<br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['WRITTEN_BY'] . ": </span>" . $article_data['article_user_name'] . "<br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['WRITTEN_ON'] . ": </span>" . $user->format_date($article_data['article_time']) . "<br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['DESCRIPTION'] . ": </span>" . $desc . "<hr /><br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['ARTICLE_CONTENT'] . "</span><br />";
+			$output .= $text;
+			$output .= "</div></body></html>";
+			
+			//Set some formal stuff
+			$extension = '.doc';
+		break;
+		
+		// not working need to find a new way of doing this or just leave it as word?
+		case 'pdf':
+			$output .= "<html>";
+			$output .= "<head>
+							<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
+							<meta name=\"ProgId\" content=\"Pdf.Document\">
+							<style>
+							@page Section1
+							{
+								margin: 3cm 2.5cm 3cm 2.5cm;
+							}
+							</style>
+						</head>
+						<body>
+						<div class=\"Section1\">";
+			$output .= "<span style=\"font-weight: bold; text-align: center; font-size: 150%; \">" . $article_data['article_title'] . "</span><br /><br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['ARTICLE_ID'] . ": </span>" . $article_data['article_id'] . "<br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['WRITTEN_BY'] . ": </span>" . $article_data['article_user_name'] . "<br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['WRITTEN_ON'] . ": </span>" . $user->format_date($article_data['article_time']) . "<br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['DESCRIPTION'] . ": </span>" . $desc . "<hr /><br />";
+			$output .= "<span style=\"font-weight: bold; \">" . $user->lang['ARTICLE_CONTENT'] . "</span><br />";
+			$output .= $text;
+			$output .= "</div></body></html>";
+			
+			//Set some formal stuff
+			$extension = '.pdf';
+		break;
+	}
+	
+	$save_as = str_replace(' ', '_', $article_data['article_title']);
+	$location = $phpbb_root_path . 'store/' . $save_as . $extension;
+	
+	$fp = fopen($location, 'w+'); 
+	fwrite($fp, $output);
+    fclose($fp);
+	
+	set_download($save_as, $location, $extension);
+	
+	unlink($location);
+}
+
+function set_download($filename, $location, $extension)
+{
+	header("Content-disposition: attachment; filename=$filename" . $extension);
+	header('Content-type: application/vnd.$extension');
+	readfile($location);
+}
+
+function make_sort_select($mode, $default)
+{
+	global $user;
+	
+	// Sort options
+	if($mode == 'articles')
+	{
+		$s_sort_options = array(
+			'time'		=> $user->lang['KB_SORT_ATIME'],
+			'etime'		=> $user->lang['KB_SORT_ETIME'],
+			'title'		=> $user->lang['KB_SORT_TITLE'],
+			'author'	=> $user->lang['KB_SORT_AUTHOR'],
+			'views'		=> $user->lang['KB_SORT_VIEWS'],
+			'rating'	=> $user->lang['KB_SORT_RATING'],
+		);
+	}
+	elseif($mode == 'comments')
+	{
+		$s_sort_options = array(
+			'etime'		=> $user->lang['KB_SORT_ETIME'],
+			'name'		=> $user->lang['KB_SORT_CTITLE'],
+			'author'	=> $user->lang['KB_SORT_CAUTHOR'],
+			'time'		=> $user->lang['KB_SORT_CTIME'],
+		);
+	}
+	
+	$select = '<select name="sort" id="sort">';
+	foreach($s_sort_options as $value => $name)
+	{
+		$selected = ($value == $default) ? ' selected="selected"' : '';
+		$select .= '<option value="' . $value . '"' . $selected . '>' . $name . '</option>';
+		
+	}
+	$select .= '</select>';
+	
+	return $select;
+}
+
+function make_direction_select($direction)
+{
+	global $user;
+	
+	$s_dir_options = array(
+		'DESC'		=> $user->lang['KB_SORT_DESCENDING'],
+		'ASC'		=> $user->lang['KB_SORT_ASCENDING'],
+	);
+	
+	$select = '<select name="dir" id="dir">';
+	foreach($s_dir_options as $value => $name)
+	{
+		$selected = ($value == $direction) ? ' selected="selected"' : '';
+		$select .= '<option value="' . $value . '"' . $selected . '>' . $name . '</option>';
+		
+	}
+	$select .= '</select>';
+	
+	return $select;
 }
 
 ?>

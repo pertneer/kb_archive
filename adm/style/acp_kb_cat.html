@@ -47,6 +47,55 @@
 	</fieldset>
 	</form>
 
+<!-- ELSEIF S_DELETE_CAT -->
+
+	<a href="{U_BACK}" style="float: {S_CONTENT_FLOW_END};">&laquo; {L_BACK}</a>
+
+	<h1>{L_CAT_DELETE}</h1>
+
+	<p>{L_CAT_DELETE_EXPLAIN}</p>
+
+	<!-- IF S_ERROR -->
+		<div class="errorbox">
+			<h3>{L_WARNING}</h3>
+			<p>{ERROR_MSG}</p>
+		</div>
+	<!-- ENDIF -->
+
+	<form id="acp_forum" method="post" action="{U_ACTION}">
+
+	<fieldset>
+		<legend>{L_CAT_DELETE}</legend>
+	<dl>
+		<dt><label>{L_CAT_NAME}:</label></dt>
+		<dd><strong>{CAT_NAME}</strong></dd>
+	</dl>
+	<!-- IF S_CAT_ARTICLES -->
+		<dl>
+			<dt><label for="delete_action">{L_ACTION}:</label></dt>
+			<dd><label><input type="radio" class="radio" id="delete_action" name="action_articles" value="delete" checked="checked" /> {L_DELETE_ALL_ARTICLES}</label></dd>
+			<!-- IF S_MOVE_CAT_OPTIONS -->
+				<dd><label><input type="radio" class="radio" name="action_articles" value="move" /> {L_MOVE_ARTICLES_TO}</label> <select name="articles_to_id">{S_MOVE_CAT_OPTIONS}</select></dd>
+			<!-- ENDIF -->
+		</dl>
+	<!-- ENDIF -->
+	<!-- IF S_HAS_SUBFORUMS -->
+		<dl>
+			<dt><label for="sub_delete_action">{L_ACTION}:</label></dt>
+			<dd><label><input type="radio" class="radio" id="sub_delete_action" name="action_subcats" value="delete" checked="checked" /> {L_DELETE_SUBFORUMS}</label></dd>
+			<!-- IF S_CAT_LIST -->
+				<dd><label><input type="radio" class="radio" name="action_subcats" value="move" /> {L_MOVE_SUBFORUMS_TO}</label> <select name="subcats_to_id">{S_CAT_LIST}</select></dd>
+			<!-- ENDIF -->
+		</dl>
+	<!-- ENDIF -->
+
+	<p class="quick">
+		<input class="button1" type="submit" name="update" value="{L_SUBMIT}" />
+	</p>
+	{S_FORM_TOKEN}
+	</fieldset>
+	</form>
+	
 <!-- ELSE -->
 	<h1>{L_CAT_ADMIN}</h1>
 

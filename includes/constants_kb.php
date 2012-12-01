@@ -18,20 +18,22 @@ if (!defined('IN_PHPBB'))
 //
 // This file holds extra constants defined to use in the KB mod.
 //
-define('KB_VERSION', '0.1.0');
+
+define('KB_VERSION', '0.3.0');
 
 
 // Extra db tables
-define('KB_ATTACHMENTS_TABLE', $table_prefix . 'article_attachments');
-define('KB_CATS_TABLE', $table_prefix . 'article_cats');
-define('KB_COMMENTS_TABLE', $table_prefix . 'article_comments');
-define('KB_EDITS_TABLE', $table_prefix . 'article_edits');
-define('KB_RATE_TABLE', $table_prefix . 'article_rate');
-define('KB_TAGS_TABLE', $table_prefix . 'article_tags');
-define('KB_TRACK_TABLE', $table_prefix . 'article_track');
-define('KB_TABLE', $table_prefix . 'articles');
-define('KB_REQ_TABLE', $table_prefix . 'article_requests');
-define('KB_TYPE_TABLE', $table_prefix . 'article_types');
+define('KB_ATTACHMENTS_TABLE', 	$table_prefix . 'article_attachments');
+define('KB_CATS_TABLE', 		$table_prefix . 'article_cats');
+define('KB_COMMENTS_TABLE', 	$table_prefix . 'article_comments');
+define('KB_EDITS_TABLE', 		$table_prefix . 'article_edits');
+define('KB_RATE_TABLE', 		$table_prefix . 'article_rate');
+define('KB_TAGS_TABLE', 		$table_prefix . 'article_tags');
+define('KB_TRACK_TABLE', 		$table_prefix . 'article_track');
+define('KB_TABLE', 				$table_prefix . 'articles');
+define('KB_REQ_TABLE', 			$table_prefix . 'article_requests');
+define('KB_TYPE_TABLE', 		$table_prefix . 'article_types');
+define('KB_PLUGIN_TABLE', 		$table_prefix . 'article_plugins');
 
 // Comment type constants
 define('COMMENT_GLOBAL', 0);
@@ -70,4 +72,10 @@ define('SEARCH_DESC', 3);
 define('STATUS_REQUEST', 0);
 define('STATUS_ADDED', 1);
 define('STATUS_PENDING', 2);
+
+// Menu system
+define('NO_MENU', 0);
+define('LEFT_MENU', 1);
+define('CENTER_MENU', 2);
+define('RIGHT_MENU', 3);
 ?>
