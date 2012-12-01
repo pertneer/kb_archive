@@ -1236,7 +1236,8 @@ function article_delete($article_id, $cat_id, $article_data)
 */
 function comment_delete($comment_id, $article_id, $type = COMMENT_GLOBAL)
 {
-	global $phpEx, $user, $phpbb_root_path, $auth, $db;
+	global $phpEx, $user, $phpbb_root_path;
+	global $config, $auth, $db;
 	
 	$s_hidden_fields = build_hidden_fields(array(
 		'comment_id' => $comment_id,
@@ -2234,7 +2235,7 @@ function kb_display_cats($root_data = '')
 	while($row = $db->sql_fetchrow($result))
 	{
 		// Only show cats you can read
-		if ($auth->acl_get('u_kb_read', $row['cat_id']))
+		if ($auth->acl_get('u_kb_view', $row['cat_id']))
 		{
 			$cat_id = $row['cat_id'];
 			$cat_ids[] = $cat_id;
@@ -2411,7 +2412,7 @@ function make_cat_select($select_id = false, $ignore_id = false, $in_acp = false
 	// If this happens, the padding could be "broken"
 	while ($row = $db->sql_fetchrow($result))
 	{
-		if (!$auth->acl_get('u_kb_read', $row['cat_id']) && !$in_acp)
+		if (!$auth->acl_get('u_kb_view', $row['cat_id']) && !$in_acp)
 		{
 			// if no permission, skip branch
 			$right = $row['right_id'];
@@ -2537,7 +2538,7 @@ function get_readable_cats()
 		$allowed_cats = array();
 		while($row = $db->sql_fetchrow($result))
 		{
-			if($auth->acl_get('u_kb_read', $row['cat_id']))
+			if($auth->acl_get('u_kb_view', $row['cat_id']))
 			{
 				$allowed_cats[] = $row['cat_id'];
 			}

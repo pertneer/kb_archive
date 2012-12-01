@@ -538,6 +538,23 @@ function get_kb_versions()
 			),
 			'custom' => 'kb_update_031_to_032',
 		),
+		
+		'0.3.3' => array(
+			// New acp settings & improved the somewhat confusing permission system a bit
+			'config_add' => array(
+				array('kb_desc_min_chars', 0),
+				array('kb_desc_max_chars', 0),
+			),
+			
+			'permission_remove' => array(
+				array('u_kb_viewhistory', true),
+			),
+			
+			'permission_add' => array(
+				array('u_kb_viewhistory', false),
+				array('u_kb_view', false),
+			),
+		),
 	);
 
 	return $versions;
@@ -676,7 +693,7 @@ function kb_update_031_to_032($action, $version)
 	foreach($articles as $article_id => $clean_title)
 	{
 		$sql = 'UPDATE ' . $table_prefix . 'articles  
-				SET article_title_clean = ' . $clean_title . '
+				SET article_title_clean = "' . $clean_title . '"
 				WHERE article_id = ' . $article_id;
 		$db->sql_query($sql);
 	}

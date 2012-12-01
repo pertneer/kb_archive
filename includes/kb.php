@@ -323,15 +323,15 @@ class knowledge_base
 			trigger_error("KB_NO_CATEGORY");
 		}
 		
-		if (!$auth->acl_get('u_kb_read', $this->cat_id))
+		if (!$auth->acl_get('u_kb_view', $this->cat_id))
 		{
 			if ($user->data['user_id'] != ANONYMOUS)
 			{
-				trigger_error('KB_USER_CANNOT_READ');
+				trigger_error('KB_USER_CANNOT_VIEW');
 			}
 			
 			$red_url = ($this->start > 0) ? "&amp;start=$this->start" : '';
-			login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$this->cat_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_READ']);
+			login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$this->cat_id" . $red_url), $user->lang['KB_LOGIN_EXPLAIN_VIEW']);
 		}		
 		
 		kb_display_cats($cat_data);
@@ -839,6 +839,7 @@ class knowledge_base
 			'ARTICLE_DESC'			=> $article_desc_re,
 			'ARTICLE_ID' 			=> $this->article_id,
 			'ARTICLE_TITLE' 		=> $article_type['article_title'],
+			'ARTICLE_TITLE_CLEAN' 	=> strip_tags($article_type['article_title']),
 			'ARTICLE_POSTER'		=> $article_data['article_user_id'],
 			
 			'L_EDIT_ARTICLE'		=> $user->lang['KB_EDIT_ARTICLE'],
@@ -911,7 +912,7 @@ class knowledge_base
 			'U_EDIT'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb')) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=edit&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
 			'U_STATUS'			=> ($auth->acl_get('m_kb')) ? kb_append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;&amp;hmode=status&amp;a=" . $this->article_id) : '',
 			'U_DELETE'			=> (!$user->data['is_registered']) ? '' : (($user->data['user_id'] == $article_data['article_user_id'] && $auth->acl_get('u_kb_edit', $this->cat_id)) || $auth->acl_get('m_kb')) ? kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=delete&amp;c=$this->cat_id&amp;a=$this->article_id") : '',
-			'U_HISTORY'			=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;a=" . $this->article_id),
+			'U_HISTORY'			=> (!$auth->acl_get('u_kb_viewhistory', $this->cat_id)) ? '' : kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;a=" . $this->article_id),
 	
 			'S_KB_EMAIL'	=> ($config['email_enable'] && $auth->acl_get('u_sendemail')) ? true : false,
 			'U_KB_EMAIL'	=> kb_append_sid("{$phpbb_root_path}kb.$phpEx", "i=email&amp;starter=" . $article_data['article_user_name'] . '&amp;sender=' . $user->data['username'] . '&amp;a=' . $this->article_id . '&amp;a_t= ' . $article_data['article_title']),
@@ -1608,11 +1609,11 @@ class knowledge_base
 		}
 		
 		// Is the user able to read within this forum?
-		if (!$auth->acl_get('u_kb_read', $this->cat_id))
+		if (!$auth->acl_get('u_kb_view', $this->cat_id))
 		{
 			if ($user->data['user_id'] != ANONYMOUS)
 			{
-				trigger_error('KB_USER_CANNOT_READ');
+				trigger_error('KB_USER_CANNOT_VIEW');
 			}
 			
 			$red_url = ($this->mode == 'edit' || $this->mode == 'delete') ? "&amp;a=$this->article_id" : '';
@@ -1829,6 +1830,23 @@ class knowledge_base
 			if (sizeof($message_parser->warn_msg))
 			{
 				$error[] = fix_error_vars('article', implode('<br />', $message_parser->warn_msg));
+			}
+			
+			// Make our own parser for the desc length so we can control it
+			$desc_parser->warn_msg = array();
+			if ($config['kb_desc_min_chars'] > 0 || $config['kb_desc_max_chars'] > 0)
+			{
+				$msg_len = utf8_strlen($desc_parser->message);
+				
+				if ($config['kb_desc_min_chars'] > 0 && $config['kb_desc_min_chars'] > $msg_len)
+				{
+					$desc_parser->warn_msg[] = $user->lang['TOO_FEW_CHARS'];
+				}
+				
+				if($config['kb_desc_max_chars'] > 0 && $config['kb_desc_max_chars'] < $msg_len)
+				{
+					$desc_parser->warn_msg[] = sprintf($user->lang['TOO_MANY_CHARS_POST'], $msg_len, $config['kb_desc_max_chars']);
+				}
 			}
 			
 			if (sizeof($desc_parser->warn_msg))
@@ -2274,11 +2292,11 @@ class knowledge_base
 		}
 		
 		// Is the user able to read within this forum?
-		if (!$auth->acl_get('u_kb_read', $comment_data['cat_id']))
+		if (!$auth->acl_get('u_kb_view', $comment_data['cat_id']))
 		{
 			if ($user->data['user_id'] != ANONYMOUS)
 			{
-				trigger_error('KB_USER_CANNOT_READ');
+				trigger_error('KB_USER_CANNOT_VIEW');
 			}
 			
 			$red_url = ($this->action == 'edit' || $this->action == 'delete') ? "&amp;comment_id=$comment_id" : '';
@@ -2921,11 +2939,11 @@ class knowledge_base
 				switch($search_in)
 				{
 					case SEARCH_TITLE_TEXT_DESC:
-						$where_tpl = "(a.article_title " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . "  OR a.article_title_clean " . $db->sql_like_expression($db->anychar . 'SEARCHED' . $db->anychar) . " OR a.article_text " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . " OR a.article_desc " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . ") ";
+						$where_tpl = "(a.article_title " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . "  OR a.article_title_clean " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . " OR a.article_text " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . " OR a.article_desc " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . ") ";
 					break;
 					
 					case SEARCH_TITLE:
-						$where_tpl = "(a.article_title " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . " OR a.article_title_clean " . $db->sql_like_expression($db->anychar . 'SEARCHED' . $db->anychar) . ")";
+						$where_tpl = "(a.article_title " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . " OR a.article_title_clean " . $db->sql_like_expression($db->any_char . 'SEARCHED' . $db->any_char) . ")";
 					break;
 					
 					case SEARCH_DESC:
@@ -3003,7 +3021,7 @@ class knowledge_base
 			$search .= ($time_limit) ? '&amp;time=' . $time_limit : '';
 			$search .= ($edit_time) ? '&amp;etime=1' : '';
 			$search .= '&amp;sort=' . $this->sort;
-			$search .= '&amp;dir=' . strtolower($direction);
+			$search .= '&amp;dir=' . strtolower($this->dir);
 			$u_search = kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=search' . $search);
 			
 			$l_search_matches = ($articles_found == 1) ? sprintf($user->lang['FOUND_SEARCH_MATCH'], $articles_found) : sprintf($user->lang['FOUND_SEARCH_MATCHES'], $articles_found);
@@ -3290,7 +3308,7 @@ class knowledge_base
 		$result = $db->sql_query_limit($sql, $config['kb_articles_per_page'], $this->start);
 		while($row = $db->sql_fetchrow($result))
 		{
-			if (!$auth->acl_get('u_kb_read', $row['cat_id']))
+			if (!$auth->acl_get('u_kb_view', $row['cat_id']) || !$auth->acl_get('u_kb_read', $row['cat_id']))
 			{
 				continue;
 			}
@@ -3371,11 +3389,6 @@ class knowledge_base
 		$diff_from = request_var('df', 0);
 		$diff_to = request_var('dt', '');
 		
-		if(!$auth->acl_get('u_kb_viewhistory', $this->cat_id))
-		{
-			trigger_error('KB_NO_PERM_HISTORY');
-		}
-		
 		$icons = $cache->obtain_icons();
 		$types = $cache->obtain_article_types();
 		
@@ -3415,12 +3428,29 @@ class knowledge_base
 				'GROUP_BY'	=> 'e.article_id',
 			));
 			$result = $db->sql_query($sql);
+			
 			if(!$data = $db->sql_fetchrow($result))
 			{
 				trigger_error('KB_NO_ARTICLE');
 			}
 			$db->sql_freeresult($result);
+			
+			if($this->cat_id == 0)
+			{
+				$this->cat_id = $data['cat_id'];
+			}
 			$this->article_id = $data['article_id'];
+			
+			// Authenticate
+			if(!$auth->acl_get('u_kb_viewhistory', $this->cat_id))
+			{
+				if ($user->data['user_id'] != ANONYMOUS)
+				{
+					trigger_error('KB_NO_PERM_HISTORY');
+				}
+				
+				login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $this->article_id . '&amp;e=' . $edit_id), $user->lang['KB_LOGIN_EXPLAIN_HISTORY']);
+			}
 			
 			// Process article tags
 			$article_tags = '';
@@ -3568,11 +3598,28 @@ class knowledge_base
 				'GROUP_BY'	=> 'a.article_id',
 			));
 			$result = $db->sql_query($sql);
+			
 			if(!$data = $db->sql_fetchrow($result))
 			{
 				trigger_error('KB_NO_ARTICLE');
 			}
 			$db->sql_freeresult($result);
+			
+			if($this->cat_id == 0)
+			{
+				$this->cat_id = $data['cat_id'];
+			}
+			
+			// Authenticate
+			if(!$auth->acl_get('u_kb_viewhistory', $this->cat_id))
+			{
+				if ($user->data['user_id'] != ANONYMOUS)
+				{
+					trigger_error('KB_NO_PERM_HISTORY');
+				}
+				
+				login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $this->article_id . '&amp;df=' . $diff_from . '&amp;dt=' . $diff_to), $user->lang['KB_LOGIN_EXPLAIN_HISTORY']);
+			}
 			
 			$diff = array();
 			if($diff_from === -1)
@@ -3675,13 +3722,29 @@ class knowledge_base
 				'WHERE'		=> "a.article_id = $this->article_id" . (($auth->acl_get('m_kb')) ? '' : ' AND a.article_status = ' . STATUS_APPROVED),
 				'GROUP_BY'	=> 'a.article_id',
 			));
-			
 			$result = $db->sql_query($sql);
+			
 			if(!$data = $db->sql_fetchrow($result))
 			{
 				trigger_error('KB_NO_ARTICLE');
 			}
 			$db->sql_freeresult($result);
+			
+			if($this->cat_id == 0)
+			{
+				$this->cat_id = $data['cat_id'];
+			}
+			
+			// Authenticate
+			if(!$auth->acl_get('u_kb_viewhistory', $this->cat_id))
+			{
+				if ($user->data['user_id'] != ANONYMOUS)
+				{
+					trigger_error('KB_NO_PERM_HISTORY');
+				}
+				
+				login_box(kb_append_sid("{$phpbb_root_path}kb.$phpEx", 'i=history&amp;a=' . $this->article_id), $user->lang['KB_LOGIN_EXPLAIN_HISTORY']);
+			}
 			
 			$sql = $db->sql_build_query('SELECT', array(
 				'SELECT'	=> 'e.edit_id, e.article_id, e.parent_id, e.edit_user_id, e.edit_user_name, e.edit_user_color, e.edit_time, e.edit_article_title, e.edit_article_status, e.edit_reason, e.edit_reason_global',

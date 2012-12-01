@@ -19,7 +19,7 @@ if (!defined('IN_PHPBB'))
 // This file holds extra constants defined to use in the KB mod.
 //
 
-define('KB_VERSION', '0.3.2');
+define('KB_VERSION', '0.3.3');
 
 
 // Extra db tables

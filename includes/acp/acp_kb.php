@@ -96,6 +96,8 @@ class acp_kb
 						'kb_allow_smilies'		=> array('lang' => 'KB_ALLOW_SMILES',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_allow_post_flash'	=> array('lang' => 'KB_ALLOW_FLASH',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
 						'kb_allow_post_links'	=> array('lang' => 'KB_ALLOW_LINKS',	'validate' => 'bool',	'type' => 'radio:yes_no', 	'explain' => false),
+						'kb_desc_min_chars'		=> array('lang' => 'KB_DESC_MIN_CHARS', 'validate' => 'int',	'type' => 'text:3:5',		'explain' => true),
+						'kb_desc_max_chars'		=> array('lang' => 'KB_DESC_MAX_CHARS', 'validate' => 'int',	'type' => 'text:3:5',		'explain' => true),
 					)
 				);
 			break;

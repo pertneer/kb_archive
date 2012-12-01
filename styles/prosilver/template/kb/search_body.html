@@ -1,9 +1,11 @@
 <!-- INCLUDE overall_header.html -->
 <table style="width: 100%">
 	<tr>
-		<td id="left_menu" style="width: 240px;">
-			<!-- INCLUDE kb/left_menu.html -->
-		</td>
+		<!-- IF .left_menu -->
+			<td id="left_menu" style="width: 240px;">
+				<!-- INCLUDE kb/left_menu.html -->
+			</td>
+		<!-- ENDIF -->
 		<td style="vertical-align: top;">
 			<!-- IF S_SHOW_FORM -->
 			<form method="get" action="{S_SEARCH_ACTION}">
@@ -51,8 +53,8 @@
 				<dl>
 					<dt><label for="sd">{L_RESULT_SORT}:</label></dt>
 					<dd><select name="sort" id="sort" title="{L_RESULT_SORT}"> {S_SORT_OPTIONS}</select>&nbsp;
-						<label for="sa"><input type="radio" name="dir" id="sa" value="a" /> {L_SORT_ASCENDING}</label> 
-						<label for="sd"><input type="radio" name="dir" id="sd" value="d" checked="checked" /> {L_SORT_DESCENDING}</label>
+						<label for="sa"><input type="radio" name="dir" id="sa" value="ASC" /> {L_SORT_ASCENDING}</label> 
+						<label for="sd"><input type="radio" name="dir" id="sd" value="DESC" checked="checked" /> {L_SORT_DESCENDING}</label>
 					</dd>
 				</dl>
 				<dl>
@@ -143,6 +145,11 @@
 			<!-- ENDIF -->
 			<!-- ENDIF -->
 		</td>
+		<!-- IF .right_menu -->
+		<td id="right_menu" style="width: 240px; vertical-align: top; padding-left: 10px;">
+			<!-- INCLUDE kb/right_menu.html -->
+		</td>
+		<!-- ENDIF -->
 	</tr>
 </table>
 <!-- INCLUDE overall_footer.html -->

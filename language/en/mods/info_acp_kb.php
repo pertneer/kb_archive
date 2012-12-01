@@ -49,6 +49,11 @@ $lang = array_merge($lang, array(
 	'ACP_MANAGE_CATS'				=> 'Manage Categories',
 	'ACP_MANAGE_KB_TYPES'			=> 'Manage Article Types',
 
+	'KB_DESC_MIN_CHARS'				=> 'Article description minimum length',
+	'KB_DESC_MIN_CHARS_EXPLAIN'		=> 'Specify the minimum length of the article description. Leave as 0 to disable this feature.',
+	'KB_DESC_MAX_CHARS'				=> 'Article description maximum length',
+	'KB_DESC_MAX_CHARS_EXPLAIN'		=> 'Specify the maximum length of the article description. Leave as 0 to disable this feature.',
+	
 	'LOG_CAT_ADD'					=> '<strong>Category added</strong><br /> - %1$s',
 	'LOG_CAT_EDIT'					=> '<strong>Category edited</strong><br /> - %1$s',
 	'LOG_CAT_MOVE_DOWN'				=> '<strong>Category %1$s moved down below</strong> <br /> - %2$s',
