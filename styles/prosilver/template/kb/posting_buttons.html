@@ -31,10 +31,11 @@
 			,cb_{custom_tags.BBCODE_ID}: '{custom_tags.A_BBCODE_HELPLINE}'
 		<!-- END custom_tags -->
 	}
-
+	
+	<!-- IF not S_IS_UCP && not S_IS_MCP -->
 	var panels = new Array('options-panel', 'attach-panel'<!-- IF S_IS_ARTICLE -->, 'tags-panel'<!-- ENDIF -->);
 	var show_panel = 'options-panel';
-
+	<!-- ENDIF -->
 
 // ]]>
 </script>

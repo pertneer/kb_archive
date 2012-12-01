@@ -17,8 +17,8 @@ if (!defined('IN_PHPBB'))
 }
 
 /**
-* ucp_main
-* UCP Front Panel
+* ucp_kb
+* UCP Knowledge Base
 * @package ucp
 */
 class ucp_kb
@@ -168,13 +168,15 @@ class ucp_kb
 							case 'add':
 								$sql = 'SELECT article_title
 										FROM ' . KB_TABLE . "  
-										WHERE article_id = $article_id";
+										WHERE article_id = $article_id
+										AND article_status = " . STATUS_APPROVED;
 							break;
 							
 							case 'edit':
 								$sql = 'SELECT a.article_id, a.article_title, n.* 
 										FROM ' . KB_TABLE . ' a, ' . KB_TRACK_TABLE . " n
 										WHERE a.article_id = n.article_id
+										AND a.article_status = " . STATUS_APPROVED . "
 										AND n.user_id = {$user->data['user_id']}
 										AND n.article_id = $article_id
 										AND n.subscribed = 1";
@@ -345,6 +347,7 @@ class ucp_kb
 							WHERE n.subscribed > 0
 							AND n.article_id = a.article_id
 							AND n.user_id = {$user->data['user_id']}
+							AND a.article_status = " . STATUS_APPROVED . "
 							ORDER BY a.article_last_edit_time DESC";
 					$result = $db->sql_query($sql);
 					while($row = $db->sql_fetchrow($result))
@@ -412,16 +415,16 @@ class ucp_kb
 				{
 					case 'add':
 						$article_id = request_var('a', 0);
+						if(!$article_id)
+						{
+							trigger_error('KB_NO_ARTICLE');
+						}
 						
 						$sql = "SELECT article_id, subscribed
 								FROM " . KB_TRACK_TABLE . "
 								WHERE article_id = $article_id
 								AND user_id = {$user->data['user_id']}";
 						$result = $db->sql_query($sql);
-						if(!$article_id)
-						{
-							trigger_error('KB_NO_ARTICLE');
-						}
 						
 						// The user has submitted the data, insert it into the db
 						$sql_data = array(
@@ -530,6 +533,7 @@ class ucp_kb
 					$sql = "SELECT n.*, a.* 
 							FROM " . KB_TRACK_TABLE . " n, " . KB_TABLE . " a
 							WHERE n.bookmarked = 1
+							AND a.article_status = " . STATUS_APPROVED . "
 							AND n.article_id = a.article_id
 							AND n.user_id = {$user->data['user_id']}
 							ORDER BY a.article_last_edit_time DESC";
@@ -595,13 +599,87 @@ class ucp_kb
 			
 			case 'articles':
 				// Handle all article stuff in external file
-				trigger_error('Module unavailable, wait untill next version');
-				//include($phpbb_root_path . 'includes/ucp/ucp_kb_articles.' . $phpEx);
+				include($phpbb_root_path . 'includes/kb.' . $phpEx);
+				$kb = new knowledge_base(0, false);
+				$module_action = request_var('ma', '');
+				
+				switch($module_action)
+				{
+					case 'comment':
+						$page_title = $kb->comment_posting('ucp');
+						$this->tpl_name = 'kb/posting_body';
+						$this->page_title = $page_title;
+					break;
+					
+					case 'view':
+						$page_title = $kb->generate_article_page('ucp');
+						$this->tpl_name = 'kb/view_article';
+						$this->page_title = $page_title;
+					break;
+					
+					case '':
+					default:
+						$sql = "SELECT a.* 
+								FROM " . KB_TABLE . " a
+								WHERE a.article_status != " . STATUS_APPROVED . "
+								AND a.article_user_id = " . $user->data['user_id'] . "
+								ORDER BY a.article_last_edit_time DESC";
+						$result = $db->sql_query($sql);
+						while($row = $db->sql_fetchrow($result))
+						{
+							$folder_img = ($row['article_last_edit_time'] > $user->data['user_lastvisit']) ? 'topic_unread' : 'topic_read';
+							
+							$article_status_ary = array(
+								STATUS_UNREVIEW		=> 'KB_STATUS_UNREVIEW',
+								STATUS_DISAPPROVED	=> 'KB_STATUS_DISAPPROVED',
+								STATUS_ONHOLD		=> 'KB_STATUS_ONHOLD',
+							);
+							
+							// Send vars to template
+							$template->assign_block_vars('articlerow', array(
+								'ARTICLE_ID'				=> $row['article_id'],
+								'ARTICLE_AUTHOR_FULL'		=> get_username_string('full', $row['article_user_id'], $row['article_user_name'], $row['article_user_color']),
+								'FIRST_POST_TIME'			=> $user->format_date($row['article_time']),
+					
+								'ARTICLE_LAST_EDIT'			=> gen_kb_edit_string($row['article_id'], $row['article_last_edit_id'], $row['article_time'], $row['article_last_edit_time']),
+								'ARTICLE_TITLE'				=> censor_text($row['article_title']),
+								'ARTICLE_FOLDER_IMG'		=> $user->img($folder_img, censor_text($row['article_title'])),
+								'ARTICLE_FOLDER_IMG_SRC'	=> $user->img($folder_img, censor_text($row['article_title']), false, '', 'src'),
+								'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
+								'ARTICLE_FOLDER_IMG_WIDTH'  => $user->img($folder_img, '', false, '', 'width'),
+								'ARTICLE_FOLDER_IMG_HEIGHT'	=> $user->img($folder_img, '', false, '', 'height'),
+								'ARTICLE_STATUS'			=> $user->lang[$article_status_ary[$row['article_status']]],
+								
+								'ARTICLE_ICON_IMG'			=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['img'] : '',
+								'ARTICLE_ICON_IMG_WIDTH'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['width'] : '',
+								'ARTICLE_ICON_IMG_HEIGHT'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['height'] : '',
+								'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
+								
+								'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}ucp.$phpEx", "i=kb&amp;mode=articles&amp;ma=view&amp;a=" . $row['article_id']), // Mode articles here for style continuity
+							));
+						}
+						$db->sql_freeresult($result);
+						
+						$template->assign_vars(array(
+							'S_ARTICLE_ICONS' 			=> true,
+							'L_TITLE'					=> $user->lang['UCP_KB_ARTICLES'],
+							'L_KB_ARTICLES_EXPLAIN'		=> $user->lang['UCP_KB_ARTICLES_EXPLAIN'],
+							'L_NO_QUEUED_ARTICLES'		=> $user->lang['KB_NO_QUEUED_ARTICLES'],
+							'L_QUEUED_ARTICLES'			=> $user->lang['KB_QUEUED_ARTICLES'],
+							'L_STATUS'					=> $user->lang['ARTICLE_STATUS'],
+						));
+						$this->tpl_name = 'kb/ucp_kb_articles';
+						$this->page_title = 'UCP_KB_ARTICLES';
+					break;
+				}
 			break;
 		}
 		
-		$this->tpl_name = 'kb/ucp_kb_' . $mode;
-		$this->page_title = 'UCP_KB_' . strtoupper($mode);
+		if($mode != 'articles' && $mode != '')
+		{
+			$this->tpl_name = 'kb/ucp_kb_' . $mode;
+			$this->page_title = 'UCP_KB_' . strtoupper($mode);
+		}
 	}
 }
 

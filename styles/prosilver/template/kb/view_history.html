@@ -1,0 +1,258 @@
+<!-- INCLUDE overall_header.html -->
+
+<table style="width: 100%">
+	<tr>
+		<td id="left_menu" style="width: 240px; vertical-align: top;">
+			<!-- INCLUDE kb/left_menu.html -->
+		</td>
+		<td style="vertical-align: top; padding-left: 10px;">
+			<!-- IF S_VIEW_EDIT -->
+			<div id="a" class="post bg1">
+				<div class="inner"><span class="corners-top"><span></span></span>
+					<div class="postbody" style="width: 100%;">
+						<h3><a href="{U_VIEW_ARTICLE}">{ARTICLE_TITLE}</a></h3>
+						
+						<p class="author">{MINI_POST_IMG}{L_POST_BY_AUTHOR} <strong>{ARTICLE_AUTHOR_FULL}</strong> &raquo; {ARTICLE_TIME} </p>
+						<h4>{L_DESCRIPTION}:</h2>
+						<div class="content">{ARTICLE_DESC}</div>
+						<h4>{L_CONTENT}:</h4>
+						<div class="content">{ARTICLE_MESSAGE}</div>
+
+						<br />
+
+						<!-- IF SIGNATURE or ARTICLE_TAGS != '' --><div id="sig" class="signature"><!-- IF SIGNATURE -->{SIGNATURE}<!-- ENDIF --><!-- IF ARTICLE_TAGS != '' --><!-- IF SIGNATURE --><br /><!-- ENDIF --><strong>{L_TAGS}:</strong> {ARTICLE_TAGS}<!-- ENDIF --></div><!-- ENDIF -->
+					</div>
+				<span class="corners-bottom"><span></span></span></div>
+			</div>
+		<!-- ELSEIF S_VIEW_DIFF -->
+			<style type="text/css">
+			/* <![CDATA[ */
+			
+			#main {
+				font-size: 1em;
+				line-height: 0.7em;
+				margin: 0;
+				padding: 0;
+				width: 100%;
+			}
+			
+			div#codepanel {
+				overflow: auto;
+				width: 100%;
+				height: 550px;
+				display: inline-block;
+			}
+			
+			/**
+			* Unified Diff
+			*/
+			.file {
+				line-height: .7em;
+			}
+			
+			.diff {
+				margin: 0;
+			}
+			
+			.added {
+				background-color: #dfd;
+			}
+			
+			.removed {
+				background-color: #fdd;
+			}
+			
+			.info {
+				color: #888;
+			}
+			
+			.context {
+				background-color: #eee;
+			}
+			
+			/**
+			* Inline Diff
+			*/
+			.ins {
+				background-color: #dfd;
+				text-decoration: underline;
+			}
+			
+			.del {
+				background-color: #fdd;
+				text-decoration: line-through;
+			}
+			
+			/**
+			* Column Diff
+			*/
+			table.hrdiff {
+				margin: 0 0 8px 5px;
+				width: 100%;
+				overflow: hidden;
+				border-bottom: 1px solid #999;
+				table-layout: fixed;
+			}
+			
+			table.hrdiff th {
+				text-align: left;
+				width: 50%;
+				color: #333;
+				font-family: Verdana,Helvetica,sans-serif;
+				font-size: 11px;
+				border-bottom: 1px solid #999;
+				background: transparent;
+			}
+			
+			table.hrdiff thead th {
+				font-weight: bold;
+				font-size: 110%;
+				padding: 2px;
+			}
+			
+			table.hrdiff tr:first-child th {
+				border-top: none;
+			}
+			
+			table.hrdiff tbody th {
+				padding: 2em 1px 1px 1px;
+				font-size: 80%;
+				border-top: 1px solid #999;
+			}
+			
+			table.hrdiff tbody td.old {
+				border-left: 1px solid #999;
+				border-right: 1px solid #999;	
+			}
+			table.hrdiff tbody td.new {
+				border-right: 1px solid #999;	
+			}
+			
+			table.hrdiff td pre {
+				overflow: auto;
+				display: block;
+				width: 100%;
+				overflow: auto;
+				display: block;
+			}
+			
+			table.hrdiff .unmodified {
+				background: #fff;
+			}
+			
+			table.hrdiff .added {
+				background: #9f9;
+			}
+			
+			table.hrdiff .added_empty {
+				background: #cfc;
+			}
+			
+			table.hrdiff .modified {
+				background: #fd9;
+			}
+			
+			table.hrdiff .removed {
+				background: #f99;
+			}
+			
+			table.hrdiff .removed_empty {
+				background: #fcc;
+			}
+			
+			table.hrdiff caption {
+				caption-side: top;
+				text-align: left;
+				margin: 0 0 8px 5px;
+				font-size: 90%;
+				font-weight: bold;
+				padding: 5px;
+			}
+			
+			table.hrdiff caption span {
+				height: 10px;
+				width: 10px;
+				line-height: 10px;
+				letter-spacing: 10px;
+				border: 1px solid #000;
+				margin-left: 0.5em;
+				vertical-align: baseline;
+			}
+			
+			/* ]]> */
+			</style>
+			<h2>{L_VIEWING_EDIT_DIFF}</h2>		
+			<div class="post bg1">
+				<div class="inner">
+					<span class="corners-top"><span></span></span>
+						<div id="diff_content">
+							<div id="codepanel">
+								<div id="main"><a name="content"></a>
+										{DIFF_CONTENT}
+								</div>
+							</div>
+						</div>
+					<span class="corners-bottom"><span></span></span>
+				</div>
+			</div>
+		<!-- ELSE -->
+			<form action="{U_DIFF_ACTION}" method="post" name="diff_form">
+			<h2>{L_TITLE}</h2>
+			
+			<div class="panel bg3">
+				<div class="inner"><span class="corners-top"><span></span></span>
+				
+				<ul class="topiclist">
+					<li class="header">
+						<dl>
+							<dt style="width: 40%">{L_EDITS}</dt>
+							<dd class="extra">{L_DIFF_FROM}</dd>
+							<dd class="extra">{L_DIFF_TO}</dd>
+							<dd class="time"><span>{L_EDIT_TIME}</span></dd>
+							<dd class="mark">{L_STATUS}</dd>
+						</dl>
+					</li>
+				</ul>
+				
+				<ul class="topiclist cplist">
+				<!-- BEGIN editrow -->
+					<li class="row <!-- IF editrow.S_ROW_COUNT is odd -->bg1<!-- ELSE -->bg2<!-- ENDIF -->">
+						<dl>
+							<!-- IF editrow.S_STATUS_EDIT -->
+							<dt style="width: 100%">{editrow.L_STATUS_EDIT}<br /><!-- IF editrow.REASON -->{editrow.REASON}<!-- ENDIF --></dt>
+							<!-- ELSE -->
+							<dt style="width: 40%"><a href="{editrow.U_EDIT}">{editrow.ARTICLE_TITLE}</a> {editrow.EDIT_BY}<br />
+								<!-- IF editrow.EDIT_REASON -->{editrow.EDIT_REASON}<!-- ENDIF --></dt>
+							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_F --><input type="radio" id="df-{editrow.NUM}" onClick="" name="df" value="{editrow.EDIT_ID}"><!-- ELSE -->&nbsp;<!-- ENDIF --></dd>
+							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_T --><input type="radio" id="dt-{editrow.NUM}" onClick="" name="dt" value="{editrow.EDIT_ID}"><!-- ELSE -->&nbsp;<!-- ENDIF --></dd>
+							<dd class="time"><span>{editrow.EDIT_TIME}</span></dd>
+							<dd class="mark">{editrow.EDIT_STATUS}</dd>
+							<!-- ENDIF -->
+						</dl>
+					</li>
+				<!-- END editrow -->
+				</ul>
+				<fieldset class="display-options">
+						<input name="submit" value="{L_VIEW_DIFF}" class="button1" type="submit">
+				</fieldset>
+				
+				<span class="corners-bottom"><span></span></span></div>
+			</div>
+			
+			{S_HIDDEN_FIELDS}</form>
+		<!-- ENDIF --> 
+		</td>
+		<td id="left_menu" style="width: 240px; vertical-align: top; padding-left: 10px;">
+			<!-- INCLUDE kb/right_menu.html -->
+		</td>
+	</tr>
+</table>
+<!-- IF S_DISPLAY_ONLINE_LIST -->
+	<h3><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a></h3>
+	<p>{LOGGED_IN_USER_LIST}</p>
+<!-- ENDIF -->
+
+<h3>{L_KB_PERMISSIONS}</h3>
+<p><!-- BEGIN rules -->{rules.RULE}<br /><!-- END rules --></p>
+
+<!-- INCLUDE overall_footer.html -->

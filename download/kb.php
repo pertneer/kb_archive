@@ -85,7 +85,7 @@ if ($attachment['is_orphan'])
 	}
 
 	// Obtain all extensions...
-	$extensions = $cache->obtain_attach_extensions();
+	$extensions = $cache->obtain_attach_extensions('kb');
 }
 else
 {
@@ -96,7 +96,7 @@ else
 	}
 
 	// disallowed?
-	$extensions = $cache->obtain_attach_extensions();
+	$extensions = $cache->obtain_attach_extensions('kb');
 	if (!extension_allowed(false, $attachment['extension'], $extensions))
 	{
 		trigger_error(sprintf($user->lang['EXTENSION_DISABLED_AFTER_POSTING'], $attachment['extension']));

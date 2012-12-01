@@ -16,6 +16,18 @@ if (!defined('IN_PHPBB'))
 	exit;
 }
 
+// DEVELOPERS PLEASE NOTE
+//
+// All language files should use UTF-8 as their encoding and the files must not contain a BOM.
+//
+// Placeholders can now contain order information, e.g. instead of
+// 'Page %s of %s' you can (and should) write 'Page %1$s of %2$s', this allows
+// translators to re-order the output of data while ensuring it remains correct
+//
+// You do not need this where single placeholders are used, e.g. 'Message %d' is fine
+// equally where a string contains only two placeholders which are used to wrap text
+// in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
+
 if (empty($lang) || !is_array($lang))
 {
 	$lang = array();
@@ -33,7 +45,7 @@ $lang = array_merge($lang, array(
 	'TAGS_EXPLAIN' 			=> 'You can specify which tags you want your article to be found under (if any). Seperate each tag by a comma.',
 	'VIEW_ARTICLE' 			=> 'View article',
 	'VIEW_CAT' 				=> 'View category',
-	'CHANGE_STATUS' 		=> 'Alter article status',
+	'CHANGE_STATUS' 		=> 'Alter status',
 	'ARTICLE_HISTORY' 		=> 'View article history',
 	'ARTICLE_UNAPPROVED' 	=> 'This article has not been approved by a moderator yet.',
 	'ARTICLE_CONTENT' 		=> 'Article content',
@@ -71,6 +83,7 @@ $lang = array_merge($lang, array(
 // Article Posting
 $lang = array_merge($lang, array(
 	'KB_NO_ARTICLE'						=> 'There is no article with that id.',
+	'KB_NO_EDIT_ARTICLE'				=> 'There is no edits for this article.',
 	'KB_ADD_ARTICLE' 					=> 'Add article',
 	'KB_EDIT_ARTICLE' 					=> 'Edit article',
 	'KB_DELETE_ARTICLE' 				=> 'Delete article',
@@ -90,6 +103,7 @@ $lang = array_merge($lang, array(
 	'KB_LOGIN_EXPLAIN_COMMENT_EDIT'		=>	'You need to login in order to edit this comment.',
 	'KB_LOGIN_EXPLAIN_COMMENT_DELETE'	=>	'You need to login in order to delete this comment.',
 	'KB_ADDED'							=>	'The article has been successfully added and is now awaiting approval by a moderator. You can follow the status of your article %shere%s.',
+	'KB_ADDED_WA'						=> 'The article has been successfully addded and can now be found in the category you chose. You can view it %shere%s.',
 	'KB_EDITED'							=>	'The article has been successfully edited and you can now view the updated article %shere%s.',
 	'KB_DELETED' 						=> 'The article has been successfully deleted along with all the accompanying article data',
 	'KB_COMMENT_ADDED'					=>	'The comment has been successfully added and is now visible in the article %shere%s.',
@@ -118,7 +132,8 @@ $lang = array_merge($lang, array(
 	'KB_HAS_RATED' 			=> 'You have already rated this article and cannot rate it twice.',
 	'RATED_THANKS' 			=> 'Thank you for rating the article.',
 	'STARS_OUT_OF' 			=> 'stars out of',
-	'CURRENT_RATING' 		=> 'The article is currently rated with %1$s stars and %2$s votes have been cast.',
+	'CURRENT_RATING_S' 		=> 'The article is currently rated with %1$s stars and %2$s vote has been cast.',
+	'CURRENT_RATING_P' 		=> 'The article is currently rated with %1$s stars and %2$s votes have been cast.',
 	
 	'SEARCH_ARTICLES' 		=> 'Search Articles',
 	'RATINGS' 				=> 'Rate this article',
@@ -137,7 +152,11 @@ $lang = array_merge($lang, array(
 	'KB_ALLOW_BBCODE'		=> 'Allow bbcodes in articles',
 	'KB_ALLOW_SMILES'		=> 'Allow smiles in articles',
 	'KB_ALLOW_FLASH'		=> 'Allow flash in articles',
-	'KB_ALLOW_LINKS'		=> 'Allow links in articles',
+	'KB_ALLOW_LINKS'		=> 'Allow links in articles',	
+	
+	'KB_MANAGEMENT'				=> 'Manage Knowledge Base',
+	'UNINSTALL'					=> 'Uninstall KB',
+	'RUN_NOW'					=> 'Run Now',
 	
 	'VERSION_CHECK'				=> 'Version check',
 	'VERSION_CHECK_EXPLAIN'		=> 'Checks to see if the version of Knowledge Base you are currently running is up to date.',
@@ -198,9 +217,12 @@ $lang = array_merge($lang, array(
 	// Install stuff
 	'KB_UPDATE_UMIL'		=> 'Please download the latest UMIL (Unified MOD Install Library) from: <a href=\'http://www.phpbb.com/mods/umil/\'>phpBB.com/mods/umil</a>',
 	'KB_INSTALLED'			=> 'Knowledge Base Mod has been successfully installed, you may now proceed to the ACP to set permissions for it and enable it.',
+	'KB_UNINSTALLED'		=> 'Knowledge Base Mod has been successfully uninstalled',
 	'KB_UPDATED'			=> 'Your Knowledge Base Mod has been updated to the latest version, check the ACP for confirmation of this.',
 	'INSTALL_KB'			=> 'Install Knowledge Base Mod',
+	'UNINSTALL_KB'			=> 'Uninstall Knowledge Base Mod',
 	'INSTALL_KB_CONFIRM'	=> 'Please confirm that you want to install the Knowledge Base Mod. Before starting the installation please take a full backup of your forum and please make sure you have downloaded the latest version of this mod. <br />This installation script uses the latest version of UMIL (Unified Mod Install Library), please make sure you have this installed in /phpbb root/umil/umil.php on your server. The script can be found at <a href=\'http://www.phpbb.com/mods/umil/\'>phpBB.com/mods/umil</a>. <br /><br /><b>WARNING: THIS EARLY VERSION OF KB MOD IS NOT INTENDED FOR USE ON LIVE FORUMS!</b>',
+	'UNINSTALL_KB_CONFIRM'	=> 'Please confirm that you want to uninstall the Knowledge Base Mod.',
 	'UPDATE_KB'				=> 'Update Knowledge Base Mod',
 	'UPDATE_KB_CONFIRM'		=> 'Please confirm that you want to update the Knowledge Base Mod to the latest version. Make sure that your phpBB is also updated to the latest version, or this version of KB Mod might not work. Furthermore you should make sure that you have a complete backup of your forum before you begin. Like the installer, this script uses the latest version of UMIL (Unified Mod Install Library), so please make sure you have this installed in /phpbb root/umil/umil.php on your server. The script can be found at <a href=\'http://www.phpbb.com/mods/umil/\'>phpBB.com/mods/umil</a>. <br /><br /><b>WARNING: THIS EARLY VERSION OF KB MOD IS NOT INTENDED FOR USE ON LIVE FORUMS!</b>',
 
@@ -241,6 +263,36 @@ $lang = array_merge($lang, array(
 	'ARTICLE_STATUS_PAGE'			=> 'View the article status page',
 	'YOUR_KB_DETAILS'				=> 'Your activity in the knowledge base',
 	'RULE'							=> 'Rule',
+	'RELATED_ARTICLES'				=> 'Related Articles',
+	'EMAIL_ARTICLE'					=> 'Email Article',
+	'SOCIAL_BOOKMARK'				=> 'Social Bookmark',
+	'EXPORT_ARTICLE'				=> 'Export Article',
+	'COMMENT_DELETED'				=> 'Your comment has been deleted.',
+	'ARTICLES_VIEW'					=> 'This article has been viewed %1$s time',
+	'ARTICLES_VIEWS'				=> 'This article has been viewed %1$s times',
+	'LATEST_ARTICLES'				=> 'Latest articles',
+	'NO_RELATED_ARTICLES'			=> 'No related articles have been found.',
+	'MATCH_FOUND'					=> 'match found',
+	'MATCHS_FOUND'					=> 'matches found',
+	
+	// Social bookmarking
+	'THIS'							=> 'this',
+	'BLOGGER'						=> 'Blogger',
+	'DELICIOUS'						=> 'Delicious',
+	'DIGG'							=> 'Digg',
+	'FACEBOOK'						=> 'Facebook',
+	'FRIEND_FEED'					=> 'Friend Feed',
+	'GOOGLE'						=> 'Google',
+	'LINKED_IN'						=> 'Linked In',
+	'LIVE'							=> 'Live',
+	'MIXX'							=> 'Mixx',
+	'MYSPACE'						=> 'MySpace',
+	'NETVIBES'						=> 'Netvibes',
+	'REDDIT'						=> 'Reddit',
+	'STUMBLE_UPON'					=> 'Stumble Upon',
+	'TECHNORATI'					=> 'Technorati',
+	'TWITTER'						=> 'Twitter',
+	'WORDPRESS'						=> 'Wordpress',
 	
 	// Permission stuff
 	'KB_NOT'			=> '<strong>cannot</strong>',
@@ -268,6 +320,36 @@ $lang = array_merge($lang, array(
 	'TOTAL_ARTICLES'	=> 'Total articles',
 	'TOTAL_COMMENTS'	=> 'Total comments',
 	'KB_LAST_UPDATE'	=> 'Last updated',
+	
+	// MCP Stuff
+	'NO_MCP_PERM'				=> 'You don\'t have permission to access the MCP for the Knowledge Base',
+	'KB_QUEUED_ARTICLES'		=> 'Articles awaiting approval',
+	'KB_NO_QUEUED_ARTICLES'		=> 'There are no articles awaiting approval.',
+	'ARTICLE_STATUS'			=> 'Article status',
+	'KB_STATUS_APPROVED'		=> 'Approved',
+	'KB_STATUS_UNREVIEW'		=> 'Not viewed',
+	'KB_STATUS_DISAPPROVED'		=> 'Not approved',
+	'KB_STATUS_ONHOLD'			=> 'On hold',
+	'KB_APPROVED_ARTICLES'		=> 'Approved articles',
+	'KB_NO_APPROVED_ARTICLES'	=> 'There are no approved articles.',
+	'KB_SUCCESS_STATUS'			=> 'You have successfully altered the status of the article.',
+	'MCP_KB_STATUS_EXPLAIN'		=> 'With this form can you change the status of an article and supply reasons of why you did so.',
+	
+	// History stuff
+	'KB_NO_PERM_HISTORY'		=> 'You don\'t have permission to view the history of an article.',
+	'KB_ARTICLE_REVISIONS'		=> 'Article Revisions',
+	'NO_ARTICLES_REVISIONS'		=> 'No article revisions available yet',
+	'REVISION'					=> 'Revision ID',
+	'EDITED_BY'					=> 'Last edited by %s',
+	'STATUS_EDIT'				=> 'This edit was just a change of status from <strong>%1$s</strong> to <strong>%2$s</strong>.',
+	'KB_VIEW_HISTORY'			=> 'View article history',
+	'KB_EDITS'					=> 'Revisions',
+	'KB_DIFF_FROM'				=> 'Diff from',
+	'KB_DIFF_TO'				=> 'Diff to',
+	'EDIT_TIME'					=> 'Revision time',
+	'KB_VIEW_DIFF'				=> 'View revision differences',
+	'KB_EDIT_REASON'			=> 'Reason for editting the article',
+	'KB_EDIT_REASON_GLOBAL'		=> 'Is this reason public',
 ));
 					
 ?>

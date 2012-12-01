@@ -28,11 +28,11 @@
       			</contributions-group>
 			</author>
 		</author-group>
-		<mod-version>0.0.7</mod-version>
+		<mod-version>0.0.11</mod-version>
 		<installation>
 			<level>easy</level>
 			<time>600</time>
-			<target-version>3.0.4</target-version>
+			<target-version>3.0.5</target-version>
 		</installation>
 		<history>
 			<entry>
@@ -41,6 +41,15 @@
 					<major>0</major>
 					<minor>0</minor>
 					<revision>7</revision>
+					<release></release>
+				</rev-version>
+			</entry>
+			<entry>
+				<date>2009-06-04</date>
+				<rev-version>
+					<major>0</major>
+					<minor>0</minor>
+					<revision>10</revision>
 					<release></release>
 				</rev-version>
 			</entry>
@@ -62,25 +71,98 @@
 									<file from="/includes/kb.php" to="/includes/kb.php" />
 									<file from="/includes/ucp/ucp_kb.php" to="/includes/ucp/ucp_kb.php" />
 									<file from="/includes/ucp/info/ucp_kb.php" to="/includes/ucp/info/ucp_kb.php" />
+									<file from="/includes/mcp/mcp_kb.php" to="/includes/mcp/mcp_kb.php" />
+									<file from="/includes/mcp/info/mcp_kb.php" to="/includes/mcp/info/mcp_kb.php" />
 									<file from="/language/en/mods/info_acp_kb.php" to="/language/en/mods/info_acp_kb.php" />
 									<file from="/language/en/mods/info_ucp_kb.php" to="/language/en/mods/info_ucp_kb.php" />
+									<file from="/language/en/mods/info_mcp_kb.php" to="/language/en/mods/info_mcp_kb.php" />
 									<file from="/language/en/mods/kb.php" to="/language/en/mods/kb.php" />
 									<file from="/language/en/mods/permissions_kb.php" to="/language/en/mods/permissions_kb.php" />
-									<file from="/styles/prosilver/template/kb/index_body.html" to="/styles/prosilver/template/kb/index_body.html" />
-									<file from="/styles/prosilver/template/kb/left_menu.html" to="/styles/prosilver/template/kb/left_menu.html" />
-									<file from="/styles/prosilver/template/kb/posting_body.html" to="/styles/prosilver/template/kb/posting_body.html" />
-									<file from="/styles/prosilver/template/kb/posting_buttons.html" to="/styles/prosilver/template/kb/posting_buttons.html" />
-									<file from="/styles/prosilver/template/kb/rate_article.html" to="/styles/prosilver/template/kb/rate_article.html" />
-									<file from="/styles/prosilver/template/kb/right_menu.html" to="/styles/prosilver/template/kb/right_menu.html" />
-									<file from="/styles/prosilver/template/kb/ucp_kb_bookmarks.html" to="/styles/prosilver/template/kb/ucp_kb_bookmarks.html" />
-									<file from="/styles/prosilver/template/kb/ucp_kb_subscribed.html" to="/styles/prosilver/template/kb/ucp_kb_subscribed.html" />
-									<file from="/styles/prosilver/template/kb/view_article.html" to="/styles/prosilver/template/kb/view_article.html" />
-									<file from="/styles/prosilver/template/kb/view_cat_list.html" to="/styles/prosilver/template/kb/view_cat_list.html" />
-									<file from="/styles/prosilver/template/kb/viewcat_body.html" to="/styles/prosilver/template/kb/viewcat_body.html" />
+									<file from="/styles/prosilver/template/kb/*.*" to="/styles/prosilver/template/kb/*.*" />
 									<file from="/styles/prosilver/theme/kb.css" to="/styles/prosilver/theme/kb.css" />
 									<file from="/styles/prosilver/theme/images/rate_star.gif" to="/styles/prosilver/theme/images/rate_star.gif" />
+									<file from="/styles/prosilver/theme/images/social_bookmarking/*.*" to="/styles/prosilver/theme/images/social_bookmarking/*.*" />
 									<file from="/umil/umil.php" to="/umil/umil.php" />
 							</copy>
+						<open src="/adm/style/acp_attachments.html">
+							<edit>
+								<find><![CDATA[		<dl>
+			<dt><label for="allow_in_pm">{L_ALLOW_IN_PM}:</label></dt>
+			<dd><input type="checkbox" class="radio" id="allow_in_pm" name="allow_in_pm" value="1"<!-- IF ALLOW_IN_PM --> checked="checked"<!-- ENDIF --> /></dd>
+		</dl>]]></find>
+								<action type="after-add"><![CDATA[		<dl>
+			<dt><label for="allow_in_pm">{L_ALLOW_IN_KB}:</label></dt>
+			<dd><input type="checkbox" class="radio" id="allow_in_kb" name="allow_in_kb" value="1"<!-- IF ALLOW_IN_KB --> checked="checked"<!-- ENDIF --> /></dd>
+		</dl>]]></action>
+							</edit>
+							<edit>
+								<find><![CDATA[						'ALLOW_GROUP'			=> $ext_group_row['allow_group'],
+							'ALLOW_IN_PM'			=> $ext_group_row['allow_in_pm'],]]></find>
+								<action type="add-after"><![CDATA[						// KB Mod Begin
+							'ALLOW_IN_KB'			=> $ext_group_row['allow_in_kb'],
+							// KB Mod End]]></action>
+							</edit>
+							<edit>
+								<find><![CDATA[<!-- ELSE --><br /><span>&raquo; {L_ALLOWED_IN_PM_POST}</span><!-- ENDIF -->]]></find>
+								<inline-edit>
+									<inline-find><![CDATA[<!-- ENDIF -->]]></inline-find>
+									<inline-action type="after-add"><![CDATA[<br /><span><!-- IF groups.S_ALLOWED_IN_KB -->&raquo; {L_ALLOW_IN_KB}<!-- ELSE -->&raquo; {L_NOT_ALLOWED_IN_KB}<!-- ENDIF --></span>]]></inline-action>
+								</inline-edit>
+							</edit>
+						</open>
+						<open src="/includes/cache.php">
+							<edit>
+								<find><![CDATA[			$extensions = array(
+				'_allowed_post'	=> array(),
+				'_allowed_pm'	=> array(),
+]]></find>
+								<action type="after-add"><![CDATA[				// Mod KB Begin
+				'_allowed_kb'	=> array(),
+				// Mod KB End]]></action>
+							</edit>
+							<edit>
+								<find><![CDATA[					'max_filesize'	=> (int) $row['max_filesize'],
+					'allow_group'	=> $row['allow_group'],
+					'allow_in_pm'	=> $row['allow_in_pm'],]]></find>
+								<action type="after-add"><![CDATA[				// Mod KB Begin
+					'allow_in_kb'	=> $row['allow_in_kb'],
+					// Mod KB End]]></action>
+							</edit>
+							<edit>
+								<find><![CDATA[			if ($row['allow_in_pm'])
+				{
+					$extensions['_allowed_pm'][$extension] = 0;
+				}]]></find>
+								<action type="after-add"><![CDATA[				
+				// Mod KB Begin
+				if ($row['allow_in_kb'])
+				{
+					$extensions['_allowed_kb'][$extension] = 0;
+				}
+				// Mod KB End]]></action>
+							</edit>
+							<edit>
+								<find><![CDATA[	else if ($forum_id === true)
+		{
+			return $extensions;
+		}]]></find>
+								<action type="after-add"><![CDATA[		// Mod KB Begin
+		else if($forum_id == 'kb')
+		{
+			// We are checking for the knowledge base, therefore we only need to get the kb extensions...
+			$return = array('_allowed_' => array());
+
+			foreach ($extensions['_allowed_kb'] as $extension => $check)
+			{
+				$return['_allowed_'][$extension] = 0;
+				$return[$extension] = $extensions[$extension];
+			}
+
+			$extensions = $return;
+		}
+		// Mod KB End]]></action>
+							</edit>
+						</open>
 						<open src="/includes/functions.php">
 											<edit>
 							<find><![CDATA[		'U_RESTORE_PERMISSIONS'	=> ($user->data['user_perm_from'] && $auth->acl_get('a_switchperm')) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'mode=restore_perm') : '',]]></find>
@@ -89,6 +171,36 @@
 		'L_KB'					=> $user->lang['KNOWLEDGE_BASE'],]]></action>
 													</edit>
 									</open>
+						<open src="/includes/acp/acp_attachments.php">
+							<edit>
+								<find><![CDATA[						$allowed_forums	= request_var('allowed_forums', array(0));
+						$allow_in_pm	= (isset($_POST['allow_in_pm'])) ? true : false;]]></find>
+								<action type="after-add"><![CDATA[						// Mod KB Begin
+						$allow_in_kb	= (isset($_POST['allow_in_kb'])) ? true : false;
+						// Mod KB End]]></action>
+							</edit>
+							<edit>
+								<find><![CDATA[							'allowed_forums'=> ($forum_select) ? serialize($allowed_forums) : '',
+							'allow_in_pm'	=> ($allow_in_pm) ? 1 : 0,]]></find>
+								<action type="after-add"><![CDATA[							// Mod KB Begin
+							'allow_in_kb'	=> ($allow_in_kb) ? 1 : 0,
+							// Mod KB End]]></action>
+							</edit>
+							<edit>
+								<find><![CDATA[								'allow_group'	=> 1,
+								'allow_in_pm'	=> 1,]]></find>
+								<action type="after-add"><![CDATA[								// Mod KB Begin
+								'allow_in_kb'	=> 1,
+								// Mod KB End]]></action>
+							</edit>
+							<edit>
+								<find><![CDATA[						'S_ADD_SPACER'		=> $s_add_spacer,
+						'S_ALLOWED_IN_PM'	=> ($row['allow_in_pm']) ? true : false,]]></find>
+								<action type="after-add"><![CDATA[						// Mod KB Begin
+						'S_ALLOWED_IN_KB'	=> ($row['allow_in_kb']) ? true : false,
+						// Mod KB End]]></action>
+							</edit>
+						</open>
 							<open src="/language/en/common.php">
 											<edit>
 							<find><![CDATA[	'KIB'					=> 'KiB',]]></find>
@@ -96,6 +208,15 @@
 	'KB_EXPLAIN'			=> 'Knowledge Base',]]></action>
 													</edit>
 									</open>
+							<open src="/language/en/acp/attachments.php">
+								<edit>
+									<find><![CDATA[	'ALLOW_IN_PM'						=> 'Allowed in private messaging',]]></find>
+									<action type="after-add"><![CDATA[	// Mod KB Begin
+	'ALLOW_IN_KB'						=> 'Allowed in the Knowledge Base',
+	'NOT_ALLOWED_IN_KB'					=> 'Not allowed in the Knowledge Base',
+	// Mod KB End]]></action>
+								</edit>
+							</open>	
 							<open src="/styles/prosilver/template/overall_header.html">
 											<edit>
 							<find><![CDATA[<li class="icon-faq"><a href="{U_FAQ}" title="{L_FAQ_EXPLAIN}">{L_FAQ}</a></li>]]></find>

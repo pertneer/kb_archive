@@ -30,6 +30,19 @@
 	</dl>
 	</fieldset>
 	
+	<form id="acp_board" method="post" action="{U_ACTION}">
+		<fieldset>
+			<legend>{L_KB_MANAGEMENT}</legend>
+			<dl>
+				<dt><label for="uninstall">{L_UNINSTALL}:</label></dt>
+				<dd>					
+					<input class="button1" type="submit" id="submit" name="uninstall" value="{L_RUN_NOW}" />						
+				</dd>
+			</dl>
+		</fieldset>
+	{S_FORM_TOKEN}
+	</form>
+	
 	<!-- IF not S_UP_TO_DATE -->
 		{UPDATE_INSTRUCTIONS}
 		<br /><br />

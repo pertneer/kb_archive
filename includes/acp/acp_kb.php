@@ -89,7 +89,7 @@ class acp_kb
 				$errstr = '';
 				$errno = 0;
 
-				$info = get_remote_file('www.velocity-zone.com', '/kb', 'kb.txt', $errstr, $errno);
+				$info = get_remote_file('www.kb.softphp.dk', '/version_check', 'kb.txt', $errstr, $errno);
 
 				if ($info === false)
 				{
@@ -119,6 +119,35 @@ class acp_kb
 
 					'UPDATE_INSTRUCTIONS'	=> sprintf($user->lang['UPDATE_INSTRUCTIONS'], $announcement_url, $download_url, $kb_path),
 				));
+				
+				$uninstall = (isset($_POST['uninstall'])) ? true : false;	
+				if ($uninstall)
+				{
+					if(confirm_box(true))
+					{
+						if (!file_exists($phpbb_root_path . 'umil/umil_frontend.' . $phpEx))
+						{
+							trigger_error('KB_UPDATE_UMIL', E_USER_ERROR);
+						}
+
+						include($phpbb_root_path . 'umil/umil_frontend.' . $phpEx);
+						$umil = new umil(true);
+		
+						$versions = get_kb_versions();
+			
+						$umil->run_actions('uninstall', $versions, 'kb_version');
+						unset($versions);
+						
+						trigger_error('KB_UNINSTALLED');
+					}
+					else
+					{
+						$hidden_fields = build_hidden_fields(array(
+							'uninstall'	=> true,
+						));
+						confirm_box(false, 'UNINSTALL_KB', $hidden_fields);
+					}
+				}
 			break;
 
 			default:
