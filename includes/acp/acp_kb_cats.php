@@ -1,9 +1,8 @@
 <?php
 /**
 *
-* @package acp
-* @version $Id: acp_forums.php 8898 2008-09-19 17:07:13Z acydburn $
-* @copyright (c) 2005 phpBB Group
+* @package phpBB Knowledge Base Mod (KB)
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -90,6 +89,7 @@ class acp_kb_cats
 						'cat_desc_options'		=> 7,
 						'cat_desc_bitfield'		=> '',
 						'cat_image'				=> request_var('cat_image', ''),
+						'latest_ids'			=> serialize(array()),
 					);
 
 					// Get data for forum description if specified
@@ -185,6 +185,7 @@ class acp_kb_cats
 							'cat_name'				=> utf8_normalize_nfc(request_var('cat_name', '', true)),
 							'cat_desc'				=> '',
 							'cat_image'				=> '',
+							'latest_ids'			=> serialize(array()),
 						);
 					}
 				}
@@ -648,63 +649,6 @@ class acp_kb_cats
 
 		adm_page_footer();
 	}
-}
-
-function make_cat_select($select_id = false, $ignore_id = false, $ignore_acl = false, $ignore_nonpost = false, $ignore_emptycat = true, $only_acl_post = false, $return_array = false)
-{
-	global $db, $user, $auth;
-
-	// This query is identical to the jumpbox one
-	$sql = 'SELECT cat_id, cat_name, parent_id, left_id, right_id
-		FROM ' . KB_CATS_TABLE . '
-		ORDER BY left_id ASC';
-	$result = $db->sql_query($sql, 600);
-
-	$right = 0;
-	$padding_store = array('0' => '');
-	$padding = '';
-	$cat_list = ($return_array) ? array() : '';
-
-	// Sometimes it could happen that forums will be displayed here not be displayed within the index page
-	// This is the result of forums not displayed at index, having list permissions and a parent of a forum with no permissions.
-	// If this happens, the padding could be "broken"
-
-	while ($row = $db->sql_fetchrow($result))
-	{
-		if ($row['left_id'] < $right)
-		{
-			$padding .= '&nbsp; &nbsp;';
-			$padding_store[$row['parent_id']] = $padding;
-		}
-		else if ($row['left_id'] > $right + 1)
-		{
-			$padding = (isset($padding_store[$row['parent_id']])) ? $padding_store[$row['parent_id']] : '';
-		}
-
-		$right = $row['right_id'];
-		$disabled = false;
-
-		if (((is_array($ignore_id) && in_array($row['cat_id'], $ignore_id)) || $row['cat_id'] == $ignore_id))
-		{
-			$disabled = true;
-		}
-
-		if ($return_array)
-		{
-			// Include some more information...
-			$selected = (is_array($select_id)) ? ((in_array($row['cat_id'], $select_id)) ? true : false) : (($row['cat_id'] == $select_id) ? true : false);
-			$cat_list[$row['cat_id']] = array_merge(array('padding' => $padding, 'selected' => ($selected && !$disabled), 'disabled' => $disabled), $row);
-		}
-		else
-		{
-			$selected = (is_array($select_id)) ? ((in_array($row['cat_id'], $select_id)) ? ' selected="selected"' : '') : (($row['cat_id'] == $select_id) ? ' selected="selected"' : '');
-			$cat_list .= '<option value="' . $row['cat_id'] . '"' . (($disabled) ? ' disabled="disabled" class="disabled-option"' : $selected) . '>' . $padding . $row['cat_name'] . '</option>';
-		}
-	}
-	$db->sql_freeresult($result);
-	unset($padding_store);
-
-	return $cat_list;
 }
 
 /**

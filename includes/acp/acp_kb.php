@@ -2,8 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: $
-* @copyright (c) 2009 Tom Martin
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -133,6 +132,7 @@ class acp_kb
 						include($phpbb_root_path . 'umil/umil_frontend.' . $phpEx);
 						$umil = new umil(true);
 		
+						include($phpbb_root_path . 'includes/functions_install_kb.' . $phpEx);
 						$versions = get_kb_versions();
 			
 						$umil->run_actions('uninstall', $versions, 'kb_version');

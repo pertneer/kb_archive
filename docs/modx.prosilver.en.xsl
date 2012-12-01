@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- MODX by the phpBB MOD Team XSL file v1.2.1 copyright 2005-2008 the phpBB MOD Team.
-	$Id: modx.prosilver.en.xsl 2439 2008-11-12 08:41:20Z primehalo $ -->
+<!-- MODX by the phpBB MOD Team XSL file v1.2.2 copyright 2005-2009 the phpBB MOD Team.
+	This file is released under the GNU GPL version 2.  See license.txt.
+	$Id: modx.prosilver.en.xsl 2937 2009-04-28 00:13:55Z jelly_doughnut $ -->
 <!DOCTYPE xsl:stylesheet[
 	<!ENTITY nbsp "&#160;">
 ]>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0" xmlns:mod="http://www.phpbb.com/mods/xml/modx-1.2.1.xsd">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0" xmlns:mod="http://www.phpbb.com/mods/xml/modx-1.2.2.xsd">
 	<xsl:output method="html" omit-xml-declaration="no" indent="yes" />
 	<xsl:variable name="title" select="mod:mod/mod:header/mod:title" />
 	<xsl:variable name="version">
@@ -400,7 +401,7 @@ span.key { font-size:12px; line-height:14px; padding-bottom:2px; width:20px; bor
 .mod-edit { background-color:#D6E6F6; border:solid 1px #336699; margin:10px 0; padding:0 10px; }
 .mod-inlineedit { background-color:#DDEEFF; border:solid 1px #6699CC; margin:10px 0; padding:0 10px; }
 
-dl.author-info dd { margin-left:100px; margin-bottom:8px; }
+dl.author-info dd { margin-left:112px; margin-bottom:8px; }
 ol#file-copy { padding:5px; margin-left:20px; margin-bottom:10px; }
 ol#file-copy li { margin-left:30px; vertical-align:top;}
 ol#file-copy span { font-weight:bold; }
@@ -609,6 +610,10 @@ var enStrings = "h1=Installation Instructions for\n" +
 "a-e=Email:\n" +
 "a-n=Name:\n" +
 "a-h=WWW:\n" +
+"a-c=Contributions:\n" +
+"a-c-f=From\n" +
+"a-c-t=to\n" +
+"a-c-s=Since\n" +
 "fte=Files to Edit\n" +
 "icf=Included Files\n" +
 "icfn=No files have been included with this MOD.\n" +
@@ -1434,7 +1439,7 @@ function toggle_edit(o)
 								<xsl:for-each select="mod:header">
 									<xsl:call-template name="give-header"></xsl:call-template>
 								</xsl:for-each>
-								<hr />
+
 								<div class="permissions" id="Fieldset1">
 									<xsl:for-each select="mod:action-group">
 										<xsl:call-template name="give-actions"></xsl:call-template>
@@ -1626,6 +1631,7 @@ function toggle_edit(o)
 			<dd><a href="http://www.phpbb.com/phpBB/profile.php?mode=viewprofile&amp;un={translate(mod:username, ' ', '+')}"><xsl:value-of select="mod:username" /></a></dd>
 			<xsl:if test="mod:email != 'N/A' and mod:email != 'n/a' and mod:email != ''">
 				<dt id="lang-a-e[{generate-id()}]">Email:</dt>
+
 				<dd><a href="mailto:{mod:email}"><xsl:value-of select="mod:email" /></a></dd>
 			</xsl:if>
 			<xsl:if test="mod:realname != 'N/A' and mod:realname != 'n/a' and mod:realname != ''">
@@ -1634,17 +1640,26 @@ function toggle_edit(o)
 			</xsl:if>
 			<xsl:if test="mod:homepage != 'N/A' and mod:homepage != 'n/a' and mod:homepage!=''">
 				<dt id="lang-a-h[{generate-id()}]">WWW:</dt>
+
 				<dd><a href="{mod:homepage}"><xsl:value-of select="mod:homepage" /></a></dd>
 			</xsl:if>
-			<xsl:if test="count(mod:contributions) > 0 and count(mod:contributions/mod:status) > 0">
+
+			<xsl:if test="count(mod:contributions-group) > 0">
 				<dt id="lang-a-c[{generate-id()}]">Contributions:</dt>
-				<dd>
-					<xsl:if test="count(mod:contributions/mod:status) > 0">
-						<xsl:value-of select="mod:contributions/mod:status" /><br />
-						From:<xsl:value-of select="mod:contributions/mod:from" /><br />
-						To:<xsl:value-of select="mod:contributions/mod:to" />
-					</xsl:if>
-				</dd>
+				<xsl:for-each select="mod:contributions-group/mod:contributions">
+					<dd>
+						<strong style="text-transform: capitalize;"><xsl:value-of select="@position" /></strong>&nbsp;
+						<xsl:if test="@status = 'past' and @from != 'N/A' and @from != 'n/a' and @from!=''">
+						  <xsl:if test="@to != 'N/A' and @to != 'n/a' and @to!=''">
+							(<span id="lang-a-c-f[{generate-id()}]]">From</span>:&nbsp;<xsl:value-of select="@from" />&nbsp;<span id="lang-a-c-t[{generate-id()}]]">to</span>:&nbsp;<xsl:value-of select="@to" />)
+							</xsl:if>
+
+						</xsl:if>				
+						<xsl:if test="@status = 'current' and @from != 'N/A' and @from != 'n/a' and @from!=''">
+							(<span id="lang-a-c-s[{generate-id()}]]">Since</span>:&nbsp;<xsl:value-of select="@from" />)
+						</xsl:if>
+					</dd>
+				</xsl:for-each>
 			</xsl:if>
 		</dl>
 	</xsl:template>
@@ -1765,6 +1780,9 @@ function toggle_edit(o)
 		</xsl:for-each>
 	</xsl:template>
 	<xsl:template name="give-actions">
+	  <xsl:if test="count(mod:sql) > 0 or count(mod:copy) > 0 or count(mod:open) > 0">
+	  <hr />
+    </xsl:if>
 		<xsl:if test="count(mod:sql) > 0">
 			<form method="post" action="" id="dbms-selector">
 				<fieldset class="nobg">
@@ -1981,4 +1999,5 @@ function toggle_edit(o)
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
+
 </xsl:stylesheet>

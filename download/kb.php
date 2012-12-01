@@ -2,8 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: $
-* @copyright (c) 2009 Andreas Nexmann
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -34,7 +33,6 @@ include($phpbb_root_path . 'common.' . $phpEx);
 include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
 include($phpbb_root_path . 'includes/functions_kb.' . $phpEx);
 include($phpbb_root_path . 'includes/kb.' . $phpEx);
-$kb = new knowledge_base(false);
 
 $download_id = request_var('id', 0);
 $mode = request_var('mode', '');
@@ -44,6 +42,8 @@ $thumbnail = request_var('t', false);
 $user->session_begin(false);
 $auth->acl($user->data);
 $user->setup('viewtopic');
+
+$kb = new knowledge_base(0, false);
 
 if (!$download_id)
 {

@@ -1,4 +1,4 @@
-<!-- INCLUDE mcp_header.html -->
+<!-- INCLUDE ucp_header.html -->
 
 <h2>{L_TITLE}</h2>
 <div class="panel">
@@ -21,7 +21,7 @@
 		<!-- BEGIN articlerow -->
 			<li class="row<!-- IF articlerow.S_ROW_COUNT is even --> bg1<!-- ELSE --> bg2<!-- ENDIF -->">
 				<dl class="icon" style="background-image: url({articlerow.ARTICLE_FOLDER_IMG_SRC}); background-repeat: no-repeat;">
-					<dt><!-- IF articlerow.ARTICLE_ICON_IMG and S_ARTICLE_ICONS --><img src="{T_ICONS_PATH}{articlerow.ARTICLE_ICON_IMG}" width="{ARTICLE_ICON_IMG_WIDTH}" height="{ARTICLE_ICON_IMG_HEIGHT}" />&nbsp;<!-- ENDIF --><a href="{articlerow.U_VIEW_ARTICLE}" class="topictitle">{articlerow.ARTICLE_TITLE}</a>
+					<dt><!-- IF articlerow.ARTICLE_TYPE_IMG --><img src="{articlerow.ARTICLE_TYPE_IMG}" width="{articlerow.ARTICLE_TYPE_IMG_WIDTH}" height="{articlerow.ARTICLE_TYPE_IMG_HEIGHT}" />&nbsp;<!-- ENDIF --><a href="{articlerow.U_VIEW_ARTICLE}" class="topictitle">{articlerow.ARTICLE_TITLE}</a>
 						<!-- IF articlerow.ARTICLE_LAST_EDIT --><br />{articlerow.ARTICLE_LAST_EDIT}<!-- ENDIF -->
 					</dt>
 					<dd class="lastpost"><span>{L_POST_BY_AUTHOR} {articlerow.ARTICLE_AUTHOR_FULL}<br /><!-- IF articlerow.ATTACH_ICON_IMG -->{articlerow.ATTACH_ICON_IMG} <!-- ENDIF -->{articlerow.FIRST_POST_TIME}	</span>
@@ -32,10 +32,10 @@
 		<!-- END articlerow -->
 		</ul>
 	<!-- ELSE -->
-		<p><strong>{L_NO_UNAPPROVED_ARTICLES}</strong></p>
+		<p><strong>{L_NO_QUEUED_ARTICLES}</strong></p>
 	<!-- ENDIF -->
 	
 <span class="corners-bottom"><span></span></span></div>
 </div>
 
-<!-- INCLUDE mcp_footer.html -->
+<!-- INCLUDE ucp_footer.html -->

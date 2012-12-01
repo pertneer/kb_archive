@@ -10,16 +10,16 @@
 /**
 * @package module_install
 */
-class acp_kb_cats_info
+class acp_kb_types_info
 {
 	function module()
 	{
 		return array(
-			'filename'	=> 'acp_kb_cats',
-			'title'		=> 'ACP_KB_MANAGEMENT',
+			'filename'	=> 'acp_kb_types',
+			'title'		=> 'ACP_KB_ARTICLE_TYPES',
 			'version'	=> '0.0.1',
 			'modes'		=> array(
-				'manage'	=> array('title' => 'ACP_MANAGE_CATS', 'auth' => 'acl_a_board', 'cat' => array('ACP_KB')),
+				'manage'	=> array('title' => 'ACP_MANAGE_KB_TYPES', 'auth' => 'acl_a_board', 'cat' => array('ACP_KB')),
 			),
 		);
 	}

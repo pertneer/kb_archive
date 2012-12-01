@@ -189,6 +189,16 @@
 							<div id="codepanel">
 								<div id="main"><a name="content"></a>
 										{DIFF_CONTENT}
+										<table width="100%">
+											<tr>
+												<td width="50%" align="center">
+													{L_KB_DIFF_FROM}
+												</td>
+												<td width="50%" align="center">
+													{L_KB_DIFF_TO}
+												</td>
+											</tr>
+										</table>
 								</div>
 							</div>
 						</div>
@@ -196,7 +206,7 @@
 				</div>
 			</div>
 		<!-- ELSE -->
-			<form action="{U_DIFF_ACTION}" method="post" name="diff_form">
+			<form action="{U_DIFF_ACTION}" method="get" name="diff_form">
 			<h2>{L_TITLE}</h2>
 			
 			<div class="panel bg3">
@@ -205,11 +215,11 @@
 				<ul class="topiclist">
 					<li class="header">
 						<dl>
-							<dt style="width: 40%">{L_EDITS}</dt>
+							<dt style="width: 30%">{L_EDITS}</dt>
 							<dd class="extra">{L_DIFF_FROM}</dd>
 							<dd class="extra">{L_DIFF_TO}</dd>
-							<dd class="time"><span>{L_EDIT_TIME}</span></dd>
-							<dd class="mark">{L_STATUS}</dd>
+							<dd class="time" style="width: 30%"><span>{L_EDIT_TIME}</span></dd>
+							<dd class="extra">{L_STATUS}</dd>
 						</dl>
 					</li>
 				</ul>
@@ -219,14 +229,14 @@
 					<li class="row <!-- IF editrow.S_ROW_COUNT is odd -->bg1<!-- ELSE -->bg2<!-- ENDIF -->">
 						<dl>
 							<!-- IF editrow.S_STATUS_EDIT -->
-							<dt style="width: 100%">{editrow.L_STATUS_EDIT}<br /><!-- IF editrow.REASON -->{editrow.REASON}<!-- ENDIF --></dt>
+							<dt>{editrow.L_STATUS_EDIT}<br /><!-- IF editrow.REASON --><strong>{L_REASON}:</strong> {editrow.REASON}<!-- ENDIF --></dt>
 							<!-- ELSE -->
-							<dt style="width: 40%"><a href="{editrow.U_EDIT}">{editrow.ARTICLE_TITLE}</a> {editrow.EDIT_BY}<br />
-								<!-- IF editrow.EDIT_REASON -->{editrow.EDIT_REASON}<!-- ENDIF --></dt>
+							<dt style="width: 30%"><a href="{editrow.U_EDIT}">{editrow.ARTICLE_TITLE}</a> {editrow.EDIT_BY} <!-- IF editrow.S_NEWEST -->&nbsp;<strong>({L_NEWEST})</strong><!-- ELSEIF editrow.S_ORG -->&nbsp;<strong>({L_ORIGINAL})</strong><!-- ENDIF --><br />
+								<!-- IF editrow.EDIT_REASON -->{L_REASON}: <strong>{editrow.EDIT_REASON}</strong><!-- ENDIF --></dt>
 							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_F --><input type="radio" id="df-{editrow.NUM}" onClick="" name="df" value="{editrow.EDIT_ID}"><!-- ELSE -->&nbsp;<!-- ENDIF --></dd>
 							<dd class="extra"><!-- IF editrow.S_CAN_DIFF_T --><input type="radio" id="dt-{editrow.NUM}" onClick="" name="dt" value="{editrow.EDIT_ID}"><!-- ELSE -->&nbsp;<!-- ENDIF --></dd>
-							<dd class="time"><span>{editrow.EDIT_TIME}</span></dd>
-							<dd class="mark">{editrow.EDIT_STATUS}</dd>
+							<dd class="time" style="width: 30%"><span>{editrow.EDIT_TIME}</span></dd>
+							<dd class="extra">{editrow.EDIT_STATUS}</dd>
 							<!-- ENDIF -->
 						</dl>
 					</li>
@@ -234,12 +244,13 @@
 				</ul>
 				<fieldset class="display-options">
 						<input name="submit" value="{L_VIEW_DIFF}" class="button1" type="submit">
+						<input name="i" value="history" type="hidden">
+						<input name="a" value="{ARTICLE_ID}" type="hidden">
 				</fieldset>
 				
 				<span class="corners-bottom"><span></span></span></div>
 			</div>
-			
-			{S_HIDDEN_FIELDS}</form>
+			</form>
 		<!-- ENDIF --> 
 		</td>
 		<td id="left_menu" style="width: 240px; vertical-align: top; padding-left: 10px;">

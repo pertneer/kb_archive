@@ -1,26 +1,8 @@
-<!-- IF S_IN_DIFF -->
-	<div class="post bg3">
-		<div class="inner">
-			<span class="corners-top"><span></span></span>
-			<div class="left_menu_title">{L_KB_ARTICLE_REVISIONS}</div>
-				<div style="padding-bottom: 3px;" class="user_menu">
-				<!-- BEGIN revisions -->
-					<a href="{revisions.U_VIEW_REVISION}"><strong>{L_REVISION}: </strong>{revisions.REVISION_NUM}<br />
-					&nbsp;&nbsp;&nbsp;&nbsp;{revisions.REVISION_TIME}</a><br />
-				<!-- BEGINELSE -->
-					{L_NO_ARTICLES_REVISIONS}
-				<!-- END revisions -->	
-			</div>			
-			<span class="corners-bottom"><span></span></span>
-		</div>
-	</div>
-<!-- ENDIF -->
-
 <!-- IF S_IN_MAIN -->	
 	<div class="post bg3">
 		<div class="inner">
 			<span class="corners-top"><span></span></span>
-			<div class="left_menu_title">{L_KB_LATEST}</div>
+			<div class="left_menu_title">{L_KB_LATEST} <a href="{U_RSS_LAST_ARTICLE}"><img src="{T_THEME_PATH}/images/feed.gif" width="14" height="14" alt="{L_RSS_LATEST}" title="{L_RSS_LATEST}" /></a></div>
 				<div style="padding-bottom: 3px;" class="user_menu">
 				<!-- IF not NO_LAST_ARTICLE -->
 				<div><a href="{U_LAST_ARTICLE}"><strong><h4>{LAST_ARTICLE_TITLE}</h4></strong></a></div>
@@ -52,6 +34,32 @@
 	</div>
 <!-- ENDIF -->
 
+<!-- IF S_SHOW_REQ_LIST -->
+<div class="post bg3">
+	<div class="inner">
+		<span class="corners-top"><span></span></span>
+		<div class="left_menu_title">{L_KB_REQS}</div>
+		
+		<div style="padding-bottom: 3px;" class="user_menu">
+		<!-- IF .req_list -->
+			<hr>
+			<!-- BEGIN req_list -->
+				<a href="{req_list.U_VIEW_REQ}">{req_list.REQ_TITLE}</a><br />
+			<!-- END req_list -->	
+		</div>
+		
+		<!-- ELSE -->
+		<strong>{L_KB_NO_REQS}</strong>
+		<!-- ENDIF -->
+		<!-- IF U_ADD_REQ or U_VIEW_ALL -->
+			<hr /><!-- IF U_ADD_REQ --><a href="{U_ADD_REQ}" title="{L_KB_ADD_REQUEST}">{L_KB_ADD_REQUEST}</a><!-- IF U_VIEW_ALL --> || <!-- ENDIF -->	<!-- ENDIF --><!-- IF U_VIEW_ALL --><a href="{U_VIEW_ALL}" title="{L_VIEW_ALL}">{L_VIEW_ALL}</a><!-- ENDIF -->
+		<!-- ENDIF -->
+		</div>
+		<span class="corners-bottom"><span></span></span>
+	</div>
+</div>
+<!-- ENDIF -->
+
 <!-- IF S_IN_ARTICLE -->
 	<div class="post bg3">
 		<div class="inner">
@@ -79,9 +87,14 @@
 		<div class="inner">
 			<span class="corners-top"><span></span></span>
 			<div class="left_menu_title">{L_EMAIL_ARTICLE}</div>
-			<div style="padding-bottom: 3px;">
-				<div>Email article here</div>
-			</div>
+			<form id="kb_emailform" method="post" action="{U_KB_EMAIL}">
+				<fieldset>
+					<input name="email" id="kb_email" type="text" title="{L_EMAIL}" class="inputbox" style="width: 160px;" value="" />
+					<input class="button2" value="{L_EMAIL}" type="submit" />
+					{S_HIDDEN_FIELDS}
+				</fieldset>
+			</form>
+			<!-- <div style="padding: 2px;"><a href="{U_KB_SEARCH_ADV}" title="{L_SEARCH_ADV_EXPLAIN}">{L_SEARCH_ADV}</a></div> -->
 			<span class="corners-bottom"><span></span></span>
 		</div>
 	</div>
@@ -89,27 +102,32 @@
 	<div class="post bg3">
 		<div class="inner">
 			<span class="corners-top"><span></span></span>
-			<div class="left_menu_title">{L_SOCIAL_BOOKMARK}</div>
+			<div class="left_menu_title">{L_BOOKMARK_OPTIONS}</div>
 			<div style="padding-bottom: 3px;">
 				<div>
+					<ul class="linklist">
+					<!-- IF U_WATCH_ARTICLE --><li <!-- IF S_WATCHING_ARTICLE -->class="icon-unsubscribe"<!-- ELSE -->class="icon-subscribe"<!-- ENDIF -->><a href="{U_WATCH_ARTICLE}" title="{L_WATCH_ARTICLE}">{L_WATCH_ARTICLE}</a></li><!-- ENDIF -->
+					<!-- IF U_BOOKMARK_ARTICLE --><li class="icon-bookmark"><a href="{U_BOOKMARK_ARTICLE}" title="{L_BOOKMARK_ARTICLE}">{L_BOOKMARK_ARTICLE}</a></li><!-- ENDIF -->
+					</ul>
+					<strong>{L_SOCIAL_BOOKMARKS}:</strong>
 					<div class="addthis_toolbox">   
 						<div class="custom_images">
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;amp;s=blogger&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/blogger.png" width="24" height="24" alt="{L_BLOGGER}" title="{L_BLOGGER} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=delicious&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/delicious.png" width="24" height="24" alt="{L_DELICIOUS}" title="{L_DELICIOUS} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=digg&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/digg.png" width="24" height="24" alt="{L_DIGG}" title="{L_DIGG} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=facebook&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/facebook.png" width="24" height="24" alt="{L_FACEBOOK}" title="{L_FACEBOOK} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=friendfeed&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/friendfeed.png" width="24" height="24" alt="{L_FRIEND_FEED}" title="{L_FRIEND_FEED} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=google&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/Google.png" width="24" height="24" alt="{L_GOOGLE}" title="{L_GOOGLE} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=linkedin&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/linkedin.png" width="24" height="24" alt="{L_LINKED_IN}" title="{L_LINKED_IN} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=live&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/live.png" width="24" height="24" alt="{L_LIVE}" title="{L_LIVE} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=mixx&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/mixx.png" width="24" height="24" alt="{L_MIXX}" title="{L_MIXX} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=myspace&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/myspace.png" width="24" height="24" alt="{L_MYSPACE}" title="{L_MYSPACE} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=netvibes&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/netvibes.png" width="24" height="24" alt="{L_NETVIBES}" title="{L_NETVIBES} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=reddit&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/reddit.png" width="24" height="24" alt="{L_REDDIT}" title="{L_REDDIT} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=stumbleupon&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/stumbleupon.png" width="24" height="24" alt="{L_STUMBLE_UPON}" title="{L_STUMBLE_UPON} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=technorati&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/technorati.png" width="24" height="24" alt="{L_TECHNORATI}" title="{L_TECHNORATI} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=twitter&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/twitter.png" width="24" height="24" alt="{L_TWITTER}" title="{L_TWITTER} {L_THIS}" /></a>
-								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=wordpress&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}"><img src="{T_THEME_PATH}/images/social_bookmarking/wordpress.png" width="24" height="24" alt="{L_WORDPRESS}" title="{L_WORDPRESS} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;amp;s=blogger&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/blogger.png" width="24" height="24" alt="{L_BLOGGER}" title="{L_BLOGGER} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=delicious&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/delicious.png" width="24" height="24" alt="{L_DELICIOUS}" title="{L_DELICIOUS} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=digg&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/digg.png" width="24" height="24" alt="{L_DIGG}" title="{L_DIGG} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=facebook&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/facebook.png" width="24" height="24" alt="{L_FACEBOOK}" title="{L_FACEBOOK} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=friendfeed&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/friendfeed.png" width="24" height="24" alt="{L_FRIEND_FEED}" title="{L_FRIEND_FEED} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=google&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/Google.png" width="24" height="24" alt="{L_GOOGLE}" title="{L_GOOGLE} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=linkedin&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/linkedin.png" width="24" height="24" alt="{L_LINKED_IN}" title="{L_LINKED_IN} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=live&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/live.png" width="24" height="24" alt="{L_LIVE}" title="{L_LIVE} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=mixx&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/mixx.png" width="24" height="24" alt="{L_MIXX}" title="{L_MIXX} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=myspace&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/myspace.png" width="24" height="24" alt="{L_MYSPACE}" title="{L_MYSPACE} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=netvibes&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/netvibes.png" width="24" height="24" alt="{L_NETVIBES}" title="{L_NETVIBES} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=reddit&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/reddit.png" width="24" height="24" alt="{L_REDDIT}" title="{L_REDDIT} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=stumbleupon&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/stumbleupon.png" width="24" height="24" alt="{L_STUMBLE_UPON}" title="{L_STUMBLE_UPON} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=technorati&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/technorati.png" width="24" height="24" alt="{L_TECHNORATI}" title="{L_TECHNORATI} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=twitter&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/twitter.png" width="24" height="24" alt="{L_TWITTER}" title="{L_TWITTER} {L_THIS}" /></a>
+								<a href="http://www.addthis.com/bookmark.php?pub=&amp;v=250&amp;source=men-250&amp;s=wordpress&amp;url={U_PERM_LINK}&amp;title={ARTICLE_TITLE}&amp;content={ARTICLE_DESC}" target="_blank"><img src="{T_THEME_PATH}/images/social_bookmarking/wordpress.png" width="24" height="24" alt="{L_WORDPRESS}" title="{L_WORDPRESS} {L_THIS}" /></a>
 								
 						</div>
 					</div>

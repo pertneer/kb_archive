@@ -1,0 +1,42 @@
+<!-- INCLUDE overall_header.html -->
+
+<table style="width: 100%">
+	<tr>
+		<td id="left_menu" style="width: 240px; vertical-align: top;">
+			<!-- INCLUDE kb/left_menu.html -->
+		</td>
+		<td style="vertical-align: top; padding-left: 10px;">
+			<div id="a" class="post bg1">
+			<div class="inner">
+				<span class="corners-top"><span></span></span>
+					<div class="postbody" style="width: 100%;">
+						<!-- IF U_DELETE or U_EDIT and not S_IS_BOT -->
+							<ul class="profile-icons">
+								<!-- IF U_EDIT --><li class="edit-icon"><a href="{U_EDIT}" title="{L_KB_EDIT_REQUEST}"><span>{L_KB_EDIT_REQUEST}</span></a></li><!-- ENDIF -->
+								<!-- IF U_DELETE --><li class="delete-icon"><a href="{U_DELETE}" title="{L_KB_DELETE_REQUEST}"><span>{L_KB_DELETE_REQUEST}</span></a></li><!-- ENDIF -->
+							</ul>								
+						<!-- ENDIF -->
+						<h3><a href="{U_VIEW}">{REQUEST_TITLE}</a></h3>
+						<p class="author">
+							<a href="{U_VIEW_PERMANENT}"><img src="{T_IMAGESET_PATH}/icon_post_target.gif" alt="{L_PERMANENT_LINK}" /></a>{L_POST_BY_AUTHOR} <strong>{POST_AUTHOR_FULL}</strong> {L_POSTED_ON_DATE} {POST_DATE} 
+						</p>
+						
+						<div class="content"><strong>{EXPLAIN}</strong><hr /><br />{MESSAGE}</div>
+					</div>
+				<span class="corners-bottom"><span></span></span></div>
+			</div>
+		</td>
+		<td id="left_menu" style="width: 240px; vertical-align: top; padding-left: 10px;">
+			<!-- INCLUDE kb/right_menu.html -->
+		</td>
+	</tr>
+</table>
+<!-- IF S_DISPLAY_ONLINE_LIST -->
+	<h3><a href="{U_VIEWONLINE}">{L_WHO_IS_ONLINE}</a></h3>
+	<p>{LOGGED_IN_USER_LIST}</p>
+<!-- ENDIF -->
+
+<h3>{L_KB_PERMISSIONS}</h3>
+<p><!-- BEGIN rules -->{rules.RULE}<br /><!-- END rules --></p>
+
+<!-- INCLUDE overall_footer.html -->

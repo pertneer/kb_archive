@@ -2,8 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: $
-* @copyright (c) 2009 Andreas Nexmann
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -37,9 +36,11 @@ if (empty($lang) || !is_array($lang))
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
 
 $lang = array_merge($lang, array(
-	'MCP_KB'						=> 'Knowledge Base',
-	'MCP_KB_QUEUE'					=> 'Articles awaiting approval',
-	'MCP_KB_QUEUE_EXPLAIN'			=> 'Here is a list of articles that needs approval to be shown publicly. You can communicate with the article author here and edit the articles at your will.',
-	'MCP_KB_ARTICLES'				=> 'Approved articles',
-	'MCP_KB_ARTICLES_EXPLAIN'		=> 'Here is a list of articles which have been approved, all old chat with the authors is logged here.',
+	'MCP_KB'					=> 'Knowledge Base',
+	'MCP_KB_ARTICLES'			=> 'Approved articles',
+	'MCP_KB_ARTICLES_EXPLAIN'	=> 'Here is a list of articles which have been approved, all old chat with the authors is logged here.',
+	'MCP_KB_QUEUE'				=> 'Articles awaiting approval',
+	'MCP_KB_QUEUE_EXPLAIN'		=> 'Here is a list of articles that needs approval to be shown publicly. You can communicate with the article author here and edit the articles at your will.',
 ));
+
+?>

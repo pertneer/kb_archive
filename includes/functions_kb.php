@@ -2,8 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: $
-* @copyright (c) 2009 Andreas Nexmann
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -493,14 +492,14 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 		'article_desc_uid'				=>	$data['article_desc_uid'],
 		'article_checksum'				=>	$data['message_md5'],
 		'article_status'				=>	$data['article_status'],
-		'article_attachment'			=>	(isset($data['attachment_data'])) ? 1 : 0, //$data['article_attachment'],
+		'article_attachment'			=>	(!empty($data['attachment_data'])) ? 1 : 0,
 		'article_views'					=>	$data['article_views'],
 		'article_user_id'				=>	$data['article_user_id'],
 		'article_user_name'				=>	$data['article_user_name'],
 		'article_user_color'			=>	$data['article_user_color'],
-		'article_time'					=>	$data['current_time'],
+		'article_time'					=>	$data['article_time'],
 		'article_tags'					=>	$data['article_tags'],
-		'article_icon'					=>	$data['article_icon'],
+		'article_type'					=>	$data['article_type'],
 		'enable_bbcode'					=>	$data['enable_bbcode'],
 		'enable_smilies'				=>	$data['enable_smilies'],
 		'enable_magic_url'				=>	$data['enable_urls'],
@@ -515,7 +514,6 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 	
 	if($mode == 'edit')
 	{
-		$sql_data[KB_TABLE]['sql']['article_last_edit_time'] = $data['current_time'];
 		$sql_data[KB_TABLE]['sql']['article_last_edit_id'] = $edit_id;
 	}
 	
@@ -573,6 +571,15 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 		}
 		
 		$db->sql_multi_insert(KB_TAGS_TABLE, $sql_data[KB_TAGS_TABLE]['sql']);
+	}
+	
+	// Assign request to this article
+	if($data['request_id'])
+	{
+		$sql = 'UPDATE ' . KB_REQ_TABLE . '
+				SET article_id = ' . $data['article_id'] . '
+				WHERE request_id = ' . $data['request_id'];
+		$db->sql_query($sql);
 	}
 	
 	// Don't update cats table until the article is shown.
@@ -822,6 +829,71 @@ function comment_submit($mode, &$data, $update_message = true)
 	}
 	
 	return $data['comment_id'];
+}
+
+/**
+* Submit request
+* handle take on as well
+*/
+function request_submit($mode, &$data, $update_message = true)
+{
+	global $db, $auth, $user, $config, $phpEx, $template, $phpbb_root_path;
+	
+	if($mode == 'delete')
+	{
+		// No delete from this function
+		return false;
+	}
+	
+	if($mode == 'add')
+	{
+		$update_message = true;
+	}
+	
+	// Begin sql transaction and build needed sql data
+	$db->sql_transaction('begin');
+	
+	$sql_data = array();
+	$data['request_title'] = truncate_string($data['request_title']);
+	
+	// Build sql data for articles table
+	$sql_data[KB_REQ_TABLE]['sql'] = array(
+		'request_id'				=> $data['request_id'],
+		'article_id'				=> $data['article_id'],
+		'request_accepted'			=> $data['request_accepted'],
+		'request_title'				=> $data['request_title'],
+		'request_checksum'			=> $data['message_md5'],
+		'request_status'			=> $data['request_status'],
+		'request_user_id'			=> $data['request_user_id'],
+		'request_user_name'			=> $data['request_user_name'],
+		'request_user_color'		=> $data['request_user_color'],
+		'request_time'				=> $data['request_time'],
+		'bbcode_bitfield'			=> $data['bbcode_bitfield'],
+		'bbcode_uid'				=> $data['bbcode_uid'],
+	);
+	
+	// Only update text if needed
+	if($update_message)
+	{
+		$sql_data[KB_REQ_TABLE]['sql']['request_text'] = $data['request_text'];
+	}
+	
+	// Submit article
+	if($mode == 'add')
+	{
+		$sql = 'INSERT INTO ' . KB_REQ_TABLE . ' ' . $db->sql_build_array('INSERT', $sql_data[KB_REQ_TABLE]['sql']);
+		$db->sql_query($sql);
+		$data['request_id'] = $db->sql_nextid();
+	}
+	elseif($mode == 'edit')
+	{
+		$sql = 'UPDATE ' . KB_REQ_TABLE . ' 
+				SET ' . $db->sql_build_array('UPDATE', $sql_data[KB_REQ_TABLE]['sql']) . '
+				WHERE request_id = ' . $data['request_id'];
+		$db->sql_query($sql);
+	}
+	
+	return $data['request_id'];
 }
 
 /**
@@ -1088,6 +1160,12 @@ function article_delete($article_id, $cat_id, $article_data)
 				WHERE article_id = $article_id";
 		$db->sql_query($sql);
 		
+		// Unset requests...
+		$sql = 'UPDATE ' . KB_REQ_TABLE . " 
+				SET article_id = 0, request_accepted = 0, request_status = " . STATUS_REQUEST . "
+				WHERE article_id = $article_id";
+		$db->sql_query($sql);
+		
 		// Resync cat table if needed
 		if($article_data['article_status'] == STATUS_APPROVED)
 		{
@@ -1177,6 +1255,121 @@ function comment_delete($comment_id, $article_id, $show_confirm_box, $type = COM
 	}
 	
 	redirect(append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_id"));
+}
+
+/*
+* Request delete
+*/
+function request_delete($request_id)
+{
+	global $db, $phpbb_root_path, $phpEx, $user;
+	
+	$s_hidden_fields = build_hidden_fields(array(
+		'r'	=> $request_id,
+	));
+	
+	if(confirm_box(true))
+	{
+		// Delete request
+		$sql = 'DELETE FROM ' . KB_REQ_TABLE . ' 
+				WHERE request_id = '. $request_id;
+		$db->sql_query($sql);
+		
+		$meta_info = append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list');
+		$message = $user->lang['REQUEST_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx") . '">', '</a>');
+		meta_refresh(5, $meta_info);
+		trigger_error($message);
+	}
+	else
+	{
+		confirm_box(false, 'DELETE_REQUEST', $s_hidden_fields);
+	}
+	
+	redirect(append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=view&amp;r=$request_id"));
+}
+
+/*
+* Show request list
+* shows list of requests so it can be used both in and outside of menus
+* in menu = true|false, num = shown requests, start = start var
+*/
+function show_request_list($in_menu, $num, $start = 0)
+{
+	global $phpEx, $user, $auth;
+	global $db, $phpbb_root_path, $template;
+	
+	get_random_article(0);
+	get_latest_article();	
+	show_cats(0);
+	
+	$sql = $db->sql_build_query('SELECT', array(
+		'SELECT'	=> 'r.*',
+		'FROM'		=> array(
+			KB_REQ_TABLE	=> 'r',
+		),
+		'ORDER_BY'	=> 'r.request_time DESC',
+	));
+	
+	if($in_menu)
+	{
+		$result = $db->sql_query_limit($sql, $num);
+	}
+	else
+	{
+		$result = $db->sql_query('SELECT COUNT(request_id) as num_requests FROM ' . KB_REQ_TABLE);
+		$requests_count = (int) $db->sql_fetchfield('num_requests', $result);
+		$db->sql_freeresult($result);
+		
+		if ($start < 0 || $start > $requests_count)
+		{
+			$start = ($start < 0) ? 0 : floor(($requests_count - 1) / $num) * $num;
+		}
+		
+		$result = $db->sql_query_limit($sql, $num, $start);
+	}
+	
+	while($row = $db->sql_fetchrow($result))
+	{
+		// Walk on by, walk on through and replace naugthy words
+		$row['request_title'] = censor_text($row['request_title']);
+			
+		// Check status and acceptance
+		switch($row['request_status'])
+		{
+			// Has been added
+			case STATUS_ADDED:
+				$title = '[' . $user->lang['STATUS_ADDED'] . '] ' . $row['request_title'];
+			break;
+			
+			// Has been accepted by someone
+			case STATUS_PENDING:
+				$title = '[' . $user->lang['STATUS_PENDING'] . '] ' . $row['request_title'];
+			break;
+			
+			case STATUS_REQUEST:
+			default:
+				$title = '[' . $user->lang['STATUS_REQUEST'] . '] ' . $row['request_title'];
+			break;
+		}
+		
+		$template->assign_block_vars('req_list', array(
+			'REQ_TITLE'			=> $title,
+			'REQ_DATE'			=> ($in_menu) ? '' : $user->format_date($row['request_time']),
+			'REQ_AUTHOR_FULL'	=> ($in_menu) ? '' : get_username_string('full', $row['request_user_id'], $row['request_user_name'], $row['request_user_color'], $row['request_user_name']),
+			'U_VIEW_REQ'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=view&amp;r=' . $row['request_id']),
+		));	
+	}
+	$db->sql_freeresult($result);
+	
+	$template->assign_vars(array(
+		'U_ADD_REQ'			=> ($auth->acl_get('u_kb_request')) ? append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=add') : '',
+		'U_VIEW_ALL'		=> ($in_menu) ? append_sid("{$phpbb_root_path}kb.$phpEx", 'i=request&amp;action=list') : '',
+		'PAGINATION'		=> ($in_menu) ? '' : generate_pagination(append_sid("{$phpbb_root_path}kb.$phpEx", "i=request&amp;action=list"), $requests_count, $num, $start),
+		'PAGE_NUMBER'		=> ($in_menu) ? '' : on_page($requests_count, $num, $start),
+		'TOTAL_REQUESTS' 	=> ($in_menu) ? '' : $requests_count,
+		'S_SHOW_REQ_LIST'	=> ($in_menu) ? true : false,
+		'S_IN_MAIN'			=> ($in_menu) ? false : true,
+	));
 }
 	
 /*
@@ -1712,43 +1905,25 @@ function handle_related_articles($article_id, $show_num = 5)
 * Using this instead of doing multiple sql queries which will increase server load, as it could be running more than 25 extra queries depending how many cats they had perpage
 * Should actually work quickly but more likely to fail if a manual delete happenes from database as doesn't check topic is there
 */
-function handle_latest_articles($mode, $cat_id, $data = false)
+function handle_latest_articles($mode, $cat_id, $data, $show = 4)
 {
 	global $phpbb_root_path, $phpEx, $db;
 
-	//Need random word/combination that is very unlikely going to appear in a message for explode
-	$combination = 'kbdev69htygfhdslo908'; //That should do me this can't be changed unless still in alpha as will stop furture versions working
-	
 	switch ($mode)
 	{
 		case 'get':
-			$article_ids 	= explode($combination, $data['LATEST_IDS']);
-			$article_titles = explode($combination, $data['LATEST_TITLES']);
-			
+			$latest_articles = unserialize($data);
 			// Goes article_id => $article_title
 			$article_links = array();
 			
-			// Got to limit to 4 think that should be enough
-			if (!empty($article_ids))
+			if (!empty($latest_articles))
 			{				
-				if (isset($article_ids[1]))
+				$latest_articles = array_reverse($latest_articles); // Revert array so newest articles are on top
+				$show = (count($latest_articles) < $show) ? count($latest_articles) : $show; // Make sure that we don't try to show more articles than there are
+				for($i = 0; $i < $show; $i++)
 				{
-					$article_links[] = '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_ids[1]") . '">' . $article_titles[1] . '</a>';
-				}
-				
-				if (isset($article_ids[2]))
-				{
-					$article_links[] = '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_ids[2]") . '">' . $article_titles[2] . '</a>';
-				}
-				
-				if (isset($article_ids[3]))
-				{
-					$article_links[] = '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_ids[3]") . '">' . $article_titles[3] . '</a>';
-				}
-				
-				if (isset($article_ids[4]))
-				{
-					$article_links[] = '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "a=$article_ids[4]") . '">' . $article_titles[4] . '</a>';
+					$article = $latest_articles[$i];
+					$article_links[] = '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $article['article_id']) . '">' . $article['article_title'] . '</a>';
 				}
 			}	
 			
@@ -1757,7 +1932,7 @@ function handle_latest_articles($mode, $cat_id, $data = false)
 		
 		case 'add':
 			$sql = $db->sql_build_query('SELECT', array(
-				'SELECT'	=> 'c.latest_ids, c.latest_titles',
+				'SELECT'	=> 'c.latest_ids',
 				'FROM'		=> array(
 					KB_CATS_TABLE => 'c'),
 
@@ -1767,65 +1942,31 @@ function handle_latest_articles($mode, $cat_id, $data = false)
 			$row = $db->sql_fetchrow($result);
 			$db->sql_freeresult($result);
 			
-			$article_ids 	= explode($combination, $row['latest_ids']);
-			$article_titles = explode($combination, $row['latest_titles']);
-			
-			// only start checking if empty if not start a fresh
-			if (isset($article_ids[1]))
-			{				
-				if (isset($article_ids[1]))
-				{
-					$use = 1;
-				}
-				
-				if (isset($article_ids[2]))
-				{
-					$use = 2;
-				}
-				
-				if (isset($article_ids[3]))
-				{
-					$use = 3;
-				}
-				
-				if (isset($article_ids[4]))
-				{
-					$use = 4;
-				}
-				
-				if ($use == 4)
-				{
-					$latest_ids 	= str_replace($combination . $article_ids[4], '', $row['latest_ids']);
-					$latest_titles 	= str_replace($combination . $article_titles[4], '', $row['latest_titles']);
-					
-					$sql_ary = array(
-						'latest_ids'		=> $combination . $data['ARTICLE_ID'] . $latest_ids,
-						'latest_titles'		=> $combination . $data['ARTICLE_TITLE'] . $latest_titles,
-					);
-				}
-				else
-				{
-					$sql_ary = array(
-						'latest_ids'		=> $combination . $data['ARTICLE_ID'] . $row['latest_ids'],
-						'latest_titles'		=> $combination . $data['ARTICLE_TITLE'] . $row['latest_titles'],
-					);
-				}
-				
-				$sql = 'UPDATE ' . KB_CATS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
-					WHERE cat_id = '" . $db->sql_escape($cat_id) . "'";
-				$db->sql_query($sql);
-			}
-			else
+			$latest_articles = unserialize($row['latest_ids']);
+			// Build new array
+			if(count($latest_articles) == $show)
 			{
-				$sql_ary = array(
-					'latest_ids'		=> $combination . $data['ARTICLE_ID'],
-					'latest_titles'		=> $combination . $data['ARTICLE_TITLE'],
-				);
-				
-				$sql = 'UPDATE ' . KB_CATS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
-					WHERE cat_id = '" . $db->sql_escape($cat_id) . "'";
-				$db->sql_query($sql);
-			}	
+				// The database table is filled.. cycle through them and add the new one at the end
+				for($i = 0; $i < $show; $i++)
+				{
+					if(isset($latest_articles[$i]))
+					{
+						unset($latest_articles[$i]);
+						break;
+					}
+				}
+			}
+			
+			// Just add it at the end of the table
+			$latest_articles[] = array(
+				'article_id'	=> $data['article_id'],
+				'article_title'	=> $data['article_title'],
+			);
+			
+			$sql_ary = array('latest_ids' => serialize($latest_articles));
+			$sql = 'UPDATE ' . KB_CATS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
+				WHERE cat_id = '" . $db->sql_escape($cat_id) . "'";
+			$db->sql_query($sql);
 		break;
 		
 		case 'delete':
@@ -1835,11 +1976,119 @@ function handle_latest_articles($mode, $cat_id, $data = false)
 }
 
 /**
+* Show cats here
+* Moved from main kb.php
+* Might pass cat_id later so selected cat is in bold
+*/
+function show_cats($cat_id)
+{
+	global $template, $phpbb_root_path, $phpEx;
+	
+	$cats = make_cat_select($cat_id, false, false, false, true, false, true);
+	foreach ($cats as $cat)
+	{
+		$template->assign_block_vars('cat_list', array(
+			'CAT_SEL'				=> $cat['selected'],
+			'CAT_NAME'				=> $cat['padding'] . $cat['cat_name'],
+			'U_VIEW_CAT'			=> append_sid("{$phpbb_root_path}kb.$phpEx", "c=" . $cat['cat_id']),
+		));
+	}
+	unset($cats);
+}
+
+/**
+* Generates feeds for display
+* $feed = RSS or ATOM
+* $feed_type = latest or user or cat or popular
+* $feed_data (only used by user and cat) = user_id or cat_id
+* Credit to EXreaction, Lithium Studios for some of the code used here and the idea for the function workings
+*/
+function feed_output($feed, $feed_type, $feed_data = false)
+{
+	global $template, $phpbb_root_path, $phpEx, $config, $db, $user;
+	
+	switch ($feed_type)
+	{
+		case 'latest':
+			$title = $user->lang['KB_LATEST'];
+			$sql_where = 'a.article_status = ' . STATUS_APPROVED;
+			$sql_order = 'a.article_time DESC';
+		break;
+		
+		case 'user':
+			$title = $feed_data['USERNAME'] .  ' ' . $user->lang['ARTICLE'];
+			$sql_where = 'a.article_user_id = ' . $feed_data['USER_ID'] . ' AND a.article_status = ' . STATUS_APPROVED;
+			$sql_order = 'a.article_time DESC';
+		break;
+		
+		case 'cat':
+			$title = $user->lang['KB_SORT_CAT'] . ' - ' . $feed_data['CAT_NAME'] .  ' ' . $user->lang['ARTICLE'];
+			$sql_where = 'a.cat_id = ' . $feed_data['CAT_ID'] . ' AND a.article_status = ' . STATUS_APPROVED;
+			$sql_order = 'a.article_time DESC';
+		break;
+		
+		case 'popular':
+			$title = $user->lang['POPULAR_ART'];
+			$sql_where = 'a.article_status = ' . STATUS_APPROVED;
+			$sql_order = 'a.article_views DESC';
+		break;	
+	}
+	
+	$sql = $db->sql_build_query('SELECT', array(
+		'SELECT'	=> 'a.article_id, a.article_title, a.article_desc, a.article_desc_uid, a.article_user_name, a.article_time',
+		'FROM'		=> array(
+			KB_TABLE => 'a'),		
+		'WHERE'		=> "$sql_where",
+		'ORDER_BY'	=> "$sql_order",
+	));
+	$result = $db->sql_query_limit($sql, 10);
+	while ($row = $db->sql_fetchrow($result))
+	{
+		strip_bbcode($row['article_desc'], $row['article_desc_uid']);
+		$template->assign_block_vars('item', array(
+			'TITLE'				=> $row['article_title'],
+			'URL'				=> generate_board_url() . '/kb.' . $phpEx . '?a=' . $row['article_id'],
+			'USERNAME'			=> $row['article_user_name'],
+			'MESSAGE'			=> str_replace("'", '&#039;', $row['article_desc']),
+			'PUB_DATE'			=> date('r', $row['article_time']),
+			'DATE_3339'			=> ($feed_type == 'ATOM') ? date3339($row['article_time']) : '',
+		));
+	}
+
+	$template->assign_vars(array(
+		'FEED'				=> $feed,
+		'SELF_FULL_URL'		=> generate_board_url() . '/kb.' . $phpEx . '?i=feed&amp;feed=' . $feed . '&amp;feed_type=' . $feed_type,
+		'TITLE'				=> $config['sitename'] . ' ' . $title . ' ' . $user->lang['FEED'],
+		'SITE_URL'			=> generate_board_url() . '/kb.' . $phpEx,
+		'SITE_DESC'			=> $config['site_desc'],
+		'SITE_LANG'			=> $config['default_lang'],
+		'CURRENT_TIME'		=> ($feed_type == 'ATOM') ? date3339() : date('r'),
+	));
+
+	// Output time
+	header('Content-type: application/xml; charset=UTF-8');
+
+	header('Cache-Control: private, no-cache="set-cookie"');
+	header('Expires: 0');
+	header('Pragma: no-cache');
+
+	$template->set_template();
+	$template->set_filenames(array(
+		'body' => 'kb/kb_feed.xml'
+	));
+
+	$template->display('body');
+
+	garbage_collection();
+	exit_handler();
+}
+
+/**
 * Pagination routine, generates page number sequence
 * tpl_prefix is for using different pagination blocks at one page
 * for kb, change start to what you want so can be used multiple times on a page :)
 */
-function kb_generate_pagination($base_url, $num_items, $per_page, $start_item, $pass, $add_prevnext_text = false, $tpl_prefix = 'KB_')
+function kb_generate_pagination($base_url, $num_items, $per_page, $start_item, $pass = 'start', $add_prevnext_text = false, $tpl_prefix = 'KB_')
 {
 	global $template, $user;
 
@@ -2012,11 +2261,7 @@ function kb_display_cats($root_data = '')
 			
 			$folder_img = (sizeof($subcats_list)) ? 'forum_read_subforum' : 'forum_read';
 			
-			$late_article = array(
-				'LATEST_IDS'		=> $cats[$cat_id]['latest_ids'],
-				'LATEST_TITLES'		=> $cats[$cat_id]['latest_titles'],
-			);
-			$latest_articles = handle_latest_articles('get', $cat_id, $late_article);
+			$latest_articles = handle_latest_articles('get', $cat_id, $cats[$cat_id]['latest_ids']);
 			
 			$template->assign_block_vars('cat_row.cats', array(
 				'S_SUBFORUMS'			=> (sizeof($subcats_list)) ? true : false,
@@ -2034,7 +2279,8 @@ function kb_display_cats($root_data = '')
 				'LATEST_ARTICLE'		=> $latest_articles,
 
 				'L_SUBCAT'				=> ($visible_subcats[$cat_id] == 1) ? $user->lang['SUBCAT'] : $user->lang['SUBCATS'],
-				'U_VIEWCAT'				=> append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id")
+				'U_VIEWCAT'				=> append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id"),
+				'U_RSS_CAT'				=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=cat&amp;feed_cat_id=' . $cats[$cat_id]['cat_id'] . '&amp;feed_cat_name=' . $cats[$cat_id]['cat_name']),
 			));		
 		}
 	}	
@@ -2042,25 +2288,169 @@ function kb_display_cats($root_data = '')
 }
 
 // Generate edit string, used so many places i found it better to put it here
-function gen_kb_edit_string($article_id, $last_edit_id, $article_time, $edit_time)
+function gen_kb_edit_string($article_id, $last_edit_id, $article_time, $edit_time, $reason = '', $reason_global = false)
 {
 	global $db, $user, $phpbb_root_path, $phpEx;
 	
 	if($last_edit_id && $edit_time != $article_time)
 	{
-		$sql = "SELECT e.edit_id, u.user_id, u.username, u.user_colour
-				FROM " . KB_EDITS_TABLE . " e, " . USERS_TABLE . " u
-				WHERE e.edit_id = $article_id
-				AND u.user_id = $last_edit_id";
+		$sql = "SELECT e.edit_id, e.edit_user_id, e.edit_user_name, e.edit_user_color
+				FROM " . KB_EDITS_TABLE . " e
+				WHERE e.edit_id = $last_edit_id";
 		$result = $db->sql_query($sql);
 		$edit_data = $db->sql_fetchrow($result);
 		$db->sql_freeresult($result);
 		
-		$l_edit = sprintf($user->lang['KB_EDITED_BY'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "e=$article_id") . '">', '</a>', get_username_string('full', $edit_data['user_id'], $edit_data['username'], $edit_data['user_colour']), $user->format_date($edit_time, false, true));
+		$l_edit = sprintf($user->lang['KB_EDITED_BY'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "i=history&amp;e=$article_id") . '">', '</a>', get_username_string('full', $edit_data['edit_user_id'], $edit_data['edit_user_name'], $edit_data['edit_user_color']), $user->format_date($edit_time, false, true));
+		
+		if($reason != '' && $reason_global)
+		{
+			$l_edit .= '<br />' . $user->lang['REASON'] . ': ' . $reason;
+		}
 		return $l_edit;
 	}
 	
 	return '';
+}
+
+// Make select list for posting article
+function make_req_select()
+{
+	global $db, $user;
+	
+	$sql = 'SELECT request_id, request_title
+			FROM ' . KB_REQ_TABLE . '
+			WHERE request_accepted = ' . $user->data['user_id'] . '
+			AND request_status = ' . STATUS_PENDING . '
+			ORDER BY request_title DESC';
+	$result = $db->sql_query($sql);
+	
+	$options = '';
+	while($row = $db->sql_fetchrow($result))
+	{
+		$options .= '<option value="' . $row['request_id'] . '">' . $row['request_title'] . '</option>';
+	}
+	$db->sql_freeresult($result);
+	
+	if($options == '')
+	{
+		return '';
+	}
+	
+	return '<option value="0" selected="selected">' . $user->lang['KB_NOT_ADD_REQUEST'] . '</option>' . $options;
+}
+
+// Make article type list
+function make_article_type_select($type_id = 0)
+{
+	global $user, $cache;
+	
+	$options = '<option value="0"' . ((!$type_id) ? ' selected="selected"' : '') . '>' . $user->lang['SELECT_TYPE'] . '</option>';
+	$types = $cache->obtain_article_types();
+	
+	foreach($types as $id => $type_data)
+	{
+		$selected = ($type_id == $id) ? ' selected="selected"' : '';
+		$options .= '<option value="' . $id . '"' . $selected . '>' . $type_data['title'] . '</option>';
+	}
+	
+	return $options;
+}	
+
+//Make cat list
+function make_cat_select($select_id = false, $ignore_id = false, $ignore_acl = false, $ignore_nonpost = false, $ignore_emptycat = true, $only_acl_post = false, $return_array = false)
+{
+	global $db, $user, $auth;
+
+	// This query is identical to the jumpbox one
+	$sql = 'SELECT cat_id, cat_name, parent_id, left_id, right_id
+		FROM ' . KB_CATS_TABLE . '
+		ORDER BY left_id ASC';
+	$result = $db->sql_query($sql);
+
+	$right = 0;
+	$padding_store = array('0' => '');
+	$padding = '';
+	$cat_list = ($return_array) ? array() : '';
+
+	// Sometimes it could happen that forums will be displayed here not be displayed within the index page
+	// This is the result of forums not displayed at index, having list permissions and a parent of a forum with no permissions.
+	// If this happens, the padding could be "broken"
+
+	while ($row = $db->sql_fetchrow($result))
+	{
+		if ($row['left_id'] < $right)
+		{
+			$padding .= '&nbsp; &nbsp;';
+			$padding_store[$row['parent_id']] = $padding;
+		}
+		else if ($row['left_id'] > $right + 1)
+		{
+			$padding = (isset($padding_store[$row['parent_id']])) ? $padding_store[$row['parent_id']] : '';
+		}
+
+		$right = $row['right_id'];
+		$disabled = false;
+
+		if (((is_array($ignore_id) && in_array($row['cat_id'], $ignore_id)) || $row['cat_id'] == $ignore_id))
+		{
+			$disabled = true;
+		}
+
+		if ($return_array)
+		{
+			// Include some more information...
+			$selected = (is_array($select_id)) ? ((in_array($row['cat_id'], $select_id)) ? true : false) : (($row['cat_id'] == $select_id) ? true : false);
+			$cat_list[$row['cat_id']] = array_merge(array('padding' => $padding, 'selected' => ($selected && !$disabled), 'disabled' => $disabled), $row);
+		}
+		else
+		{
+			$selected = (is_array($select_id)) ? ((in_array($row['cat_id'], $select_id)) ? ' selected="selected"' : '') : (($row['cat_id'] == $select_id) ? ' selected="selected"' : '');
+			$cat_list .= '<option value="' . $row['cat_id'] . '"' . (($disabled) ? ' disabled="disabled" class="disabled-option"' : $selected) . '>' . $padding . $row['cat_name'] . '</option>';
+		}
+	}
+	$db->sql_freeresult($result);
+	unset($padding_store);
+
+	return $cat_list;
+}
+
+// Insert article type into article data
+// Mode can be both|img|title
+function gen_article_type($article_type, $article_title, $types, $icons)
+{
+	global $phpbb_root_path;
+	
+	// Article type standard action
+	$type_info = array(
+		'article_title'		=> $article_title,
+		'type_image'		=> array(
+			'img'		=> '',
+			'width'		=> 0,
+			'height'	=> 0,
+		),
+	);
+	
+	if($article_type == 0 || !isset($types[$article_type]))
+	{
+		return $type_info;
+	}
+	
+	$type_data = $types[$article_type];
+	$prefix = (!isset($type_data['prefix'])) ? '' : $type_data['prefix'] . ' ';
+	$suffix = (!isset($type_data['suffix'])) ? '' : ' ' . $type_data['suffix'];
+	$article_title = $prefix . $article_title . $suffix;
+
+	$article_image = array(
+		'img'		=> (!isset($type_data['img']) || $type_data['img'] == '') ? ((isset($icons[$type_data['icon']])) ? $phpbb_root_path . 'images/icons/' . $icons[$type_data['icon']]['img'] : '') : $phpbb_root_path . $type_data['img'],
+		'width'		=> (!isset($type_data['img']) || $type_data['img'] == '') ? ((isset($icons[$type_data['icon']])) ? $icons[$type_data['icon']]['width'] : 0) : $type_data['width'],
+		'height'	=> (!isset($type_data['img']) || $type_data['img'] == '') ? ((isset($icons[$type_data['icon']])) ? $icons[$type_data['icon']]['height'] : 0) : $type_data['height'],
+	);
+	
+	return array(
+		'type_image'		=> $article_image,
+		'article_title'		=> $article_title,
+	);
 }
 
 // Show what user can do, $cat_id not used at the moment as nothing is local!
@@ -2074,6 +2464,7 @@ function gen_kb_auth_level($cat_id = false)
 		($user->data['is_registered'] && $auth->acl_gets('u_kb_edit', 'm_kb')) ? sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_EDIT'], $user->lang['KB_NOT']),
 		($user->data['is_registered'] && $auth->acl_gets('u_kb_delete', 'm_kb')) ? sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_DEL'], $user->lang['KB_NOT']),
 		($auth->acl_get('u_kb_rate')) ? sprintf($user->lang['KB_PERM_RATE'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_RATE'], $user->lang['KB_NOT']),
+		($auth->acl_get('u_kb_viewhistory')) ? sprintf($user->lang['KB_PERM_HIST'], $user->lang['KB_CAN']) : sprintf($user->lang['KB_PERM_HIST'], $user->lang['KB_NOT']),
 	);
 
 	if ($config['kb_allow_attachments'])
@@ -2091,320 +2482,155 @@ function gen_kb_auth_level($cat_id = false)
 	return;
 }
 
-function get_kb_versions()
+// Get latest article
+function get_latest_article()
 {
-	$versions = array(
-		'0.0.1'		=> array(
-			'table_add'	=> array(
-				array('phpbb_articles', array(
-					'COLUMNS'		=> array(
-						'article_id'				=> array('UINT', NULL, 'auto_increment'),
-						'cat_id'					=> array('UINT', 0),
-						'article_title'				=> array('VCHAR', ''),
-						'article_desc'				=> array('TEXT_UNI', ''),
-						'article_desc_bitfield'		=> array('VCHAR', ''),
-						'article_desc_options'		=> array('UINT:11', 7),
-						'article_desc_uid'			=> array('VCHAR:8', ''),
-						'article_text'				=> array('MTEXT_UNI', ''),
-						'article_checksum'			=> array('VCHAR:32', ''),
-						'article_status'			=> array('TINT:1', 0),
-						'article_attachment'		=> array('BOOL', 0),
-						'article_views'				=> array('UINT', 0),
-						'article_comments'			=> array('UINT', 0),
-						'article_user_id'			=> array('UINT', 0),
-						'article_user_name'			=> array('VCHAR_UNI:255', ''),
-						'article_user_color'		=> array('VCHAR:6', ''),
-						'article_time'				=> array('TIMESTAMP', 0),
-						'article_tags'				=> array('VCHAR', ''),
-						'article_icon'				=> array('UINT', 0),
-						'enable_bbcode'				=> array('BOOL', 1),
-						'enable_smilies'			=> array('BOOL', 1),
-						'enable_magic_url'			=> array('BOOL', 1),
-						'enable_sig'				=> array('BOOL', 1),
-						'bbcode_bitfield'			=> array('VCHAR', ''),
-						'bbcode_uid'				=> array('VCHAR:8', ''),
-						'article_last_edit_time'	=> array('TIMESTAMP', 0),
-						'article_last_edit_id'		=> array('UINT', 0),
-					),
-					'PRIMARY_KEY'	=> 'article_id'
-				)),
+	global $config, $db, $template, $phpbb_root_path, $phpEx;
+	
+	if ($config['kb_last_article'] == '')
+	{
+		$template->assign_vars(array(
+			'NO_LAST_ARTICLE'		=> true,
+		));
+		
+		return;
+	}
 
-				array('phpbb_article_attachments', array(
-					'COLUMNS'		=> array(
-						'attach_id'			=> array('UINT', NULL, 'auto_increment'),
-						'article_id'		=> array('UINT', 0),
-						'comment_id'		=> array('UINT', 0),
-						'poster_id'			=> array('UINT', 0),
-						'is_orphan'			=> array('BOOL', 1),
-						'physical_filename'	=> array('VCHAR', ''),
-						'real_filename'		=> array('VCHAR', ''),
-						'download_count'	=> array('UINT', 0),
-						'attach_comment'	=> array('TEXT_UNI', ''),
-						'extension'			=> array('VCHAR:100', ''),
-						'mimetype'			=> array('VCHAR:100', ''),
-						'filesize'			=> array('UINT:20', 0),
-						'filetime'			=> array('TIMESTAMP', 0),
-						'thumbnail'			=> array('BOOL', 0),
-					),
-					'PRIMARY_KEY'	=> 'attach_id',
-					'KEYS'			=> array(
-						'filetime'			=> array('INDEX', 'filetime'),
-						'article_id'		=> array('INDEX', 'article_id'),
-						'comment_id'		=> array('INDEX', 'comment_id'),
-						'poster_id'			=> array('INDEX', 'poster_id'),
-						'is_orphan'			=> array('INDEX', 'is_orphan'),
-					),
-				)),
+	$sql = 'SELECT article_title, article_desc, article_desc_bitfield, article_desc_options, article_desc_uid, article_views, article_comments 
+		FROM ' . KB_TABLE . '
+		WHERE article_id = ' . $config['kb_last_article'];
+	$result = $db->sql_query($sql);
+	$row = $db->sql_fetchrow($result);
+	if (!$db->sql_affectedrows())	
+	{
+		$template->assign_vars(array(
+			'NO_LAST_ARTICLE'		=> true,
+		));
+		
+		return;
+	}	
+	$db->sql_freeresult($result);
 
-				array('phpbb_article_cats', array(
-					'COLUMNS'		=> array(
-						'cat_id'				=> array('UINT', NULL, 'auto_increment'),
-						'parent_id'				=> array('UINT', 0),
-						'left_id'				=> array('UINT', 0),
-						'right_id'				=> array('UINT', 0),
-						'cat_name'				=> array('VCHAR', ''),	
-						'cat_desc'				=> array('TEXT_UNI', ''),
-						'cat_desc_bitfield'		=> array('VCHAR', ''),
-						'cat_desc_options'		=> array('UINT:11', 7),
-						'cat_desc_uid'			=> array('VCHAR:8', ''),
-						'cat_image'				=> array('VCHAR', ''),
-						'cat_articles'			=> array('UINT', 0),
-					),
-					'PRIMARY_KEY'	=> 'cat_id',
-					'KEYS'			=> array(
-						'cat_name'			=> array('INDEX', 'cat_name'),
-						'cat_desc'			=> array('INDEX', 'cat_desc'),
-					),
-				)),
+	$template->assign_vars(array(
+		'LAST_ARTICLE_TITLE'		=> $row['article_title'],
+		'LAST_ARTICLE_DESC'			=> generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options']),
+		'LAST_ARTICLE_COMMENTS'		=> $row['article_comments'],
+		'LAST_ARTICLE_VIEWS'		=> $row['article_views'],
+		
+		'U_LAST_ARTICLE'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $config['kb_last_article']),
+		'U_RSS_LAST_ARTICLE'		=> append_sid("{$phpbb_root_path}kb.$phpEx", 'i=feed&amp;feed_type=latest'),
+	));
+}
 
-				array('phpbb_article_comments', array(
-					'COLUMNS'		=> array(
-						'comment_id'			=> array('UINT', NULL, 'auto_increment'),
-						'article_id'			=> array('UINT', 0),
-						'comment_title'			=> array('VCHAR', ''),
-						'comment_text'			=> array('MTEXT_UNI', ''),
-						'comment_checksum'		=> array('VCHAR:32', ''),
-						'comment_type'			=> array('TINT:1', 0),
-						'comment_user_id'		=> array('UINT', 0),
-						'comment_user_name'		=> array('VCHAR_UNI:255', ''),
-						'comment_user_color'	=> array('VCHAR:6', ''),
-						'comment_time'			=> array('TIMESTAMP', 0),
-						'comment_edit_time'		=> array('TIMESTAMP', 0),
-						'comment_edit_id'		=> array('UINT', 0),
-						'comment_edit_name'		=> array('VCHAR_UNI:255', ''),
-						'comment_edit_color'	=> array('VCHAR:6', ''),
-						'enable_bbcode'			=> array('BOOL', 1),
-						'enable_smilies'		=> array('BOOL', 1),
-						'enable_magic_url'		=> array('BOOL', 1),
-						'enable_sig'			=> array('BOOL', 1),
-						'bbcode_bitfield'		=> array('VCHAR', ''),
-						'bbcode_uid'			=> array('VCHAR:8', ''),
-						'comment_attachment'	=> array('BOOL', 0),
-					),
-					'PRIMARY_KEY'	=> 'comment_id'
-				)),
+// Random article - need all ids first, May as well cache the results for an hour to add later after debuggig
+function get_random_article($cat_id, $second_pass = false)
+{
+	global $db, $template, $phpbb_root_path, $phpEx;
+	$random_where = ($cat_id == 0) ? ' WHERE article_status = ' . STATUS_APPROVED : " WHERE cat_id = '" . $db->sql_escape($cat_id) . "'  AND article_status = " . STATUS_APPROVED;
+	
+	$all_ids = array();
 
-				array('phpbb_article_edits', array(
-					'COLUMNS'		=> array(
-						'edit_id'						=> array('UINT', NULL, 'auto_increment'),
-						'article_id'					=> array('UINT', 0),
-						'parent_id'						=> array('UINT', 0),
-						'edit_user_id'					=> array('UINT', 0),
-						'edit_user_name'				=> array('VCHAR_UNI:255', ''),
-						'edit_user_color'				=> array('VCHAR:6', ''),
-						'edit_time'						=> array('TIMESTAMP', 0),
-						'edit_article_title'			=> array('VCHAR', ''),
-						'edit_article_desc'				=> array('TEXT_UNI', ''),
-						'edit_article_desc_bitfield'	=> array('VCHAR', ''),
-						'edit_article_desc_options'		=> array('UINT:11', 7),
-						'edit_article_desc_uid'			=> array('VCHAR:8', ''),
-						'edit_article_text'				=> array('MTEXT_UNI', ''),
-						'edit_article_checksum'			=> array('VCHAR:32', ''),
-						'edit_enable_bbcode'			=> array('BOOL', 1),
-						'edit_enable_smilies'			=> array('BOOL', 1),
-						'edit_enable_magic_url'			=> array('BOOL', 1),
-						'edit_enable_sig'				=> array('BOOL', 1),
-						'edit_bbcode_bitfield'			=> array('VCHAR', ''),
-						'edit_bbcode_uid'				=> array('VCHAR:8', ''),
-						'edit_article_status'			=> array('TINT:1', 1),
-						'comment_id'					=> array('UINT', 0),
-						'edit_moderated'				=> array('TINT:1', 0),
-					),
-					'PRIMARY_KEY'	=> 'edit_id'
-				)),
-				
-				array('phpbb_article_rate', array(
-					'COLUMNS'		=> array(
-						'article_id'	=> array('UINT', 0),
-						'user_id'		=> array('UINT', 0),
-						'rate_time'		=> array('TIMESTAMP', 0),
-						'rating'		=> array('TINT:2', 0),
-					),
-				)),
-				
-				array('phpbb_article_tags', array(
-					'COLUMNS'		=> array(
-						'article_id'	=> array('UINT', 0),
-						'tag_name'		=> array('VCHAR:30', ''),
-						'tag_name_lc'	=> array('VCHAR:30', ''),
-					),
-				)),
-				
-				array('phpbb_article_track', array(
-					'COLUMNS'		=> array(
-						'article_id'	=> array('UINT', 0),
-						'user_id'		=> array('UINT', 0),
-						'subscribed'	=> array('TINT:1', 0),
-						'bookmarked'	=> array('TINT:1', 0),
-						'notify_by'		=> array('TINT:1', 0),
-						'notify_on'		=> array('TINT:1', 0),
-					),
-				)),
-			),
-		),
+	$sql = 'SELECT article_id 
+			FROM ' . KB_TABLE . "
+			$random_where";
+	$result = $db->sql_query($sql);
+	while($row = $db->sql_fetchrow($result))
+	{
+		$all_ids[] = $row['article_id'];
+	}
 		
-		'0.0.2'		=> array(
-			'permission_add'	=> array(
-				array('u_kb_read', true),
-				array('u_kb_download', true),
-				array('u_kb_comment', true),
-				array('u_kb_add', true),
-				array('u_kb_delete', true),
-				array('u_kb_edit', true),
-				array('u_kb_bbcode', true),
-				array('u_kb_flash', true),
-				array('u_kb_smilies', true),
-				array('u_kb_img', true),
-				array('u_kb_sigs', true),
-				array('u_kb_attach', true),
-				array('u_kb_icons', true),
-				array('u_kb_rate', true),
-				array('m_kb', true),
-			),
-		),
+	if (!$db->sql_affectedrows())	
+	{
+		if (!$second_pass)
+		{
+			// Call again with second pass saves writing another sql
+			get_random_article(0, true);
+		}
+		else
+		{
+			$template->assign_vars(array(
+				'NO_ARTICLE'		=> true,
+			));
+		}
 		
-		'0.0.3'		=> array(
-			'config_add'	=> array(
-				array('kb_allow_attachments', 1),
-				array('kb_allow_sig', 1),
-				array('kb_allow_smilies', 1),
-				array('kb_allow_bbcode', 1),
-				array('kb_allow_post_flash', 1),
-				array('kb_allow_post_links', 1),
-				array('kb_enable', 1),
-				array('kb_articles_per_page', 25),
-				array('kb_comments_per_page', 25),
-				array('kb_allow_subscribe', 1),
-				array('kb_allow_bookmarks', 1),
-			),
-		),
+		return;
+	}
+	$db->sql_freeresult($result);	
+	
+	if (empty($all_ids))
+	{
+		$template->assign_vars(array(
+			'NO_ARTICLE'		=> true,
+		));
 		
-		'0.0.4' => array(
-			// Alright, now lets add some modules to the ACP
-			'module_add' => array(
-				// First, lets add a new category
-				array('acp', 'ACP_CAT_DOT_MODS', 'ACP_KB'),
+		return;
+	}
+	
+	$value = array_rand($all_ids);
+	$article_id = $all_ids[$value];
 
-				// Now we will add the settings and features modes.
-				array('acp', 'ACP_KB', array(
-						'module_basename'		=> 'kb',
-						'modes'					=> array('settings'),
-					),
-				),
-			),
-		),
+	$sql = 'SELECT article_title, article_desc, article_desc_bitfield, article_desc_options, article_desc_uid, article_views, article_comments 
+			FROM ' . KB_TABLE . '
+			WHERE article_id = ' . $article_id;
+	$result = $db->sql_query($sql);
+	$row = $db->sql_fetchrow($result);
+	$db->sql_freeresult($result);
 
-		'0.0.5' => array(
-			'config_add'	=> array(
-				array('kb_last_article', 0, true),
-				array('kb_last_updated', time(), true),
-				array('kb_total_articles', 0, true),
-				array('kb_total_comments', 0, true),
-				array('kb_total_cats', 0),
-			),
-			
-			'module_add' => array(
-				array('ucp', '', 'UCP_KB'),
-				
-				array('ucp', 'UCP_KB', array(
-						'module_basename'			=> 'kb',
-						'modes'						=> array('front', 'subscribed', 'bookmarks', 'articles'),
-					),
-				),
-			),
-		),
+	$template->assign_vars(array(
+		'RAN_ARTICLE_TITLE'		=> $row['article_title'],
+		'RAN_ARTICLE_DESC'		=> generate_text_for_display($row['article_desc'], $row['article_desc_uid'], $row['article_desc_bitfield'], $row['article_desc_options']),
+		'RAN_ARTICLE_COMMENTS'	=> $row['article_comments'],
+		'RAN_ARTICLE_VIEWS'		=> $row['article_views'],
 		
-		'0.0.6' => array(
-			// Alright, now lets add some modules to the ACP
-			'module_add' => array(
-				array('acp', 'ACP_KB', array(
-						'module_basename'		=> 'kb',
-						'modes'					=> array('health_check'),
-					),
-				),
-			),
-		),
-		
-		'0.0.7' => array(
-			// Alright, now lets add some modules to the ACP
-			'module_add' => array(
-				array('acp', 'ACP_KB', array(
-						'module_basename'		=> 'kb_cats',
-						'modes'					=> array('manage'),
-					),
-				),
-			),
-		),
-		
-		'0.0.8' => array(
-			'table_column_remove' => array(
-				array(KB_EDITS_TABLE, 'comment_id'), // Unused column
-			),
-			'table_column_add' => array(
-				array(KB_TABLE, 'article_edit_reason', array('MTEXT_UNI', '')),
-				array(KB_TABLE, 'article_edit_reason_global', array('BOOL', 0)),
-				array(KB_EDITS_TABLE, 'edit_reason', array('MTEXT_UNI', '')),
-				array(KB_EDITS_TABLE, 'edit_reason_global', array('BOOL', 0)),
-			),
-			
-			'module_add' => array(
-				array('mcp', '', 'MCP_KB'),
-				array('mcp', 'MCP_KB', array(
-						'module_basename'	=> 'kb',
-						'modes'				=> array('queue', 'articles'),
-					),
-				),
-			),
-		),
-		
-		'0.0.9' => array(
-			'table_column_add' => array(
-				array(KB_CATS_TABLE, 'latest_ids', array('TEXT_UNI', NULL)),
-				array(KB_CATS_TABLE, 'latest_titles', array('TEXT_UNI', NULL)),
-			),
-		),
-		
-		'0.0.10' => array(
-			'table_column_add' => array(
-				array(EXTENSION_GROUPS_TABLE, 'allow_in_kb', array('BOOL', 0)),
-			),
-		),
-		
-		'0.0.11' => array(
-			'table_column_add' => array(
-				// Adding some new DB tables to lessen db queries
-				array(USERS_TABLE, 'user_articles', array('UINT', 0)),
-				array(KB_TABLE, 'article_votes', array('UINT', 0)),
-			),
-			// New permission to add articles without approval
-			'permission_add' => array(
-				array('u_kb_add_wa', true), // Add articles without approval
-				array('u_kb_viewhistory', true), // View history of articles
-			),
-		),
-	);
+		'U_RAN_ARTICLE'			=> append_sid("{$phpbb_root_path}kb.$phpEx", 'a=' . $article_id),
+	));
+}
 
-	return $versions;
+/**
+* Replaces message_parser lang vars with KB's own
+*/
+function fix_error_vars($mode, $error)
+{
+	global $user;
+	
+	// needle => replacement
+	switch($mode)
+	{
+		case 'article':
+			$replacement = array(
+				$user->lang['TOO_FEW_CHARS'] 			=> $user->lang['KB_TOO_FEW_CHARS_ARTICLE'],
+				$user->lang['TOO_MANY_CHARS_POST'] 		=> $user->lang['KB_TOO_MANY_CHARS_ARTICLE'],
+			);
+		break;
+		
+		case 'desc':
+			$replacement = array(
+				$user->lang['TOO_FEW_CHARS'] 			=> $user->lang['KB_TOO_FEW_CHARS_DESC'],
+				$user->lang['TOO_MANY_CHARS_POST'] 		=> $user->lang['KB_TOO_MANY_CHARS_DESC'],
+			);
+		break;
+		
+		case 'comment':
+			$replacement = array(
+				$user->lang['TOO_FEW_CHARS'] 			=> $user->lang['KB_TOO_FEW_CHARS_COMMENT'],
+				$user->lang['TOO_MANY_CHARS_POST'] 		=> $user->lang['KB_TOO_MANY_CHARS_COMMENT'],
+			);
+		break;
+		
+		case 'request':
+			$replacement = array(
+				$user->lang['TOO_FEW_CHARS'] 			=> $user->lang['KB_TOO_FEW_CHARS_REQUEST'],
+				$user->lang['TOO_MANY_CHARS_POST'] 		=> $user->lang['KB_TOO_MANY_CHARS_REQUEST'],
+			);
+		break;
+	}
+	
+	foreach($replacement as $needle => $new_str)
+	{
+		$error = str_replace($needle, $new_str, $error);
+	}
+	
+	return $error;
 }
 
 ?>

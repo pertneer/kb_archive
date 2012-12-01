@@ -18,27 +18,31 @@
 
 	<fieldset class="fields1">
 	<!-- IF ERROR --><p class="error">{ERROR}</p><!-- ENDIF -->
-
-	<!-- IF S_SHOW_TOPIC_ICONS -->
-	<dl>
-		<dt><label for="icon">{L_ICON}:</label></dt>
-		<dd>
-			<label for="icon"><input type="radio" name="icon" id="icon" value="0" checked="checked" /> <!-- IF S_SHOW_TOPIC_ICONS -->{L_NO_TOPIC_ICON}<!-- ELSE -->{L_NO_PM_ICON}<!-- ENDIF --></label>
-			<!-- BEGIN topic_icon --><label for="icon-{topic_icon.ICON_ID}"><input type="radio" name="icon" id="icon-{topic_icon.ICON_ID}" value="{topic_icon.ICON_ID}" {topic_icon.S_ICON_CHECKED} /><img src="{topic_icon.ICON_IMG}" width="{topic_icon.ICON_WIDTH}" height="{topic_icon.ICON_HEIGHT}" alt="" title="" /></label> <!-- END topic_icon -->
-		</dd>
-	</dl>
-	<!-- ENDIF -->
-
+	
 	<!-- IF S_POST_ACTION -->
 	<dl style="clear: left;">
 		<dt><label for="subject">{L_ARTICLE_TITLE}:</label></dt>
 		<dd><input type="text" name="title" id="title" size="45" maxlength="64" tabindex="2" value="{ARTICLE_TITLE}" class="inputbox autowidth" /></dd>
 	</dl>
 	<!-- ENDIF -->
+	
+	<!-- IF S_SHOW_ARTICLE_TYPES -->
+	<dl>
+		<dt><label for="type">{L_ARTICLE_TYPE}:</label></dt>
+		<dd><select name="type" id="type">{S_SHOW_ARTICLE_TYPES}</select></dd>
+	</dl>
+	<!-- ENDIF -->
+	
 	<!-- IF S_IS_ARTICLE -->
 	<dl style="clear: left;">
 		<dt><label for="subject">{L_ARTICLE_DESC}:</label><br /><span class="gensmall">{L_ARTICLE_DESC_EXPLAIN}</span></dt>
 		<dd><textarea name="desc" id="desc" rows="10" cols="45" tabindex="3" class="inputbox desc" onselect="storeCaret(this);" onclick="storeCaret(this);" onkeyup="storeCaret(this);">{DESC}</textarea></dd>
+	</dl>
+	<!-- ENDIF -->
+	<!-- IF S_REQUEST_OPTIONS -->
+	<dl style="clear: left;"
+		<dt><label for="r">{L_ARTICLE_ADD_REQ}</label></dt>
+		<dd><select name="r">{S_REQUEST_OPTIONS}</select></dd>
 	</dl>
 	<!-- ENDIF -->
 	<!-- INCLUDE kb/posting_buttons.html -->
@@ -144,14 +148,16 @@
 			<!-- IF S_SIG_ALLOWED -->
 				<div><label for="attach_sig"><input type="checkbox" name="attach_sig" id="attach_sig"{S_SIGNATURE_CHECKED} /> {L_ATTACH_SIG}</label></div>
 			<!-- ENDIF -->
+			<!-- IF S_IS_ARTICLE and S_EDIT_REASON -->
 			<dl>
-				<dt><label for="reason">{L_EDIT_REASON}:</label></dt>
+				<dt><label for="reason">{L_EDIT_REASON_ARTICLE}:</label></dt>
 				<dd><input type="text" name="reason" id="reason" value="{EDIT_REASON}" class="inputbox" /></dd>
 			</dl>
 			<dl>
 				<dt><label for="reason_global">{L_EDIT_REASON_GLOBAL}:</label></dt>
 				<dd><input type="checkbox" {REASON_GLOBAL}name="reason_global" id="reason" value="1" class="inputbox" /></dd>
 			</dl>
+			<!-- ENDIF -->
 		</fieldset>
 		{S_FORM_TOKEN}
 		<span class="corners-bottom"><span></span></span></div>

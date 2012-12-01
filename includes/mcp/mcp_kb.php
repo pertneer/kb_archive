@@ -2,8 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: $
-* @copyright (c) 2009 Andreas Nexmann
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -33,7 +32,8 @@ class mcp_kb
 
 	function main($id, $mode)
 	{
-		global $config, $db, $user, $auth, $template, $phpbb_root_path, $phpEx, $table_prefix;
+		global $config, $db, $user, $auth, $template, $cache;
+		global $phpbb_root_path, $phpEx, $table_prefix;
 		
 		$user->add_lang('mods/kb');
 		include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
@@ -87,6 +87,11 @@ class mcp_kb
 					
 					if($status == STATUS_APPROVED && $article_data['article_status'] != STATUS_APPROVED) // Secure against inflation
 					{
+						$sql = 'UPDATE ' . KB_REQ_TABLE . '
+								SET request_status = ' . REQUEST_ADDED . '
+								WHERE article_id = ' . $article_id;
+						$db->sql_query($sql);
+						
 						$sql = 'UPDATE ' . KB_CATS_TABLE . '
 								SET cat_articles = cat_articles + 1
 								WHERE cat_id = ' . $article_data['cat_id'];
@@ -99,8 +104,8 @@ class mcp_kb
 						
 						// handle latest article list for cat
 						$late_articles = array(
-							'ARTICLE_ID'		=> $article_id,
-							'ARTICLE_TITLE'		=> $article_data['article_title'],
+							'article_id'		=> $article_id,
+							'article_title'		=> $article_data['article_title'],
 						);
 						handle_latest_articles('add', $article_data['cat_id'], $late_articles);
 					
@@ -108,7 +113,7 @@ class mcp_kb
 						set_config('kb_last_updated', time(), true);
 						set_config('kb_total_articles', $config['kb_total_articles'] + 1, true);
 					}
-					else if($article_data['status'] == STATUS_APPROVED && $status != STATUS_APPROVED) // Reduce count when deactivating article
+					else if($article_data['article_status'] == STATUS_APPROVED && $status != STATUS_APPROVED) // Reduce count when deactivating article
 					{
 						$sql = 'UPDATE ' . KB_CATS_TABLE . '
 								SET cat_articles = cat_articles - 1
@@ -215,6 +220,9 @@ class mcp_kb
 		// There are 2 default modes which are queue and articles, they generate output
 		if($hidden_mode == '')
 		{
+			$icons = $cache->obtain_icons();
+			$types = $cache->obtain_article_types();
+			
 			switch($mode)
 			{
 				case 'queue':
@@ -233,6 +241,9 @@ class mcp_kb
 							STATUS_ONHOLD		=> 'KB_STATUS_ONHOLD',
 						);
 						
+						// Set article type
+						$article_type = gen_article_type($row['article_type'], $row['article_title'], $types, $icons);
+						
 						// Send vars to template
 						$template->assign_block_vars('articlerow', array(
 							'ARTICLE_ID'				=> $row['article_id'],
@@ -240,7 +251,7 @@ class mcp_kb
 							'FIRST_POST_TIME'			=> $user->format_date($row['article_time']),
 				
 							'ARTICLE_LAST_EDIT'			=> gen_kb_edit_string($row['article_id'], $row['article_last_edit_id'], $row['article_time'], $row['article_last_edit_time']),
-							'ARTICLE_TITLE'				=> censor_text($row['article_title']),
+							'ARTICLE_TITLE'				=> censor_text($article_type['article_title']),
 							'ARTICLE_FOLDER_IMG'		=> $user->img($folder_img, censor_text($row['article_title'])),
 							'ARTICLE_FOLDER_IMG_SRC'	=> $user->img($folder_img, censor_text($row['article_title']), false, '', 'src'),
 							'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
@@ -248,9 +259,9 @@ class mcp_kb
 							'ARTICLE_FOLDER_IMG_HEIGHT'	=> $user->img($folder_img, '', false, '', 'height'),
 							'ARTICLE_STATUS'			=> $user->lang[$article_status_ary[$row['article_status']]],
 							
-							'ARTICLE_ICON_IMG'			=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['img'] : '',
-							'ARTICLE_ICON_IMG_WIDTH'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['width'] : '',
-							'ARTICLE_ICON_IMG_HEIGHT'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['height'] : '',
+							'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
+							'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
+							'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
 							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 							
 							'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;hmode=view&amp;a=" . $row['article_id']),
@@ -260,7 +271,6 @@ class mcp_kb
 					$db->sql_freeresult($result);
 					
 					$template->assign_vars(array(
-						'S_ARTICLE_ICONS' 			=> true,
 						'L_TITLE'					=> $user->lang['MCP_KB_QUEUE'],
 						'L_KB_QUEUE_EXPLAIN'		=> $user->lang['MCP_KB_QUEUE_EXPLAIN'],
 						'L_NO_QUEUED_ARTICLES'		=> $user->lang['KB_NO_QUEUED_ARTICLES'],
@@ -280,6 +290,9 @@ class mcp_kb
 					{
 						$folder_img = ($row['article_last_edit_time'] > $user->data['user_lastvisit']) ? 'topic_unread' : 'topic_read';
 						
+						// Set article type
+						$article_type = gen_article_type($row['article_type'], $row['article_title'], $types, $icons);
+						
 						// Send vars to template
 						$template->assign_block_vars('articlerow', array(
 							'ARTICLE_ID'				=> $row['article_id'],
@@ -287,16 +300,16 @@ class mcp_kb
 							'FIRST_POST_TIME'			=> $user->format_date($row['article_time']),
 				
 							'ARTICLE_LAST_EDIT'			=> gen_kb_edit_string($row['article_id'], $row['article_last_edit_id'], $row['article_time'], $row['article_last_edit_time']),
-							'ARTICLE_TITLE'				=> censor_text($row['article_title']),
+							'ARTICLE_TITLE'				=> censor_text($article_type['article_title']),
 							'ARTICLE_FOLDER_IMG'		=> $user->img($folder_img, censor_text($row['article_title'])),
 							'ARTICLE_FOLDER_IMG_SRC'	=> $user->img($folder_img, censor_text($row['article_title']), false, '', 'src'),
 							'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
 							'ARTICLE_FOLDER_IMG_WIDTH'  => $user->img($folder_img, '', false, '', 'width'),
 							'ARTICLE_FOLDER_IMG_HEIGHT'	=> $user->img($folder_img, '', false, '', 'height'),
 							
-							'ARTICLE_ICON_IMG'			=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['img'] : '',
-							'ARTICLE_ICON_IMG_WIDTH'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['width'] : '',
-							'ARTICLE_ICON_IMG_HEIGHT'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['height'] : '',
+							'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
+							'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
+							'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
 							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 							
 							'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}mcp.$phpEx", "i=kb&amp;mode=articles&amp;hmode=view&amp;a=" . $row['article_id']), // Mode articles here for style continuity
@@ -306,7 +319,6 @@ class mcp_kb
 					$db->sql_freeresult($result);
 					
 					$template->assign_vars(array(
-						'S_ARTICLE_ICONS' 			=> true,
 						'L_TITLE'					=> $user->lang['MCP_KB_ARTICLES'],
 						'L_KB_ARTICLES_EXPLAIN'		=> $user->lang['MCP_KB_ARTICLES_EXPLAIN'],
 						'L_NO_APPROVED_ARTICLES'	=> $user->lang['KB_NO_APPROVED_ARTICLES'],

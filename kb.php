@@ -2,8 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id$
-* @copyright (c) 2009 Andreas Nexmann
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -43,7 +42,8 @@ if ((!isset($config['kb_version']) || $config['kb_version'] != KB_VERSION) && $a
 		}
 	
 		$umil = new umil(true);
-	
+		
+		include($phpbb_root_path . 'includes/functions_install_kb.' . $phpEx);
 		$versions = get_kb_versions();
 	
 		$umil->run_actions('update', $versions, 'kb_version');
@@ -90,11 +90,6 @@ $template->assign_vars(array(
 	'LAST_UPDATED'		=> $user->format_date($config['kb_last_updated']),
 	'U_MCP'				=> ($auth->acl_get('m_kb')) ? append_sid("{$phpbb_root_path}mcp.$phpEx", 'i=kb') : false,
 ));
-
-
-// Call random article & latest article
-get_random_article($cat_id);
-get_latest_article();
 
 // Handle all knowledge base related stuff, this file is only to call it, makes the user able to move it around
 gen_kb_auth_level();

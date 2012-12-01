@@ -2,8 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: $
-* @copyright (c) 2009 Tom Martin
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -13,8 +12,6 @@
 */
 class acp_kb_info
 {
-	
-
 	function module()
 	{
 		return array(
@@ -28,7 +25,13 @@ class acp_kb_info
 		);
 	}
 
+	function install()
+	{
+	}
 	
+	function uninstall()
+	{
+	}
 }
 
 ?>

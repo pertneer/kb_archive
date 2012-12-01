@@ -33,7 +33,8 @@ class ucp_kb
 
 	function main($id, $mode)
 	{
-		global $config, $db, $user, $auth, $template, $phpbb_root_path, $phpEx, $table_prefix;
+		global $config, $db, $user, $auth, $template;
+		global $cache, $phpbb_root_path, $phpEx, $table_prefix;
 		
 		$user->add_lang('mods/kb');
 		include($phpbb_root_path . 'includes/constants_kb.' . $phpEx);
@@ -44,6 +45,10 @@ class ucp_kb
 
 		$form_key = 'ucp_kb';
 		add_form_key($form_key);
+		
+		// Get icons and types from cache
+		$icons = $cache->obtain_icons();
+		$types = $cache->obtain_article_types();
 		
 		switch ($mode)
 		{
@@ -350,6 +355,7 @@ class ucp_kb
 							AND a.article_status = " . STATUS_APPROVED . "
 							ORDER BY a.article_last_edit_time DESC";
 					$result = $db->sql_query($sql);
+					
 					while($row = $db->sql_fetchrow($result))
 					{
 						$l_edit = '';
@@ -367,6 +373,9 @@ class ucp_kb
 							$l_edit = sprintf($user->lang['KB_EDITED_BY'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "e={$row['article_id']}") . '">', '</a>', get_username_string('full', $edit_data['user_id'], $edit_data['username'], $edit_data['user_colour']), $user->format_date($row['article_last_edit_time'], false, true));
 						}
 						
+						// Set article type
+						$article_type = gen_article_type($row['article_type'], $row['article_title'], $types, $icons);
+						
 						// Send vars to template
 						$template->assign_block_vars('articlerow', array(
 							'ARTICLE_ID'				=> $row['article_id'],
@@ -374,16 +383,16 @@ class ucp_kb
 							'FIRST_POST_TIME'			=> $user->format_date($row['article_time']),
 				
 							'ARTICLE_LAST_EDIT'			=> $l_edit,
-							'ARTICLE_TITLE'				=> censor_text($row['article_title']),
+							'ARTICLE_TITLE'				=> censor_text($article_type['article_title']),
 							'ARTICLE_FOLDER_IMG'		=> $user->img($folder_img, censor_text($row['article_title'])),
 							'ARTICLE_FOLDER_IMG_SRC'	=> $user->img($folder_img, censor_text($row['article_title']), false, '', 'src'),
 							'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
 							'ARTICLE_FOLDER_IMG_WIDTH'  => $user->img($folder_img, '', false, '', 'width'),
 							'ARTICLE_FOLDER_IMG_HEIGHT'	=> $user->img($folder_img, '', false, '', 'height'),
 				
-							'ARTICLE_ICON_IMG'			=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['img'] : '',
-							'ARTICLE_ICON_IMG_WIDTH'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['width'] : '',
-							'ARTICLE_ICON_IMG_HEIGHT'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['height'] : '',
+							'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
+							'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
+							'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
 							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 							
 							'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $row['article_id']),
@@ -396,7 +405,6 @@ class ucp_kb
 					));
 					
 					$template->assign_vars(array(
-						'S_ARTICLE_ICONS' 			=> true,
 						'L_SUBSCRIBED_ARTICLES'		=> $user->lang['KB_SUBSCRIBED_ARTICLES'],
 						'L_TITLE'					=> $user->lang['UCP_KB_SUBSCRIBED'],
 						'L_KB_SUBSCRIBE_EXPLAIN'	=> $user->lang['UCP_KB_SUBSCRIBED_EXPLAIN'],
@@ -555,6 +563,9 @@ class ucp_kb
 							$l_edit = sprintf($user->lang['KB_EDITED_BY'], '<a href="' . append_sid("{$phpbb_root_path}kb.$phpEx", "e={$row['article_id']}") . '">', '</a>', get_username_string('full', $edit_data['user_id'], $edit_data['username'], $edit_data['user_colour']), $user->format_date($row['article_last_edit_time'], false, true));
 						}
 						
+						// Get article types
+						$article_type = gen_article_type($row['article_type'], $row['article_title'], $types, $icons);
+						
 						// Send vars to template
 						$template->assign_block_vars('articlerow', array(
 							'ARTICLE_ID'				=> $row['article_id'],
@@ -562,16 +573,16 @@ class ucp_kb
 							'FIRST_POST_TIME'			=> $user->format_date($row['article_time']),
 				
 							'ARTICLE_LAST_EDIT'			=> $l_edit,
-							'ARTICLE_TITLE'				=> censor_text($row['article_title']),
+							'ARTICLE_TITLE'				=> censor_text($article_type['article_title']),
 							'ARTICLE_FOLDER_IMG'		=> $user->img($folder_img, censor_text($row['article_title'])),
 							'ARTICLE_FOLDER_IMG_SRC'	=> $user->img($folder_img, censor_text($row['article_title']), false, '', 'src'),
 							'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
 							'ARTICLE_FOLDER_IMG_WIDTH'  => $user->img($folder_img, '', false, '', 'width'),
 							'ARTICLE_FOLDER_IMG_HEIGHT'	=> $user->img($folder_img, '', false, '', 'height'),
 				
-							'ARTICLE_ICON_IMG'			=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['img'] : '',
-							'ARTICLE_ICON_IMG_WIDTH'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['width'] : '',
-							'ARTICLE_ICON_IMG_HEIGHT'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['height'] : '',
+							'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
+							'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
+							'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
 							'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 							
 							'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}kb.$phpEx", "a=" . $row['article_id']),
@@ -584,7 +595,6 @@ class ucp_kb
 					));
 					
 					$template->assign_vars(array(
-						'S_ARTICLE_ICONS' 			=> true,
 						'L_BOOKMARKED_ARTICLES'		=> $user->lang['KB_BOOKMARKED_ARTICLES'],
 						'L_TITLE'					=> $user->lang['UCP_KB_BOOKMARKS'],
 						'L_KB_BOOKMARKS_EXPLAIN'		=> $user->lang['UCP_KB_BOOKMARKS_EXPLAIN'],
@@ -635,6 +645,9 @@ class ucp_kb
 								STATUS_ONHOLD		=> 'KB_STATUS_ONHOLD',
 							);
 							
+							// Get article types
+							$article_type = gen_article_type($row['article_type'], $row['article_title'], $types, $icons);
+							
 							// Send vars to template
 							$template->assign_block_vars('articlerow', array(
 								'ARTICLE_ID'				=> $row['article_id'],
@@ -642,7 +655,7 @@ class ucp_kb
 								'FIRST_POST_TIME'			=> $user->format_date($row['article_time']),
 					
 								'ARTICLE_LAST_EDIT'			=> gen_kb_edit_string($row['article_id'], $row['article_last_edit_id'], $row['article_time'], $row['article_last_edit_time']),
-								'ARTICLE_TITLE'				=> censor_text($row['article_title']),
+								'ARTICLE_TITLE'				=> censor_text($article_type['article_title']),
 								'ARTICLE_FOLDER_IMG'		=> $user->img($folder_img, censor_text($row['article_title'])),
 								'ARTICLE_FOLDER_IMG_SRC'	=> $user->img($folder_img, censor_text($row['article_title']), false, '', 'src'),
 								'ARTICLE_FOLDER_IMG_ALT'	=> censor_text($row['article_title']),
@@ -650,9 +663,9 @@ class ucp_kb
 								'ARTICLE_FOLDER_IMG_HEIGHT'	=> $user->img($folder_img, '', false, '', 'height'),
 								'ARTICLE_STATUS'			=> $user->lang[$article_status_ary[$row['article_status']]],
 								
-								'ARTICLE_ICON_IMG'			=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['img'] : '',
-								'ARTICLE_ICON_IMG_WIDTH'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['width'] : '',
-								'ARTICLE_ICON_IMG_HEIGHT'	=> (!empty($icons[$row['article_icon']])) ? $icons[$row['article_icon']]['height'] : '',
+								'ARTICLE_TYPE_IMG'			=> $article_type['type_image']['img'],
+								'ARTICLE_TYPE_IMG_WIDTH'	=> $article_type['type_image']['width'],
+								'ARTICLE_TYPE_IMG_HEIGHT'	=> $article_type['type_image']['height'],
 								'ATTACH_ICON_IMG'			=> ($auth->acl_get('u_download') && $auth->acl_get('u_kb_download') && $row['article_attachment']) ? $user->img('icon_topic_attach', $user->lang['TOTAL_ATTACHMENTS']) : '',
 								
 								'U_VIEW_ARTICLE'			=> append_sid("{$phpbb_root_path}ucp.$phpEx", "i=kb&amp;mode=articles&amp;ma=view&amp;a=" . $row['article_id']), // Mode articles here for style continuity
@@ -661,7 +674,6 @@ class ucp_kb
 						$db->sql_freeresult($result);
 						
 						$template->assign_vars(array(
-							'S_ARTICLE_ICONS' 			=> true,
 							'L_TITLE'					=> $user->lang['UCP_KB_ARTICLES'],
 							'L_KB_ARTICLES_EXPLAIN'		=> $user->lang['UCP_KB_ARTICLES_EXPLAIN'],
 							'L_NO_QUEUED_ARTICLES'		=> $user->lang['KB_NO_QUEUED_ARTICLES'],

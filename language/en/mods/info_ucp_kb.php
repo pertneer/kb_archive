@@ -2,8 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: $
-* @copyright (c) 2009 Andreas Nexmann
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -37,13 +36,15 @@ if (empty($lang) || !is_array($lang))
 // in a url you again do not need to specify an order e.g., 'Click %sHERE%s' is fine
 
 $lang = array_merge($lang, array(
-	'UCP_KB'						=> 'Knowledge Base',
-	'UCP_KB_FRONT'					=> 'Front page',
-	'UCP_KB_FRONT_EXPLAIN'			=> 'Welcome to the Knowledge Base part of the User Control Panel. From here you can manage your bookmarked and subscribed articles. You can also keep track of your article status, and look at moderator comments.',
-	'UCP_KB_SUBSCRIBED'				=> 'Article Subscriptions',
-	'UCP_KB_SUBSCRIBED_EXPLAIN'		=> 'On this page you can view, remove and update your subscription to articles. You can also alter the notification settings.',
-	'UCP_KB_BOOKMARKS'				=> 'Article Bookmarks',
-	'UCP_KB_BOOKMARKS_EXPLAIN'		=> 'Here you can view and remove bookmarked articles.',
-	'UCP_KB_ARTICLES'				=> 'Article Status',
-	'UCP_KB_ARTICLES_EXPLAIN'		=> 'On this page you can view your submitted articles status and chat with moderators about your articles.',
+	'UCP_KB'					=> 'Knowledge Base',
+	'UCP_KB_ARTICLES'			=> 'Article Status',
+	'UCP_KB_ARTICLES_EXPLAIN'	=> 'On this page you can view your submitted articles status and chat with moderators about your articles.',
+	'UCP_KB_BOOKMARKS'			=> 'Article Bookmarks',
+	'UCP_KB_BOOKMARKS_EXPLAIN'	=> 'Here you can view and remove bookmarked articles.',
+	'UCP_KB_FRONT'				=> 'Front page',
+	'UCP_KB_FRONT_EXPLAIN'		=> 'Welcome to the Knowledge Base part of the User Control Panel. From here you can manage your bookmarked and subscribed articles. You can also keep track of your article status, and look at moderator comments.',
+	'UCP_KB_SUBSCRIBED'			=> 'Article Subscriptions',
+	'UCP_KB_SUBSCRIBED_EXPLAIN'	=> 'On this page you can view, remove and update your subscription to articles. You can also alter the notification settings.',
 ));
+
+?>

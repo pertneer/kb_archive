@@ -2,8 +2,7 @@
 /**
 *
 * @package phpBB Knowledge Base Mod (KB)
-* @version $Id: $
-* @copyright (c) 2009 Andreas Nexmann
+* @copyright (c) 2009 Andreas Nexmann, Tom Martin
 * @license http://opensource.org/licenses/gpl-license.php GNU Public License
 *
 */
@@ -19,7 +18,7 @@ if (!defined('IN_PHPBB'))
 //
 // This file holds extra constants defined to use in the KB mod.
 //
-define('KB_VERSION', '0.0.11');
+define('KB_VERSION', '0.1.0');
 
 
 // Extra db tables
@@ -31,6 +30,8 @@ define('KB_RATE_TABLE', $table_prefix . 'article_rate');
 define('KB_TAGS_TABLE', $table_prefix . 'article_tags');
 define('KB_TRACK_TABLE', $table_prefix . 'article_track');
 define('KB_TABLE', $table_prefix . 'articles');
+define('KB_REQ_TABLE', $table_prefix . 'article_requests');
+define('KB_TYPE_TABLE', $table_prefix . 'article_types');
 
 // Comment type constants
 define('COMMENT_GLOBAL', 0);
@@ -64,4 +65,9 @@ define('SEARCH_TITLE_TEXT_DESC', 0);
 define('SEARCH_TITLE', 1);
 define('SEARCH_TEXT', 2);
 define('SEARCH_DESC', 3);
+
+// Request status
+define('STATUS_REQUEST', 0);
+define('STATUS_ADDED', 1);
+define('STATUS_PENDING', 2);
 ?>
