@@ -533,7 +533,11 @@ function article_submit($mode, &$data, $update_message = true, $old_data = array
 	$sql_data = array();
 	$data['article_title'] = truncate_string($data['article_title']);
 	$data['article_desc'] = truncate_string($data['article_desc'], 300, 500);
-	$edit_type = check_edit_type($data, $old_data, $update_message);
+	
+	if($mode == 'edit')
+	{
+		$edit_type = check_edit_type($data, $old_data, $update_message);
+	}
 	
 	// Build sql data for articles table
 	$sql_data[KB_TABLE]['sql'] = array(
@@ -1275,6 +1279,9 @@ function article_delete($article_id, $cat_id, $article_data)
 			
 			set_config('kb_total_articles', $config['kb_total_articles'] - 1, true);
 		}
+		
+		// Delete from latest articles list
+		handle_latest_articles('delete', $cat_id, array('article_id' => $article_id));
 		
 		$meta_info = kb_append_sid("{$phpbb_root_path}kb.$phpEx", "c=$cat_id");
 		$message = $user->lang['ARTICLE_DELETED'] . '<br /><br />' . sprintf($user->lang['RETURN_KB_CAT'], '<a href="' . $meta_info . '">', '</a>');
@@ -2075,12 +2082,37 @@ function handle_latest_articles($mode, $cat_id, $data, $show = 4)
 			
 			$sql_ary = array('latest_ids' => serialize($latest_articles));
 			$sql = 'UPDATE ' . KB_CATS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
-				WHERE cat_id = '" . $db->sql_escape($cat_id) . "'";
+					WHERE cat_id = '" . $db->sql_escape($cat_id) . "'";
 			$db->sql_query($sql);
 		break;
 		
 		case 'delete':
 			// Call delete here only used it article id thats getting deleted is is recent articles for that cat
+			$sql = $db->sql_build_query('SELECT', array(
+				'SELECT'	=> 'c.latest_ids',
+				'FROM'		=> array(
+					KB_CATS_TABLE => 'c'),
+
+				'WHERE'		=> 'cat_id = ' . $cat_id,
+			));
+			$result = $db->sql_query($sql);
+			$row = $db->sql_fetchrow($result);
+			$db->sql_freeresult($result);
+			
+			$latest_articles = unserialize($row['latest_ids']);
+			for($i = 0; $i < count($latest_articles); $i++)
+			{
+				if(isset($latest_articles[$i]) && ($data['article_id'] == $latest_articles[$i]['article_id']))
+				{
+					unset($latest_articles[$i]);
+					continue;
+				}
+			}
+			
+			$sql_ary = array('latest_ids' => serialize($latest_articles));
+			$sql = 'UPDATE ' . KB_CATS_TABLE . ' SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
+					WHERE cat_id = '" . $db->sql_escape($cat_id) . "'";
+			$db->sql_query($sql);
 		break;
 	}
 }

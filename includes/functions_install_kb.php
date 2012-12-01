@@ -642,6 +642,11 @@ function get_kb_versions()
 		'0.4.0' => array(
 			// Last version update for major changes
 		),
+		
+		'0.4.1' => array(
+			// Bug updates, resync latest articles and cat count
+			'custom' => 'kb_update_400_to_401',
+		),
 	);
 
 	return $versions;
@@ -658,7 +663,7 @@ function kb_delete_permission_roles($action , $version)
 	if ($action == 'uninstall')
 	{
 		$sql = 'DELETE FROM ' . ACL_ROLES_TABLE . " 
-			WHERE role_type = 'u_kb_'";
+				WHERE role_type = 'u_kb_'";
 		$db->sql_query($sql);
 	}
 	else
@@ -806,4 +811,56 @@ function kb_update_033_to_034($action, $version)
 			SET article_last_edit_id = '0', article_last_edit_time = '0', article_edit_reason = '', article_edit_reason_global = '1'";
 	$db->sql_query($sql);
 }
+
+// Resync cat count and latest articles
+function kb_update_400_to_401($action, $version)
+{
+	global $db, $table_prefix, $cache;
+	
+	if($action != 'update')
+	{
+		return;
+	}
+	
+	$sql = 'SELECT cat_id
+			FROM ' . $table_prefix . 'article_cats
+			ORDER BY left_id ASC';
+	$result = $db->sql_query($sql);
+	
+	$cat_ids = array();
+	while($row = $db->sql_fetchrow($result))
+	{
+		$cat_ids[] = $row['cat_id'];
+	}
+	$db->sql_freeresult($result);
+	
+	foreach($cat_ids as $cat_id)
+	{
+		$sql = 'SELECT article_id, article_title
+				FROM ' . $table_prefix . 'articles
+				WHERE cat_id = ' . $cat_id . ' 
+				ORDER BY article_last_edit_time DESC';
+		$result = $db->sql_query_limit($sql, 4);
+		
+		$latest_articles = array();
+		while($row = $db->sql_fetchrow($result))
+		{
+			$latest_articles[] = array(
+				'article_id'	=> $row['article_id'],
+				'article_title'	=> $row['article_title'],
+			);
+		}
+		$db->sql_freeresult($result);
+		
+		$sql_ary = array('latest_ids' => serialize($latest_articles));
+		$sql = 'UPDATE ' . $table_prefix . 'article_cats SET ' . $db->sql_build_array('UPDATE', $sql_ary) . "
+				WHERE cat_id = '" . $db->sql_escape($cat_id) . "'";
+		$db->sql_query($sql);
+	}
+	
+	// Resync cat count
+	set_config('kb_total_cats', count($cat_ids));
+	$cache->destroy('config');
+}
+	
 ?>

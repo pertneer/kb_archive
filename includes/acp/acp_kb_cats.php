@@ -114,6 +114,82 @@ class acp_kb_cats
 
 					if (!sizeof($errors))
 					{
+						// Copy permissions
+						$cat_perm_from = request_var('cat_perm_from', 0);
+						
+						if (!empty($cat_perm_from) && $cat_perm_from != $cat_data['cat_id'] &&
+							(($action != 'edit') || empty($cat_id) || ($auth->acl_get('a_fauth') && $auth->acl_get('a_authusers') && $auth->acl_get('a_authgroups') && $auth->acl_get('a_mauth'))))
+						{
+							$cat_perm_from = request_var('cat_perm_from', 0);
+						
+							// if we edit a forum delete current permissions first
+							if ($action == 'edit')
+							{
+								// KB BEGIN
+								$sql = 'DELETE FROM ' . ACL_USERS_TABLE . '
+									WHERE forum_id = ' . (int) $cat_data['cat_id'] . '
+									AND kb_auth = 1';
+								$db->sql_query($sql);
+
+								$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . '
+									WHERE forum_id = ' . (int) $cat_data['cat_id'] . '
+									AND kb_auth = 1';
+								$db->sql_query($sql);
+							}
+
+							// From the mysql documentation:
+							// Prior to MySQL 4.0.14, the target table of the INSERT statement cannot appear in the FROM clause of the SELECT part of the query. This limitation is lifted in 4.0.14.
+							// Due to this we stay on the safe side if we do the insertion "the manual way"
+
+							// Copy permisisons from/to the acl users table (only forum_id gets changed)
+							$sql = 'SELECT user_id, auth_option_id, auth_role_id, auth_setting
+								FROM ' . ACL_USERS_TABLE . '
+								WHERE forum_id = ' . $cat_perm_from . '
+								AND kb_auth = 1';
+							$result = $db->sql_query($sql);
+
+							$users_sql_ary = array();
+							while ($row = $db->sql_fetchrow($result))
+							{
+								$users_sql_ary[] = array(
+									'user_id'			=> (int) $row['user_id'],
+									'forum_id'			=> (int) $cat_data['cat_id'],
+									'auth_option_id'	=> (int) $row['auth_option_id'],
+									'auth_role_id'		=> (int) $row['auth_role_id'],
+									'auth_setting'		=> (int) $row['auth_setting'],
+									'kb_auth'			=> (int) 1,
+								);
+							}
+							$db->sql_freeresult($result);
+
+							// Copy permisisons from/to the acl groups table (only forum_id gets changed)
+							$sql = 'SELECT group_id, auth_option_id, auth_role_id, auth_setting
+								FROM ' . ACL_GROUPS_TABLE . '
+								WHERE forum_id = ' . $cat_perm_from . '
+								AND kb_auth = 1';
+							$result = $db->sql_query($sql);
+
+							$groups_sql_ary = array();
+							while ($row = $db->sql_fetchrow($result))
+							{
+								$groups_sql_ary[] = array(
+									'group_id'			=> (int) $row['group_id'],
+									'forum_id'			=> (int) $cat_data['cat_id'],
+									'auth_option_id'	=> (int) $row['auth_option_id'],
+									'auth_role_id'		=> (int) $row['auth_role_id'],
+									'auth_setting'		=> (int) $row['auth_setting'],
+									'kb_auth'			=> (int) 1,
+								);
+							}
+							$db->sql_freeresult($result);
+
+							// Now insert the data
+							$db->sql_multi_insert(ACL_USERS_TABLE, $users_sql_ary);
+							$db->sql_multi_insert(ACL_GROUPS_TABLE, $groups_sql_ary);
+						}
+						
+						$auth->acl_clear_prefetch();
+						
 						$message = ($action == 'add') ? $user->lang['CAT_CREATED'] : $user->lang['CAT_UPDATED'];
 
 						trigger_error($message . adm_back_link($this->u_action . '&amp;parent_id=' . $this->parent_id));
@@ -292,6 +368,8 @@ class acp_kb_cats
 					'CAT_DESC'					=> $cat_desc_data['text'],
 
 					'S_PARENT_OPTIONS'			=> $parents_list,
+					'S_CAT_OPTIONS'				=> make_cat_select(false, false, true),
+					'S_CAN_COPY_PERMISSIONS'	=> ($action != 'edit' || empty($cat_id) || ($auth->acl_get('a_fauth') && $auth->acl_get('a_authusers') && $auth->acl_get('a_authgroups') && $auth->acl_get('a_mauth'))) ? true : false,
 					'S_CAT_OPTIONS'				=> make_cat_select(($action == 'add') ? $cat_data['parent_id'] : false, ($action == 'edit') ? $cat_data['cat_id'] : false, true),
 				));
 
@@ -646,7 +724,7 @@ class acp_kb_cats
 	*/
 	function delete_cat($cat_id, $action_articles = 'delete', $action_subcats = 'delete', $articles_to_id = 0, $subcats_to_id = 0)
 	{
-		global $db, $user, $cache;
+		global $db, $user, $cache, $config;
 		
 		$cat_data = $this->get_cat_info($cat_id);
 
@@ -725,6 +803,9 @@ class acp_kb_cats
 					WHERE " . $db->sql_in_set('forum_id', $cat_ids) . " 
 					AND kb_auth = 1";
 			$db->sql_query($sql);
+			
+			set_config('kb_total_cats', $config['kb_total_cats'] - count($cat_ids));
+			$cache->destroy('config');
 		}
 		else if ($action_subcats == 'move')
 		{
@@ -775,12 +856,15 @@ class acp_kb_cats
 							WHERE cat_id = $cat_id";
 					$db->sql_query($sql);
 					
+					set_config('kb_total_cats', $config['kb_total_cats'] - 1);
+					$cache->destroy('config');
+					
 					// Auth entries
 					$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
 							WHERE forum_id = $cat_id
 							AND kb_auth = 1";
 					$db->sql_query($sql);
-
+					
 					$sql = 'DELETE FROM ' . ACL_USERS_TABLE . "
 							WHERE forum_id = $cat_id
 							AND kb_auth = 1";
@@ -799,6 +883,9 @@ class acp_kb_cats
 			$sql = 'DELETE FROM ' . KB_CATS_TABLE . "
 					WHERE cat_id = $cat_id";
 			$db->sql_query($sql);
+			
+			set_config('kb_total_cats', $config['kb_total_cats'] - 1);
+			$cache->destroy('config');
 			
 			$sql = 'DELETE FROM ' . ACL_GROUPS_TABLE . "
 					WHERE forum_id = $cat_id
@@ -979,6 +1066,7 @@ class acp_kb_cats
 				set_config('kb_total_comments', $config['kb_total_comments'] - $total_comments, true);
 			}
 			set_config('kb_last_updated', time(), true);
+			$cache->destroy('config');
 		}
 		
 		return $errors;

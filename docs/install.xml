@@ -37,13 +37,20 @@
       			</contributions-group>
 			</author>
 		</author-group>
-		<mod-version>0.4.0</mod-version>
+		<mod-version>0.4.1</mod-version>
 		<installation>
 			<level>intermediate</level>
 			<time>1800</time>
 			<target-version>3.0.5</target-version>
 		</installation>
 		<history>
+			<entry>
+				<date>2009-09-14</date>
+				<rev-version>0.4.1</rev-version>
+				<changelog lang="en">
+					<change>Fixed large amount of bugs</change>
+				</changelog>
+			</entry>
 			<entry>
 				<date>2009-08-31</date>
 				<rev-version>0.4.0</rev-version>
@@ -104,47 +111,47 @@
 	</header>
 	<action-group>
 					<copy>
-									<file from="/kb.php" to="/kb.php" />
-									<file from="/adm/style/acp_kb_cat.html" to="/adm/style/acp_kb_cat.html" />
-									<file from="/adm/style/acp_kb_health.html" to="/adm/style/acp_kb_health.html" />
-									<file from="/adm/style/acp_kb.html" to="/adm/style/acp_kb.html" />
-									<file from="/adm/style/acp_kb_types.html" to="/adm/style/acp_kb_types.html" />
-									<file from="/adm/style/acp_kb_plugins.html" to="/adm/style/acp_kb_plugins.html" />
-									<file from="/download/kb.php" to="/download/kb.php" />
-									<file from="/includes/acp/acp_kb_cats.php" to="/includes/acp/acp_kb_cats.php" />
-									<file from="/includes/acp/acp_kb_types.php" to="/includes/acp/acp_kb_types.php" />
-									<file from="/includes/acp/acp_kb.php" to="/includes/acp/acp_kb.php" />
-									<file from="/includes/acp/acp_kb_permissions.php" to="/includes/acp/acp_kb_permissions.php" />
-									<file from="/includes/acp/info/acp_kb_cats.php" to="/includes/acp/info/acp_kb_cats.php" />
-									<file from="/includes/acp/info/acp_kb_types.php" to="/includes/acp/info/acp_kb_types.php" />
-									<file from="/includes/acp/info/acp_kb.php" to="/includes/acp/info/acp_kb.php" />
-									<file from="/includes/acp/info/acp_kb_permissions.php" to="/includes/acp/info/acp_kb_permissions.php" />
-									<file from="/includes/constants_kb.php" to="/includes/constants_kb.php" />
-									<file from="/includes/functions_kb.php" to="/includes/functions_kb.php" />
-									<file from="/includes/functions_install_kb.php" to="/includes/functions_install_kb.php" />
-									<file from="/includes/functions_plugins_kb.php" to="/includes/functions_plugins_kb.php" />
-									<file from="/includes/kb.php" to="/includes/kb.php" />
-									<file from="/includes/kb_plugins/*.*" to="/includes/kb_plugins/*.*" />
-									<file from="/includes/ucp/ucp_kb.php" to="/includes/ucp/ucp_kb.php" />
-									<file from="/includes/ucp/info/ucp_kb.php" to="/includes/ucp/info/ucp_kb.php" />
-									<file from="/includes/mcp/mcp_kb.php" to="/includes/mcp/mcp_kb.php" />
-									<file from="/includes/mcp/info/mcp_kb.php" to="/includes/mcp/info/mcp_kb.php" />
-									<file from="/language/en/email/kb_email_notify.txt" to="/language/en/email/kb_email_notify.txt" />
-									<file from="/language/en/email/kb_notify_email.txt" to="/language/en/email/kb_notify_email.txt" />
-									<file from="/language/en/email/kb_notify_pm.txt" to="/language/en/email/kb_notify_pm.txt" />
-									<file from="/language/en/mods/info_acp_kb.php" to="/language/en/mods/info_acp_kb.php" />
-									<file from="/language/en/mods/info_acp_kb_permissions.php" to="/language/en/mods/info_acp_kb_permissions.php" />
-									<file from="/language/en/mods/info_ucp_kb.php" to="/language/en/mods/info_ucp_kb.php" />
-									<file from="/language/en/mods/info_mcp_kb.php" to="/language/en/mods/info_mcp_kb.php" />
-									<file from="/language/en/mods/kb.php" to="/language/en/mods/kb.php" />
-									<file from="/language/en/mods/permissions_kb.php" to="/language/en/mods/permissions_kb.php" />
-									<file from="/styles/prosilver/imageset/en/button_article_new.gif" to="/styles/prosilver/imageset/en/button_article_new.gif" />
-									<file from="/styles/prosilver/imageset/en/button_comment_new.gif" to="/styles/prosilver/imageset/en/button_comment_new.gif" />
-									<file from="/styles/prosilver/template/kb/*.*" to="/styles/prosilver/template/kb/*.*" />
-									<file from="/styles/prosilver/theme/kb.css" to="/styles/prosilver/theme/kb.css" />
-									<file from="/styles/prosilver/theme/images/rate_star.gif" to="/styles/prosilver/theme/images/rate_star.gif" />
-									<file from="/styles/prosilver/theme/images/social_bookmarking/*.*" to="/styles/prosilver/theme/images/social_bookmarking/*.*" />
-									<file from="/umil/umil.php" to="/umil/umil.php" />
+									<file from="root/kb.php" to="/kb.php" />
+									<file from="root/adm/style/acp_kb_cat.html" to="/adm/style/acp_kb_cat.html" />
+									<file from="root/adm/style/acp_kb_health.html" to="/adm/style/acp_kb_health.html" />
+									<file from="root/adm/style/acp_kb.html" to="/adm/style/acp_kb.html" />
+									<file from="root/adm/style/acp_kb_types.html" to="/adm/style/acp_kb_types.html" />
+									<file from="root/adm/style/acp_kb_plugins.html" to="/adm/style/acp_kb_plugins.html" />
+									<file from="root/download/kb.php" to="/download/kb.php" />
+									<file from="root/includes/acp/acp_kb_cats.php" to="/includes/acp/acp_kb_cats.php" />
+									<file from="root/includes/acp/acp_kb_types.php" to="/includes/acp/acp_kb_types.php" />
+									<file from="root/includes/acp/acp_kb.php" to="/includes/acp/acp_kb.php" />
+									<file from="root/includes/acp/acp_kb_permissions.php" to="/includes/acp/acp_kb_permissions.php" />
+									<file from="root/includes/acp/info/acp_kb_cats.php" to="/includes/acp/info/acp_kb_cats.php" />
+									<file from="root/includes/acp/info/acp_kb_types.php" to="/includes/acp/info/acp_kb_types.php" />
+									<file from="root/includes/acp/info/acp_kb.php" to="/includes/acp/info/acp_kb.php" />
+									<file from="root/includes/acp/info/acp_kb_permissions.php" to="/includes/acp/info/acp_kb_permissions.php" />
+									<file from="root/includes/constants_kb.php" to="/includes/constants_kb.php" />
+									<file from="root/includes/functions_kb.php" to="/includes/functions_kb.php" />
+									<file from="root/includes/functions_install_kb.php" to="/includes/functions_install_kb.php" />
+									<file from="root/includes/functions_plugins_kb.php" to="/includes/functions_plugins_kb.php" />
+									<file from="root/includes/kb.php" to="/includes/kb.php" />
+									<file from="root/includes/kb_plugins/*.*" to="/includes/kb_plugins/*.*" />
+									<file from="root/includes/ucp/ucp_kb.php" to="/includes/ucp/ucp_kb.php" />
+									<file from="root/includes/ucp/info/ucp_kb.php" to="/includes/ucp/info/ucp_kb.php" />
+									<file from="root/includes/mcp/mcp_kb.php" to="/includes/mcp/mcp_kb.php" />
+									<file from="root/includes/mcp/info/mcp_kb.php" to="/includes/mcp/info/mcp_kb.php" />
+									<file from="root/language/en/email/kb_email_notify.txt" to="/language/en/email/kb_email_notify.txt" />
+									<file from="root/language/en/email/kb_notify_email.txt" to="/language/en/email/kb_notify_email.txt" />
+									<file from="root/language/en/email/kb_notify_pm.txt" to="/language/en/email/kb_notify_pm.txt" />
+									<file from="root/language/en/mods/info_acp_kb.php" to="/language/en/mods/info_acp_kb.php" />
+									<file from="root/language/en/mods/info_acp_kb_permissions.php" to="/language/en/mods/info_acp_kb_permissions.php" />
+									<file from="root/language/en/mods/info_ucp_kb.php" to="/language/en/mods/info_ucp_kb.php" />
+									<file from="root/language/en/mods/info_mcp_kb.php" to="/language/en/mods/info_mcp_kb.php" />
+									<file from="root/language/en/mods/kb.php" to="/language/en/mods/kb.php" />
+									<file from="root/language/en/mods/permissions_kb.php" to="/language/en/mods/permissions_kb.php" />
+									<file from="root/styles/prosilver/imageset/en/button_article_new.gif" to="/styles/prosilver/imageset/en/button_article_new.gif" />
+									<file from="root/styles/prosilver/imageset/en/button_comment_new.gif" to="/styles/prosilver/imageset/en/button_comment_new.gif" />
+									<file from="root/styles/prosilver/template/kb/*.*" to="/styles/prosilver/template/kb/*.*" />
+									<file from="root/styles/prosilver/theme/kb.css" to="/styles/prosilver/theme/kb.css" />
+									<file from="root/styles/prosilver/theme/images/rate_star.gif" to="/styles/prosilver/theme/images/rate_star.gif" />
+									<file from="root/styles/prosilver/theme/images/social_bookmarking/*.*" to="/styles/prosilver/theme/images/social_bookmarking/*.*" />
+									<file from="root/umil/umil.php" to="/umil/umil.php" />
 							</copy>
 						<open src="/adm/style/acp_attachments.html">
 							<edit>

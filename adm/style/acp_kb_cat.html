@@ -36,7 +36,13 @@
 		<!-- IF CAT_IMAGE_SRC -->
 			<dd><img src="{CAT_IMAGE_SRC}" alt="{L_CAT_IMAGE}" /></dd>
 		<!-- ENDIF -->
-	</dl>	
+	</dl>
+	<!-- IF S_CAN_COPY_PERMISSIONS -->
+		<dl>
+			<dt><label for="cat_perm_from">{L_COPY_PERMISSIONS}:</label></dt>
+			<dd><select id="cat_perm_from" name="cat_perm_from"><option value="0">{L_NO_PERMISSIONS}</option>{S_CAT_OPTIONS}</select></dd>
+		</dl>
+	<!-- ENDIF -->
 	</fieldset>	
 
 	<fieldset class="submit-buttons">

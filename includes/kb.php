@@ -1973,7 +1973,7 @@ class knowledge_base
 						{
 							$sql = 'UPDATE ' . USERS_TABLE . "
 								SET user_articles = user_articles - 1
-								WHERE user_id = '" . $db->sql_escape($data['article_user_id']) . "'";
+								WHERE user_id = '" . $db->sql_escape($article_data['article_user_id']) . "'";
 							$db->sql_query($sql);
 							
 							$sql = 'UPDATE ' . USERS_TABLE . "
@@ -1983,18 +1983,20 @@ class knowledge_base
 						}
 						
 						$article_data['article_user_id'] = $user->data['user_id'];
+						$article_data['username'] = $user->data['username'];
+						$article_data['user_color'] = $user->data['user_colour'];
 					break;
 					
 					case 2:
 						// Custom author
-						$sql = 'SELECT user_id
+						$sql = 'SELECT user_id, username, user_colour
 								FROM ' . USERS_TABLE . "
 								WHERE username_clean = '" . $db->sql_escape(utf8_clean_string(request_var('username', '', true))) . "'";
 						$result = $db->sql_query($sql);
-						$user_id = (int) $db->sql_fetchfield('user_id');
+						$user_data = $db->sql_fetchrow($result);
 						$db->sql_freeresult($result);
 				
-						if (!$user_id)
+						if (!$user_data)
 						{
 							continue;
 						}
@@ -2004,16 +2006,18 @@ class knowledge_base
 						{
 							$sql = 'UPDATE ' . USERS_TABLE . "
 								SET user_articles = user_articles - 1
-								WHERE user_id = '" . $db->sql_escape($data['article_user_id']) . "'";
+								WHERE user_id = '" . $db->sql_escape($article_data['article_user_id']) . "'";
 							$db->sql_query($sql);
 							
 							$sql = 'UPDATE ' . USERS_TABLE . "
 								SET user_articles = user_articles + 1
-								WHERE user_id = '" . $db->sql_escape($user_id) . "'";
+								WHERE user_id = '" . $db->sql_escape($user_data['user_id']) . "'";
 							$db->sql_query($sql);
 						}
 						
-						$article_data['article_user_id'] = $user_id;
+						$article_data['article_user_id'] = $user_data['user_id'];
+						$article_data['username'] = $user_data['username'];
+						$article_data['user_colour'] = $user_data['user_colour'];
 					break;
 				}
 			}
@@ -2405,7 +2409,7 @@ class knowledge_base
 				{
 					trigger_error('KB_NO_ARTICLE');
 				}
-				$sql = "SELECT a.*, c.cat_name, c.parent_id
+				$sql = "SELECT a.*, c.cat_name, c.parent_id, c.left_id, c.right_id
 						FROM " . KB_TABLE . " a, " . KB_CATS_TABLE . " c
 						WHERE article_id = '" . $db->sql_escape($this->article_id) . "'
 						AND a.cat_id = c.cat_id";
@@ -2418,7 +2422,7 @@ class knowledge_base
 					trigger_error('KB_NO_COMMENT');
 				}
 				
-				$sql = 'SELECT c.*, ca.cat_name, ca.parent_id, a.cat_id, a.article_id, a.article_title, a.article_user_id, a.article_status, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_colour
+				$sql = 'SELECT c.*, ca.cat_name, ca.parent_id, ca.left_id, ca.right_id, a.cat_id, a.article_id, a.article_title, a.article_user_id, a.article_status, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield, u.user_colour
 						FROM ' . KB_COMMENTS_TABLE . ' c, ' . KB_TABLE . ' a, ' . USERS_TABLE . " u, " . KB_CATS_TABLE . " ca
 						WHERE a.article_id = c.article_id
 						AND u.user_id = c.comment_user_id
